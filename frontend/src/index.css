@@ -1,0 +1,68 @@
+
+@import "tailwindcss";
+
+:root{
+    --primary-color: #1E40AF; 
+    --secondary-color: white;
+    --other-color:#b8b8c0;
+    --bg-main:#000080;
+    --text-primary:#E0E7FF;
+    --text-secondary:#090d12;
+
+    --font-family:"Poppins", sans-serif, Arial, Helvetica, sans-serif;
+}
+
+*{
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+    font-family: var(--font-family);
+}
+
+body{
+    font-family: "Poppins", sans-serif, Arial, Helvetica, sans-serif;
+}
+
+.fa-house-user,
+.fa-gear,
+.fa-circle-question,
+.fa-bell,
+.fa-message,
+.fa-users,
+.fa-circle-info,
+.fa-marker,
+.fa-clipboard-user,
+.fa-calendar
+
+.Kyu{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.KyuLogo{
+    height: 150px;
+    width: 150px;
+    text-align: center;
+}
+
+
+.fa-book-open,
+.fa-tower-observation,
+.fa-solid fa-message,
+.fa-computer,
+.fa-warehouse,
+.fa-chart-simple
+
+.fa-book-user,
+.fa-computer,
+.fa-warehouse,
+.fa-circle-question{
+    color: black;
+}
+
+  
+
+  
+

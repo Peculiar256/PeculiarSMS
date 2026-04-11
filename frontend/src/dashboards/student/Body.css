@@ -1,0 +1,203 @@
+/* Body.css - Student Dashboard */
+
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg, #2c4ebb 0%, #3b82f6 100%);
+    border-radius: 12px;
+    padding: 40px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(44, 78, 187, 0.15);
+    overflow: hidden;
+    position: relative;
+}
+
+.banner-content h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.banner-content p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.banner-icon {
+    font-size: 100px;
+    opacity: 0.1;
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid #f1f5f9;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+}
+
+.card-icon.enrolled {
+    background: linear-gradient(135deg, #2c4ebb, #3b82f6);
+}
+
+.card-icon.avg {
+    background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.card-icon.attendance {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.card-icon.assignments {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+}
+
+.card-content h3 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.card-content p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+}
+
+/* Card Section */
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.card-header {
+    background-color: white !important;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.card-header h5 {
+    color: #1e293b;
+    font-size: 18px;
+}
+
+/* Activity Items */
+.card-body {
+    padding: 24px;
+}
+
+.card-body h6 {
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.card-body small {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.badge {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Button Styles */
+.activity-btn {
+    border-radius: 12px !important;
+    transition: all 0.2s ease;
+    padding: 18px 20px !important;
+}
+
+.activity-btn:hover {
+    transform: translateX(4px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2c4ebb, #3b82f6);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1e40af, #2c63d6);
+    border-color: transparent;
+}
+
+.btn-light {
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.btn-light:hover {
+    background-color: #f1f5f9;
+    border-color: #2c4ebb;
+}
+
+.btn i {
+    font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .welcome-banner {
+        padding: 30px;
+        text-align: center;
+    }
+
+    .banner-content h1 {
+        font-size: 24px;
+    }
+
+    .banner-content p {
+        font-size: 14px;
+    }
+
+    .banner-icon {
+        display: none;
+    }
+
+    .dashboard-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+    }
+
+    .card-content h3 {
+        font-size: 24px;
+    }
+}

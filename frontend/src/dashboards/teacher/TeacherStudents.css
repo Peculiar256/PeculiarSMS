@@ -1,0 +1,191 @@
+.teacher-students-page {
+	width:80vw;
+	height: 85vh;
+	margin: 20px;
+	padding: 20px;
+	background: #ffffff;
+	border-radius: 12px;
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.teacher-students-header h2 {
+	margin: 0;
+	color: #1f2937;
+}
+
+.teacher-students-header p {
+	margin: 8px 0 18px;
+	color: #6b7280;
+}
+
+.teacher-students-filter-row {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	margin-bottom: 14px;
+	flex-wrap: wrap;
+}
+
+.teacher-students-filter-row label {
+	font-weight: 600;
+	color: #1f2937;
+	white-space: nowrap;
+}
+
+.teacher-students-filter-row select,
+.teacher-students-filter-row input[type="date"] {
+	min-width: 140px;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	padding: 8px 10px;
+	font-size: 14px;
+	background-color: #ffffff;
+}
+
+.teacher-students-info {
+	color: #374151;
+	margin: 10px 0;
+}
+
+.teacher-students-table-wrap {
+	overflow-x: auto;
+}
+
+.teacher-students-table {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+}
+
+.teacher-students-table th,
+.teacher-students-table td {
+	padding: 12px;
+	border-bottom: 1px solid #e5e7eb;
+	text-align: left;
+	vertical-align: top;
+}
+
+.teacher-students-table th {
+	background: #f3f4f6;
+	color: #111827;
+	font-size: 14px;
+}
+
+.attendance-buttons {
+	display: flex;
+	gap: 8px;
+}
+
+.attendance-buttons button {
+	border: 1px solid #d1d5db;
+	background: #fff;
+	color: #1f2937;
+	border-radius: 8px;
+	padding: 6px 10px;
+	cursor: pointer;
+	font-size: 13px;
+}
+
+.attendance-buttons button.active-present {
+	border-color: #22c55e;
+	background: #dcfce7;
+	color: #166534;
+}
+
+.attendance-buttons button.active-absent {
+	border-color: #ef4444;
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.teacher-students-empty {
+	text-align: center;
+	color: #6b7280;
+	padding: 20px;
+}
+
+.teacher-students-success {
+	background-color: #dcfce7;
+	color: #166534;
+	border: 1px solid #86efac;
+	padding: 12px 16px;
+	border-radius: 8px;
+	margin: 12px 0;
+	font-weight: 500;
+}
+
+.teacher-students-error {
+	background-color: #fee2e2;
+	color: #991b1b;
+	border: 1px solid #fca5a5;
+	padding: 12px 16px;
+	border-radius: 8px;
+	margin: 12px 0;
+	font-weight: 500;
+}
+
+.teacher-students-actions {
+	display: flex;
+	gap: 12px;
+	margin: 16px 0 20px 0;
+	flex-wrap: wrap;
+}
+
+.btn-submit-attendance,
+.btn-reset-attendance {
+	padding: 10px 20px;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.btn-submit-attendance {
+	background-color: #3b82f6;
+	color: white;
+}
+
+.btn-submit-attendance:hover:not(:disabled) {
+	background-color: #2563eb;
+	box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-submit-attendance:disabled {
+	background-color: #d1d5db;
+	color: #9ca3af;
+	cursor: not-allowed;
+}
+
+.btn-reset-attendance {
+	background-color: #ef4444;
+	color: white;
+}
+
+.btn-reset-attendance:hover:not(:disabled) {
+	background-color: #dc2626;
+	box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-reset-attendance:disabled {
+	background-color: #d1d5db;
+	color: #9ca3af;
+	cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+	.teacher-students-page {
+		margin: 10px;
+		padding: 14px;
+	}
+
+	.teacher-students-filter-row {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.attendance-buttons {
+		flex-wrap: wrap;
+	}
+}

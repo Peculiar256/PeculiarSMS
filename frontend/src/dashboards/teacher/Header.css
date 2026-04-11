@@ -1,0 +1,100 @@
+/* Header.css */
+.navbar {
+    z-index: 1;  /* Changed z-index from 1030 to 1 to ensure it stays below the sidebar and other components */
+    transition: all 0.3s ease;
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-brand {
+    font-family: 'Poppins', sans-serif;
+    color: #2c4ebb !important; /* Primary Brand Color */
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.navbar-brand span {
+    background: linear-gradient(135deg, #2c4ebb, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced Search Bar */
+.input-group-text {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s;
+}
+
+.form-control[type="search"] {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.form-control[type="search"]:focus {
+    background-color: #ffffff !important;
+    border-color: #2c4ebb;
+    box-shadow: 0 0 0 4px rgba(44, 78, 187, 0.1);
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: #2c4ebb;
+    background-color: #ffffff;
+}
+
+/* Navigation Items */
+.nav-link {
+    color: #64748b !important;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #2c4ebb !important;
+}
+
+.nav-link i {
+    font-size: 1.2rem;
+}
+
+/* Notification Badge */
+.notification-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 8px !important;
+    height: 8px !important;
+    padding: 0 !important;
+}
+
+/* User Dropdown */
+.dropdown-menu {
+    border-radius: 10px;
+}
+
+.dropdown-item {
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #2c4ebb !important;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar-brand span {
+        display: none;
+    }
+    
+    .d-none.d-md-block {
+        display: none !important;
+    }
+}

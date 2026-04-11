@@ -1,0 +1,13 @@
+
+
+/* PIE-CHART */
+  .pie-content{
+    width: 630px;
+    min-height: 360;
+    /* background-color: whitesmoke; */
+    /* border: 1px solid black; */
+    border-radius: 10px;
+    margin-top: 20px;
+    margin-left: 50px;
+    box-shadow: 0 0 5px gray ;
+  }

@@ -1,0 +1,10 @@
+
+
+
+.Bannerview h1{
+    color: var(--text-secondary);
+    font-size: 40px;
+}
+.Bannerview h2{
+    color: var(--text-secondary);
+}

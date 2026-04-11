@@ -1,0 +1,98 @@
+/* Activity Buttons Hover Effect */
+.activity-btn {
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.activity-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card {
+    border-radius: 12px;
+    background-color: #ffffff;
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.card-header h5 {
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Modal Customization - Bootstrap handles centering */
+.modal-content {
+    border-radius: 5px !important;
+    overflow: hidden;
+}
+
+.modal-header {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+/* Center modal - no offsets */
+.modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: auto;
+    height: auto;
+    margin: 0;
+}
+
+.modal-backdrop {
+    position: fixed !important;
+    z-index: 1040 !important;
+}
+
+.modal.show {
+    z-index: 1050 !important;
+}
+
+.badge {
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.5em 0.8em;
+}
+
+/* Custom Scrollbar for activity list */
+.card-body {
+    max-height: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+}
+
+/* Overriding old fixed widths if any persist */
+.Body-container, .Admin-activities, .Admin-actions {
+    width: 100% !important;
+    /* max-width: none !important; */
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}

@@ -1,0 +1,78 @@
+.my-classes-page {
+  width: 85vw;
+  margin: 20px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.my-classes-header h2 {
+  margin: 0;
+  color: #111827;
+}
+
+.my-classes-header p {
+  margin: 8px 0 18px;
+  color: #6b7280;
+}
+
+.my-classes-filter-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.my-classes-filter-row label {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.my-classes-filter-row select {
+  min-width: 160px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.my-classes-table-wrap {
+  overflow-x: auto;
+}
+
+.my-classes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.my-classes-table th,
+.my-classes-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.my-classes-table th {
+  background: #f3f4f6;
+  color: #111827;
+  font-size: 14px;
+}
+
+.my-classes-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .my-classes-page {
+    margin: 10px;
+    padding: 14px;
+  }
+
+  .my-classes-filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

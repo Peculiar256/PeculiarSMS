@@ -1,0 +1,99 @@
+
+
+/* STUDENT REGISTRATION FORM CSS STYL */
+
+.Student-reg{
+    width: 70vw;
+    height: auto;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    /* background-color: rebeccapurple; */
+}
+
+.student-reg-content{
+    width: 90%;
+    height: auto;
+    /* background-color: red; */
+}
+
+.student-reg-content fieldset{
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 2px var(--other-color) solid;
+}
+
+.student-reg-content fieldset legend{
+    font-size: 2em;
+    font-weight: 600;
+    margin-left: 50px;
+}
+
+.bio-infor-container{
+    width: 100%;
+    height: auto;
+    /* background-color: gray; */
+}
+
+.bio-content{
+    width: 100%;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.input-container{
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-container label{
+    width: 100%;
+    font-size: 1.3em;
+}
+
+.input-container input{
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px var(--other-color) solid;
+    font-size: 1em;
+}
+
+.input-container select{
+    height: 40px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px var(--other-color) solid;
+    font-size: 1em;
+}
+
+.register-student{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.register-student-btn{
+    display: flex;
+    gap: 10px;
+}
+.register-student-btn01 button{
+    width: 250px;
+    height: 50px;
+    border: 1px var(--other-color) solid;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.register-student-btn02 button{
+    width: 250px;
+    height: 50px;
+    background-color:rgb(46, 101, 239);
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}

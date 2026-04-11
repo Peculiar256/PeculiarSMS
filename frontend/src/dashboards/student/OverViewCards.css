@@ -1,0 +1,30 @@
+
+
+
+.overCards .Card{
+    width: 250px;
+    height: 150px;
+    /* background-color: whitesmoke; */
+    margin-top: 20px;
+    color: black;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    /* border: 2px solid gray; */
+    box-shadow: 0 0 5px gray;
+}
+
+.overCards{
+    display: flex;
+    gap: 10px;
+   
+}
+.Card p{
+  color: gray;
+}
+.Card h1{
+  color: black;
+  font-weight: bold;
+}
