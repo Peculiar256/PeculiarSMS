@@ -1,0 +1,402 @@
+/* Verify Email Component Styles */
+
+:root {
+    --primary-color: #2c4ebb;
+    --primary-dark: #1e40af;
+    --light-bg: #f8fafc;
+    --border-color: #e2e8f0;
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --text-color: #1f2937;
+    --text-light: #6b7280;
+}
+
+.verify-email-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--light-bg) 0%, #f1f5f9 100%);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.verify-email-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+    padding: 50px 40px;
+    max-width: 420px;
+    width: 100%;
+    border: 1px solid var(--border-color);
+}
+
+/* Header Section */
+.verify-header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.verify-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(44, 78, 187, 0.25);
+}
+
+.verify-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.verify-subtitle {
+    font-size: 14px;
+    color: var(--text-light);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Error Message */
+.error-message {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--error-color);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.error-message i {
+    flex-shrink: 0;
+}
+
+/* Form Group */
+.verify-form-group {
+    margin-bottom: 25px;
+}
+
+.verify-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Code Input Wrapper */
+.code-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.verification-code-input {
+    flex: 1;
+    height: 50px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    text-align: center;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s ease;
+    color: var(--text-color);
+    background: white;
+}
+
+.verification-code-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(44, 78, 187, 0.15);
+    background: white;
+}
+
+.verification-code-input:disabled {
+    background-color: #f9fafb;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.code-hint {
+    font-size: 12px;
+    color: var(--text-light);
+    white-space: nowrap;
+    min-width: 35px;
+}
+
+/* Verify Button */
+.verify-button {
+    width: 100%;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(44, 78, 187, 0.25);
+}
+
+.verify-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 78, 187, 0.35);
+}
+
+.verify-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.verify-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.verify-button i {
+    font-size: 16px;
+}
+
+.verify-button.verified {
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+
+.verify-button.verified:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+/* Verify Actions */
+.verify-actions {
+    margin-bottom: 25px;
+}
+
+.resend-button {
+    width: 100%;
+    height: 44px;
+    background: white;
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.resend-button:hover:not(:disabled) {
+    background-color: var(--light-bg);
+    border-color: var(--primary-color);
+    color: var(--primary-dark);
+}
+
+.resend-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+}
+
+.resend-button i {
+    font-size: 16px;
+}
+
+/* Verify Footer */
+.verify-footer {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.verify-footer p {
+    font-size: 13px;
+    color: var(--text-light);
+    margin: 10px 0 0 0;
+}
+
+.verify-footer p:first-child {
+    margin-top: 0;
+}
+
+.login-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+    color: var(--primary-dark);
+}
+
+.support-text {
+    font-size: 12px !important;
+    color: var(--text-light);
+    margin-top: 12px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.support-text i {
+    font-size: 12px;
+}
+
+/* Success State */
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 25px;
+    font-size: 40px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.25);
+    animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.success-message {
+    font-size: 14px;
+    color: var(--text-light);
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .verify-email-card {
+        padding: 35px 25px;
+    }
+
+    .verify-header {
+        margin-bottom: 25px;
+    }
+
+    .verify-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+    }
+
+    .verify-header h2 {
+        font-size: 20px;
+    }
+
+    .verify-subtitle {
+        font-size: 13px;
+    }
+
+    .verify-button,
+    .resend-button {
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .verification-code-input {
+        height: 45px;
+        font-size: 20px;
+        letter-spacing: 8px;
+    }
+
+    .code-hint {
+        font-size: 11px;
+    }
+
+    .verify-footer {
+        padding-top: 15px;
+    }
+
+    .verify-footer p {
+        font-size: 12px;
+    }
+
+    .support-text {
+        font-size: 11px !important;
+    }
+
+    .success-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 35px;
+        margin: 0 auto 20px;
+    }
+
+    .success-title {
+        font-size: 20px;
+    }
+
+    .success-message {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+}
+
+/* Focus states */
+input:focus {
+    outline: none;
+}
+
+/* Loading spinner */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner.fa-spin {
+    animation: spin 1s linear infinite;
+}

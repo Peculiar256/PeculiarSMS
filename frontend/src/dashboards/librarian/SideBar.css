@@ -1,0 +1,30 @@
+
+
+
+.KyuLogo{
+    width: 150px;
+    height: 150px;
+    display: flex;
+    text-align: center;
+}
+ .side{
+    width: 30vh;
+    min-height: 100vh;
+    /* background-color: var(--primary-color); */
+    padding: 20px;
+    /* border-radius: 10px; */
+    box-shadow: 0 0 5px gray;
+} 
+.sidelinks{
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-left: 20px;
+}
+.sidelinks a{
+    color: black;
+}
+#librarian-icon-sidebar{
+  color: black;
+  font-size: 15px;
+}

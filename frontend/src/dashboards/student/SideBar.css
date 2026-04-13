@@ -1,0 +1,166 @@
+
+.student-sidebar {
+    width: 250px;
+    height: 100vh;
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transition: width 0.3s ease;
+    z-index: 1000;
+    /* Hide scrollbar but keep functionality */
+    overflow-y: auto;
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.student-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Helper Class for hiding text on collapse (if needed later) */
+.sidebar-text {
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+/* ---------------------------------
+   Profile Section
+--------------------------------- */
+.sidebar-profile {
+    padding: 30px 20px 20px;
+    text-align: center;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-img-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    padding: 3px;
+    background: white;
+    box-shadow: 0 0 0 2px #e2e8f0; /* Outer ring */
+    overflow: hidden;
+}
+
+.profile-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.sidebar-profile h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 5px 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    background-color: #dbeafe;
+    color: #1e40af;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.user-email {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    word-break: break-all;
+}
+
+/* Divider */
+.sidebar-divider {
+    margin: 0;
+    border: none;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* ---------------------------------
+   Navigation
+--------------------------------- */
+.sidebar-nav {
+    flex: 1;
+    padding: 15px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 13px; /* Reduced Font Size */
+}
+
+.sidebar-link i {
+    width: 25px; /* Fixed width for icons aligned vertically */
+    font-size: 16px;
+    text-align: center;
+    margin-right: 12px;
+    color: #94a3b8;
+    transition: color 0.2s ease;
+}
+
+/* Hover State */
+.sidebar-link:hover {
+    background-color: #f1f5f9;
+    color: #334155;
+}
+
+.sidebar-link:hover i {
+    color: #2c4ebb;
+}
+
+/* Active State */
+.sidebar-link.active {
+    background-color: #eff6ff;
+    color: #2c4ebb;
+    font-weight: 600;
+}
+
+.sidebar-link.active i {
+    color: #2c4ebb;
+}
+
+/* Settings Link (Bottom of nav) */
+.settings-link {
+    margin-top: auto; /* Pushes to bottom of nav container if using flex-col */
+    border-top: 1px solid transparent; 
+}
+
+/* Section Headers */
+.sidebar-section-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 15px 8px 15px;
+    margin-top: 8px;
+}
+
+.sidebar-section-header:first-child {
+    margin-top: 0;
+}

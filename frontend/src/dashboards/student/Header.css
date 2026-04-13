@@ -1,0 +1,111 @@
+/* Header.css */
+.navbar {
+    z-index: 1;  /* Changed z-index from 1030 to 1 to ensure it stays below the sidebar and other components */
+    transition: all 0.3s ease;
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-brand {
+    font-family: 'Poppins', sans-serif;
+    color: #2c4ebb !important; /* Primary Brand Color */
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.navbar-brand span {
+    background: linear-gradient(135deg, #2c4ebb, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced Search Bar */
+.input-group-text {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s;
+}
+
+.form-control[type="search"] {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.form-control[type="search"]:focus {
+    background-color: #ffffff !important;
+    border-color: #2c4ebb;
+    box-shadow: 0 0 0 4px rgba(44, 78, 187, 0.1);
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: #2c4ebb;
+    background-color: #ffffff;
+}
+
+/* Navigation Items */
+.nav-link {
+    color: #64748b !important;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: #2c4ebb !important;
+}
+
+.notification-badge {
+    width: 8px;
+    height: 8px;
+    padding: 0 !important;
+    top: 5px !important;
+    right: 5px !important;
+    border: 2px solid white;
+}
+
+/* User Profile Dropdown */
+.dropdown-menu {
+    border-radius: 10px;
+    margin-top: 10px !important;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.dropdown-item {
+    font-size: 0.9rem;
+    color: #475569;
+    border-radius: 6px;
+    margin: 2px 5px;
+    width: auto;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile Responsiveness tweaks */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-item.dropdown {
+        border-top: 1px solid #f1f5f9;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+}

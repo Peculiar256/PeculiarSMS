@@ -1,0 +1,133 @@
+/* Teacher Registration Form Styles */
+
+/* Main form container */
+.teacher-Reg {
+    width: 100%;
+    height: auto;
+    padding: 0;
+}
+
+.teacher-Reg-board {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.teacher-Reg-board fieldset {
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px #e9ecef solid;
+    background-color: #f8fafc;
+}
+
+.teacher-Reg-board fieldset legend {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: #0d6efd;
+    padding: 0 10px;
+    margin-left: -10px;
+}
+
+.Teachers-infor-container {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.Teachers-infor {
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.Teachers-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.Teachers-input-container label {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.Teachers-input-container input,
+.Teachers-input-container select {
+    width: 100%;
+    height: 42px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px #e2e8f0 solid;
+    font-size: 0.95em;
+    transition: all 0.2s ease;
+}
+
+.Teachers-input-container input:focus,
+.Teachers-input-container select:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.Teachers-register {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 15px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+    margin-top: 20px;
+}
+
+.Teachers-register-btn {
+    display: flex;
+    gap: 10px;
+}
+
+.Teachers-register-btn01 button {
+    min-width: 150px;
+    height: 42px;
+    border: 1.5px #d1d5db solid;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    background-color: #ffffff;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.Teachers-register-btn01 button:hover {
+    border-color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+.Teachers-register-btn02 button {
+    min-width: 150px;
+    height: 42px;
+    background-color: #0d6efd;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.Teachers-register-btn02 button:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Bootstrap classes support */
+.needs-validation {
+    width: 100%;
+}

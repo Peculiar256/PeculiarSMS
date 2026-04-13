@@ -1,0 +1,252 @@
+
+/* TEACHER DASHBOARD CARDS */
+
+.teacher-container {
+  margin-left: 30px;
+  padding: 20px;
+}
+
+.teacher-header-section {
+  margin-bottom: 40px;
+}
+
+.teacher-dashboard-title {
+  font-size: 50px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.teacher-dashboard-subtitle {
+  font-size: 18px;
+  color: #666;
+  font-weight: 400;
+}
+
+/* Cards Grid */
+.teacher-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.teacher-overview {
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.teacher-overview:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Card Headers */
+.card-header-flex {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.card-header-flex h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #fff;
+}
+
+.card-description {
+  font-size: 12px;
+  opacity: 0.85;
+  margin: 5px 0 0 0;
+  color: #fff;
+}
+
+.card-icon {
+  font-size: 32px;
+  opacity: 0.9;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Card Values */
+.card-value {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 10px 0;
+  color: #fff;
+}
+
+.card-value-text {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 10px 0;
+  color: #fff;
+  word-wrap: break-word;
+}
+
+.card-value-status {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 10px 0;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.experience-text {
+  font-size: 12px;
+  opacity: 0.8;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Color Variants - Navy Blue Theme */
+.teacher-card-primary,
+.teacher-card-success,
+.teacher-card-info,
+.teacher-card-warning,
+.teacher-card-secondary,
+.teacher-card-danger {
+  background: #2c4ebb;
+  color: #fff;
+}
+
+.teacher-card-primary .card-header-flex h1,
+.teacher-card-success .card-header-flex h1,
+.teacher-card-info .card-header-flex h1,
+.teacher-card-warning .card-header-flex h1,
+.teacher-card-secondary .card-header-flex h1,
+.teacher-card-danger .card-header-flex h1,
+.teacher-card-primary .card-description,
+.teacher-card-success .card-description,
+.teacher-card-info .card-description,
+.teacher-card-warning .card-description,
+.teacher-card-secondary .card-description,
+.teacher-card-danger .card-description,
+.teacher-card-primary .card-value,
+.teacher-card-success .card-value,
+.teacher-card-info .card-value,
+.teacher-card-warning .card-value,
+.teacher-card-secondary .card-value,
+.teacher-card-danger .card-value,
+.teacher-card-primary .card-value-text,
+.teacher-card-success .card-value-text,
+.teacher-card-info .card-value-text,
+.teacher-card-warning .card-value-text,
+.teacher-card-secondary .card-value-text,
+.teacher-card-danger .card-value-text,
+.teacher-card-primary .card-value-status,
+.teacher-card-success .card-value-status,
+.teacher-card-info .card-value-status,
+.teacher-card-warning .card-value-status,
+.teacher-card-secondary .card-value-status,
+.teacher-card-danger .card-value-status {
+  color: #fff;
+}
+
+.teacher-card-primary .card-icon,
+.teacher-card-success .card-icon,
+.teacher-card-info .card-icon,
+.teacher-card-warning .card-icon,
+.teacher-card-secondary .card-icon,
+.teacher-card-danger .card-icon {
+  color: #fff;
+}
+
+/* Subjects List */
+.subjects-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.subject-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Qualifications Section */
+.qualifications-section {
+  background-color: #f8f9fa;
+  padding: 25px;
+  border-radius: 15px;
+  border-left: 5px solid #667eea;
+  margin-top: 40px;
+}
+
+.qualifications-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.qualifications-section p {
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .teacher-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-container {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  .teacher-dashboard-title {
+    font-size: 36px;
+  }
+
+  .teacher-dashboard-subtitle {
+    font-size: 16px;
+  }
+
+  .teacher-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+  }
+
+  .teacher-overview {
+    padding: 20px;
+    min-height: 170px;
+  }
+
+  .card-value {
+    font-size: 36px;
+  }
+
+  .card-value-text {
+    font-size: 16px;
+  }
+
+  .card-icon {
+    font-size: 24px;
+  }
+}

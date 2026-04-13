@@ -1,0 +1,192 @@
+.grading-card {
+  width: 80vw;
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 5px gray;
+  padding: 20px;
+  margin-left: 20px;
+}
+
+.grading-card h2 {
+  margin: 0;
+}
+
+.grading-card p {
+  margin-top: 8px;
+}
+
+.grading-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.grading-add-student-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-student-btn {
+  border: none;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.add-student-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.grading-filters-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.grading-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.grading-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grading-field label {
+  font-weight: 600;
+}
+
+.grading-field input,
+.grading-field select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+
+.student-table-section {
+  margin-top: 18px;
+}
+
+.table-label {
+  display: inline-block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.teacher-students-table-wrap {
+  overflow-x: auto;
+}
+
+.teacher-students-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.teacher-students-table th,
+.teacher-students-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.teacher-students-table th {
+  background: #f3f4f6;
+  color: #111827;
+  font-size: 14px;
+}
+
+.grading-marks-input {
+  width: 90px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.grading-marks-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.teacher-students-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}
+
+.grading-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+}
+
+.grading-actions button {
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.grading-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save-btn {
+  background-color: #2563eb;
+}
+
+.save-btn:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.submit-btn {
+  background-color: #059669;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #047857;
+}
+
+.grading-message {
+  margin-top: 14px;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.grading-message-success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.grading-message-error {
+  background-color: #fee2e2;
+  color: #921b1b;
+  border: 1px solid #fecaca;
+}
+
+.grading-message-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
