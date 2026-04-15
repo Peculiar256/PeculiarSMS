@@ -6,11 +6,12 @@ import {
   Legend,
   LinearScale,
   Tooltip,
+  ArcElement,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Bar, Pie } from "react-chartjs-2";
 import "./Grades.css";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, ArcElement);
 
 const Grades = () => {
   const [gradeRows, setGradeRows] = useState([]);
@@ -19,6 +20,9 @@ const Grades = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [termFilter, setTermFilter] = useState("all");
   const [subjectFilter, setSubjectFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("all"); // NEW: Class filter
+  const [successMessage, setSuccessMessage] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   // Fetch results from backend
   useEffect(() => {
@@ -151,10 +155,11 @@ const Grades = () => {
       const matchesTerm = termFilter === "all" || row.term === termFilter;
       const matchesSubject =
         subjectFilter === "all" || row.subject.toLowerCase() === subjectFilter.toLowerCase();
+      const matchesClass = classFilter === "all" || row.className === classFilter;
 
-      return matchesSearch && matchesTerm && matchesSubject;
+      return matchesSearch && matchesTerm && matchesSubject && matchesClass;
     });
-  }, [searchTerm, termFilter, subjectFilter, gradeRows]);
+  }, [searchTerm, termFilter, subjectFilter, classFilter, gradeRows]);
 
   const chartData = {
     labels: subjectOverview.map((item) => item.subject),
@@ -182,6 +187,189 @@ const Grades = () => {
         max: 100,
       },
     },
+  };
+
+  // NEW: Grade Distribution Chart Data
+  const gradeDistributionData = useMemo(() => {
+    const distribution = {
+      'D1 (80-100)': 0,
+      'D2 (70-79)': 0,
+      'C3-C6 (50-69)': 0,
+      'P7-P8 (34-49)': 0,
+      'F9 (<34)': 0,
+    };
+
+    filteredRows.forEach((row) => {
+      if (row.average >= 80) distribution['D1 (80-100)']++;
+      else if (row.average >= 70) distribution['D2 (70-79)']++;
+      else if (row.average >= 50) distribution['C3-C6 (50-69)']++;
+      else if (row.average >= 34) distribution['P7-P8 (34-49)']++;
+      else distribution['F9 (<34)']++;
+    });
+
+    return {
+      labels: Object.keys(distribution),
+      datasets: [{
+        data: Object.values(distribution),
+        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'],
+        borderColor: '#fff',
+        borderWidth: 2,
+      }],
+    };
+  }, [filteredRows]);
+
+  // NEW: Term Performance Chart Data
+  const termPerformanceData = useMemo(() => {
+    const termData = { term1: [], term2: [], term3: [] };
+    filteredRows.forEach((row) => {
+      if (termData[row.term]) termData[row.term].push(row.average);
+    });
+
+    const averages = Object.entries(termData).map(([term, scores]) => 
+      scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+    );
+
+    return {
+      labels: ['Term 1', 'Term 2', 'Term 3'],
+      datasets: [{
+        label: 'Average Performance (%)',
+        data: averages,
+        backgroundColor: '#667eea',
+        borderRadius: 8,
+      }],
+    };
+  }, [filteredRows]);
+
+  // NEW: Export Handlers
+  const handleExportCSV = () => {
+    if (filteredRows.length === 0) {
+      setError('No grade records to export');
+      return;
+    }
+
+    const headers = ['Student', 'Class', 'Subject', 'Average (%)', 'Grade', 'Term', 'Performance', 'Remarks'];
+    const rows = filteredRows.map((row) => [
+      row.student,
+      row.className,
+      row.subject,
+      row.average,
+      row.grade || getGradeLabel(row.average),
+      row.term.replace('term', 'Term '),
+      getPerformanceLabel(row.average),
+      row.remarks || 'N/A',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) =>
+        row.map((cell) => {
+          const cellStr = String(cell || '');
+          return cellStr.includes(',') ? `"${cellStr.replace(/"/g, '""')}"` : cellStr;
+        }).join(',')
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `grades_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setSuccessMessage('CSV exported successfully!');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handleExportPDF = async () => {
+    if (filteredRows.length === 0) {
+      setError('No grade records to export');
+      return;
+    }
+
+    try {
+      setExporting(true);
+      const jsPDF = (await import('jspdf')).jsPDF;
+      const autoTable = (await import('jspdf-autotable')).default;
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      doc.setFontSize(16);
+      doc.text('Student Grades Report', pageWidth / 2, 15, { align: 'center' });
+
+      doc.setFontSize(10);
+      const reportDate = new Date().toLocaleDateString();
+      doc.text(`Generated: ${reportDate}`, 15, 25);
+      doc.text(`Total Records: ${filteredRows.length}`, 15, 32);
+
+      const tableData = filteredRows.map((row) => [
+        row.student,
+        row.className,
+        row.subject,
+        row.average,
+        row.grade || getGradeLabel(row.average),
+        row.term.replace('term', 'T'),
+        getPerformanceLabel(row.average),
+      ]);
+
+      autoTable(doc, {
+        head: [['Student', 'Class', 'Subject', 'Avg (%)', 'Grade', 'Term', 'Performance']],
+        body: tableData,
+        startY: 40,
+        margin: { top: 40 },
+      });
+
+      doc.save(`grades_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      setSuccessMessage('PDF exported successfully!');
+      setTimeout(() => setSuccessMessage(''), 2000);
+    } catch (err) {
+      setError('Failed to export PDF: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const csv = event.target?.result;
+        const lines = csv.split('\n');
+        const headers = lines[0].split(',');
+        
+        const importedRows = lines.slice(1)
+          .filter((line) => line.trim())
+          .map((line, index) => {
+            const values = line.split(',');
+            return {
+              id: `IMPORTED-${index}`,
+              student: values[0]?.trim() || '',
+              className: values[1]?.trim() || '',
+              subject: values[2]?.trim() || '',
+              average: Number(values[3]) || 0,
+              grade: values[4]?.trim() || '',
+              term: `term${values[5]?.toLowerCase().replace('term', '')}` || 'term1',
+              examCode: `IMP-${index}`,
+            };
+          });
+
+        setGradeRows((prev) => [...prev, ...importedRows]);
+        setSuccessMessage(`Imported ${importedRows.length} grade record(s) successfully!`);
+        setTimeout(() => setSuccessMessage(''), 2000);
+      } catch (err) {
+        setError('Failed to import CSV: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   return (
@@ -262,6 +450,22 @@ const Grades = () => {
         </div>
       </div>
 
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+        <div className="grades-chart-panel">
+          <h2>Grade Distribution</h2>
+          <div className="grades-chart-box" style={{ minHeight: '300px' }}>
+            <Pie data={gradeDistributionData} options={chartOptions} />
+          </div>
+        </div>
+
+        <div className="grades-chart-panel">
+          <h2>Term Performance Trend</h2>
+          <div className="grades-chart-box">
+            <Bar data={termPerformanceData} options={chartOptions} />
+          </div>
+        </div>
+      </div>
+
       <div className="grades-table-panel">
         <div className="grades-table-header">
           <h2>Student Results</h2>
@@ -290,8 +494,95 @@ const Grades = () => {
                 <option key={subject} value={subject}>{subject}</option>
               ))}
             </select>
+
+            <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
+              <option value="all">All Classes</option>
+              {[...new Set(gradeRows.map(r => r.className))].sort().map(className => (
+                <option key={className} value={className}>{className}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              onClick={handleExportCSV}
+              disabled={exporting || filteredRows.length === 0}
+              style={{
+                padding: '8px 12px',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                opacity: exporting || filteredRows.length === 0 ? 0.6 : 1,
+              }}
+            >
+              <i className="fa-solid fa-download"></i> Export CSV
+            </button>
+
+            <button
+              onClick={handleExportPDF}
+              disabled={exporting || filteredRows.length === 0}
+              style={{
+                padding: '8px 12px',
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                opacity: exporting || filteredRows.length === 0 ? 0.6 : 1,
+              }}
+            >
+              <i className="fa-solid fa-file-pdf"></i> Export PDF
+            </button>
+
+            <label style={{
+              padding: '8px 12px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              <i className="fa-solid fa-upload"></i> Import CSV
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleImportCSV}
+                style={{ display: 'none' }}
+              />
+            </label>
           </div>
         </div>
+
+        {successMessage && (
+          <div style={{
+            padding: '12px 16px',
+            background: '#dcfce7',
+            border: '1px solid #86efac',
+            borderRadius: '6px',
+            color: '#166534',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <i className="fa-solid fa-check-circle"></i>
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         <div className="grades-table-wrapper">
           <table>
