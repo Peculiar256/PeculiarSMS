@@ -641,23 +641,229 @@ const StudentSearch = () => {
       {/* VIEW MODAL */}
       {isViewModalOpen && selectedStudent && (
         <div className="modal-overlay" onClick={() => setIsViewModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Student Details</h3>
-              <button className="modal-close" onClick={() => setIsViewModalOpen(false)}>×</button>
+          <div className="modal-content" style={{ maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ background: '#1E40AF', color: 'white', padding: '0', position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '50px' }}>
+              <button 
+                type="button" 
+                onClick={() => setIsViewModalOpen(false)} 
+                style={{ 
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '32px',
+                  cursor: 'pointer',
+                  padding: '10px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                title="Close"
+              >
+                ×
+              </button>
             </div>
-            <div className="student-details-grid">
-              <p><strong>Name:</strong> {selectedStudent.firstName} {selectedStudent.lastName}</p>
-              <p><strong>Student ID:</strong> {selectedStudent.studentId}</p>
-              <p><strong>Email:</strong> {selectedStudent.email}</p>
-              <p><strong>Class:</strong> 
-                <span className="class-badge">{selectedStudent.currentClass || selectedStudent.schoolClass?.name || 'Unassigned'}</span>
+
+            {/* Profile Header Section with Avatar */}
+            <div style={{ textAlign: 'center', padding: '30px 20px', background: '#1E40AF', color: 'white', position: 'relative', marginBottom: '0' }}>
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                background: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 15px',
+                fontSize: '48px',
+                color: '#1E40AF',
+                border: '4px solid white',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+              }}>
+                <i className="fa-solid fa-user-graduate"></i>
+              </div>
+              <h2 style={{ margin: '10px 0 5px', fontSize: '24px', fontWeight: '600' }}>
+                {selectedStudent.firstName} {selectedStudent.lastName}
+              </h2>
+              <p style={{ margin: '0 0 15px', fontSize: '14px', opacity: 0.9 }}>
+                <strong>{selectedStudent.studentId || 'N/A'}</strong>
               </p>
-              <p><strong>Phone:</strong> {selectedStudent.phoneNumber || 'N/A'}</p>
-              <p><strong>Gender:</strong> {selectedStudent.gender || 'N/A'}</p>
-              <p><strong>Stream:</strong> {selectedStudent.stream || 'N/A'}</p>
-              <p><strong>Residence:</strong> {selectedStudent.residenceStatus || 'N/A'}</p>
-              <p><strong>Status:</strong> {getStatusBadge(selectedStudent.isActive)}</p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <span style={{ background: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>
+                  <i className="fa-solid fa-book" style={{ marginRight: '5px' }}></i>
+                  {selectedStudent.currentClass || selectedStudent.schoolClass?.name || 'Unassigned'}
+                </span>
+                <span style={{ background: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>
+                  <i className="fa-solid fa-home" style={{ marginRight: '5px' }}></i>
+                  {selectedStudent.residenceStatus || 'Day Student'}
+                </span>
+              </div>
+            </div>
+
+            {/* Details Sections */}
+            <div style={{ padding: '25px 20px' }}>
+              {/* Personal Information */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <i className="fa-solid fa-circle-user" style={{ color: '#1E40AF' }}></i>
+                  Personal Information
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Gender</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-venus-mars" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.gender || 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-cake-candles" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.dateOfBirth ? new Date(selectedStudent.dateOfBirth).toLocaleDateString() : 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Nationality</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-globe" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.nationality || 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Other Names</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-user" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.otherNames || 'Not Provided'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Information */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <i className="fa-solid fa-graduation-cap" style={{ color: '#1E40AF' }}></i>
+                  Academic Information
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Class</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-book" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.currentClass || selectedStudent.schoolClass?.name || 'Unassigned'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Stream</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-sitemap" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.stream || 'Not Assigned'}
+                    </p>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Residence Status</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-home" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {selectedStudent.residenceStatus === 'DAY' ? 'Day Student' : 'Boarding Student'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact & ID Information */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <i className="fa-solid fa-phone" style={{ color: '#1E40AF' }}></i>
+                  Contact & Identification
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Email Address</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-envelope" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      <a href={`mailto:${selectedStudent.email}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
+                        {selectedStudent.email || 'Not Provided'}
+                      </a>
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Phone Number</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-phone" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      <a href={`tel:${selectedStudent.phoneNumber}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
+                        {selectedStudent.phoneNumber || 'Not Provided'}
+                      </a>
+                    </p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>NIN</p>
+                      <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                        <i className="fa-solid fa-id-card" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                        {selectedStudent.nin || 'Not Provided'}
+                      </p>
+                    </div>
+                    <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>LINN</p>
+                      <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                        <i className="fa-solid fa-barcode" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                        {selectedStudent.linn || 'Not Provided'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Actions */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setIsViewModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    background: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#e0e0e0'}
+                  onMouseLeave={(e) => e.target.style.background = '#f0f0f0'}
+                >
+                  Close
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    handleEditStudent(selectedStudent);
+                    setIsViewModalOpen(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    background: '#1E40AF',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  <i className="fa-solid fa-pen-to-square" style={{ marginRight: '8px' }}></i>
+                  Edit Student
+                </button>
+              </div>
             </div>
           </div>
         </div>

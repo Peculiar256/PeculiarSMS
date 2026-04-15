@@ -306,16 +306,18 @@ const TeacherSearch = () => {
         firstName,
         lastName,
         email,
-        contactNumber,
+        phoneNumber: contactNumber, // Backend expects phoneNumber, not contactNumber
         dateOfBirth,
         gender,
         nationality,
-        qualification,
+        qualifications: qualification, // Backend expects qualifications (plural)
         specialization,
         department,
-        hireDate,
+        dateJoined: hireDate, // Backend expects dateJoined, not hireDate
       };
 
+      console.log('Teacher payload being sent:', teacherPayload); // Debug log
+      
       const response = await fetch(`${API_BASE_URL}/teachers`, {
         method: 'POST',
         headers: {
@@ -340,8 +342,45 @@ const TeacherSearch = () => {
   };
 
   // Handle action buttons
-  const handleViewTeacher = (teacher) => {
-    setViewTeacher(teacher);
+  const handleViewTeacher = async (teacher) => {
+    try {
+      // Fetch complete teacher details for the modal
+      const response = await fetch(`${API_BASE_URL}/teachers/${teacher.id}`);
+      if (!response.ok) {
+        console.warn('Could not fetch complete teacher details, using available data');
+        setViewTeacher(teacher);
+        return;
+      }
+      const completeTeacher = await response.json();
+      console.log('Complete teacher data from API:', completeTeacher); // Debug log
+      
+      // Map backend field names to frontend expectations
+      const mappedTeacher = {
+        ...completeTeacher,
+        id: completeTeacher.id || teacher.id,
+        firstName: completeTeacher.firstName || teacher.firstName,
+        lastName: completeTeacher.lastName || teacher.lastName,
+        email: completeTeacher.email || teacher.email,
+        contactNumber: completeTeacher.phoneNumber || completeTeacher.contactNumber || teacher.contactNumber || teacher.phone,
+        hireDate: completeTeacher.dateJoined || completeTeacher.hireDate || teacher.hireDate,
+        qualification: completeTeacher.qualifications || completeTeacher.qualification || teacher.qualification,
+        displayId: completeTeacher.teacher_id || completeTeacher.teacherId || teacher.id,
+        department: (typeof completeTeacher.department === 'object' && completeTeacher.department?.name) 
+          ? completeTeacher.department.name 
+          : completeTeacher.department || completeTeacher.departmentName || teacher.department,
+        nationality: completeTeacher.nationality || teacher.nationality,
+        gender: completeTeacher.gender || teacher.gender,
+        dateOfBirth: completeTeacher.dateOfBirth || teacher.dateOfBirth,
+        specialization: completeTeacher.specialization || completeTeacher.primarySubject || teacher.specialization,
+        phone: completeTeacher.phoneNumber || teacher.phone,
+      };
+      console.log('Mapped teacher data:', mappedTeacher); // Debug log
+      setViewTeacher(mappedTeacher);
+    } catch (err) {
+      console.error('Error fetching teacher details:', err);
+      // Fallback to available data
+      setViewTeacher(teacher);
+    }
   };
 
   const closeViewTeacher = () => {
@@ -353,6 +392,12 @@ const TeacherSearch = () => {
     // Use numeric id for API calls, not the string teacher_id
     const teacherId = teacher.id;
     setTeacherToEditId(teacherId);
+    
+    // Handle department which might be an object or string
+    const deptValue = (typeof teacher.department === 'object' && teacher.department?.name) 
+      ? teacher.department.name 
+      : teacher.department || '';
+    
     setEditFormData({
       firstName: teacher.firstName || '',
       lastName: teacher.lastName || '',
@@ -362,9 +407,9 @@ const TeacherSearch = () => {
       gender: teacher.gender || '',
       nationality: teacher.nationality || '',
       qualification: teacher.qualification || '',
-      specialization: teacher.specialization || '',
-      department: teacher.department || '',
-      hireDate: teacher.hireDate || '',
+      specialization: teacher.specialization || teacher.primarySubject || '',
+      department: deptValue,
+      hireDate: teacher.hireDate || teacher.dateJoined || '',
     });
     setIsEditModalOpen(true);
   };
@@ -394,16 +439,18 @@ const TeacherSearch = () => {
         firstName,
         lastName,
         email,
-        contactNumber,
+        phoneNumber: contactNumber, // Backend expects phoneNumber, not contactNumber
         dateOfBirth: editFormData.dateOfBirth,
         gender: editFormData.gender,
         nationality: editFormData.nationality,
-        qualification: editFormData.qualification,
+        qualifications: editFormData.qualification, // Backend expects qualifications (plural)
         specialization: editFormData.specialization,
         department: editFormData.department,
-        hireDate: editFormData.hireDate,
+        dateJoined: editFormData.hireDate, // Backend expects dateJoined, not hireDate
       };
 
+      console.log('Update payload being sent:', updatePayload); // Debug log
+      
       const response = await fetch(`${API_BASE_URL}/teachers/${teacherToEditId}`, {
         method: 'PUT',
         headers: {
@@ -1083,24 +1130,213 @@ const TeacherSearch = () => {
 
       {viewTeacher && (
         <div className="teacher-modal-overlay" onClick={closeViewTeacher}>
-          <div className="teacher-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="teacher-modal-header">
-              <h3>Teacher Details</h3>
-              <button type="button" className="teacher-modal-close" onClick={closeViewTeacher}>x</button>
+          <div className="teacher-modal-content" style={{ maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div className="teacher-modal-header" style={{ background: '#1E40AF', color: 'white', padding: '0', position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '50px' }}>
+              <button 
+                type="button" 
+                onClick={closeViewTeacher} 
+                style={{ 
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '32px',
+                  cursor: 'pointer',
+                  padding: '10px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                title="Close"
+              >
+                ×
+              </button>
             </div>
 
-            <div className="teacher-details-grid">
-              <p><strong>Teacher Name:</strong> {viewTeacher.firstName} {viewTeacher.lastName}</p>
-              <p><strong>Teacher ID:</strong> <strong>{viewTeacher.displayId || viewTeacher.teacher_id || viewTeacher.teacherId || viewTeacher.id}</strong></p>
-              <p><strong>Email:</strong> {viewTeacher.email || '-'}</p>
-              <p><strong>Contact Number:</strong> {viewTeacher.contactNumber || viewTeacher.phone || '-'}</p>
-              <p><strong>Gender:</strong> {viewTeacher.gender || '-'}</p>
-              <p><strong>Nationality:</strong> {viewTeacher.nationality || '-'}</p>
-              <p><strong>Qualification:</strong> {viewTeacher.qualification || '-'}</p>
-              <p><strong>Specialization:</strong> {viewTeacher.specialization || '-'}</p>
-              <p><strong>Department:</strong> {viewTeacher.department || '-'}</p>
-              <p><strong>Date of Birth:</strong> {viewTeacher.dateOfBirth || '-'}</p>
-              <p><strong>Hire Date:</strong> {viewTeacher.hireDate || '-'}</p>
+            {/* Profile Header Section with Avatar */}
+            <div style={{ textAlign: 'center', padding: '30px 20px', background: '#1E40AF', color: 'white', position: 'relative', marginBottom: '0' }}>
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                background: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 15px',
+                fontSize: '48px',
+                color: '#1E40AF',
+                border: '4px solid white',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+              }}>
+                <i className="fa-solid fa-user"></i>
+              </div>
+              <h2 style={{ margin: '10px 0 5px', fontSize: '24px', fontWeight: '600' }}>
+                {viewTeacher.firstName} {viewTeacher.lastName}
+              </h2>
+              <p style={{ margin: '0 0 15px', fontSize: '14px', opacity: 0.9 }}>
+                <strong>{viewTeacher.displayId || viewTeacher.teacher_id || viewTeacher.teacherId || viewTeacher.id}</strong>
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <span style={{ background: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>
+                  <i className="fa-solid fa-briefcase" style={{ marginRight: '5px' }}></i>
+                  {viewTeacher.specialization || 'Not Assigned'}
+                </span>
+                <span style={{ background: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>
+                  <i className="fa-solid fa-building" style={{ marginRight: '5px' }}></i>
+                  {viewTeacher.department || 'Unassigned'}
+                </span>
+              </div>
+            </div>
+
+            {/* Details Sections */}
+            <div style={{ padding: '25px 20px' }}>
+              {/* Personal Information */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <i className="fa-solid fa-circle-user" style={{ color: '#1E40AF' }}></i>
+                  Personal Information
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Gender</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-venus-mars" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.gender || 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Nationality</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-globe" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.nationality || 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-cake-candles" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.dateOfBirth ? new Date(viewTeacher.dateOfBirth).toLocaleDateString() : 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Hire Date</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-calendar-check" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.hireDate ? new Date(viewTeacher.hireDate).toLocaleDateString() : 'Not Specified'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Information */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <i className="fa-solid fa-graduation-cap" style={{ color: '#1E40AF' }}></i>
+                  Professional Information
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Qualification</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-certificate" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.qualification || 'Not Specified'}
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Specialization</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-book" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.specialization || 'Not Assigned'}
+                    </p>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Department</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-building" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      {viewTeacher.department || 'Unassigned'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div style={{ marginBottom: '25px' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <i className="fa-solid fa-phone" style={{ color: '#1E40AF' }}></i>
+                  Contact Information
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Email Address</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-envelope" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      <a href={`mailto:${viewTeacher.email}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
+                        {viewTeacher.email || 'Not Provided'}
+                      </a>
+                    </p>
+                  </div>
+                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
+                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Phone Number</p>
+                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      <i className="fa-solid fa-phone" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
+                      <a href={`tel:${viewTeacher.contactNumber || viewTeacher.phone}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
+                        {viewTeacher.contactNumber || viewTeacher.phone || 'Not Provided'}
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+                <button 
+                  type="button" 
+                  onClick={closeViewTeacher}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    background: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#e0e0e0'}
+                  onMouseLeave={(e) => e.target.style.background = '#f0f0f0'}
+                >
+                  Close
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    handleEditTeacher(viewTeacher);
+                    closeViewTeacher();
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px 20px',
+                    background: '#1E40AF',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  <i className="fa-solid fa-pen-to-square" style={{ marginRight: '8px' }}></i>
+                  Edit Teacher
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1275,7 +1511,7 @@ const TeacherSearch = () => {
                         View
                       </button>
                       <button
-                        className="btn btn-warning btn-sm"
+                        className="btn btn-primary btn-sm"
                         onClick={() => handleEditTeacher(teacher)}
                         title="Edit Teacher"
                       > <i className="fa-solid fa-pen-to-square"></i>
@@ -1289,7 +1525,7 @@ const TeacherSearch = () => {
                         Assign Classes
                       </button>
                       <button
-                        className="btn btn-success btn-sm"
+                        className="btn btn-primary btn-sm"
                         onClick={() => openAssignSubjectModal(teacher)}
                         title="Assign Subjects"
                       >
