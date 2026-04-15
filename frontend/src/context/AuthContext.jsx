@@ -30,11 +30,11 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email, password, identifier = null) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login(email, password, identifier);
       const { accessToken, refreshToken, user } = response.data;
       authService.setTokens(accessToken, refreshToken, user);
       setUser(user);

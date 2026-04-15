@@ -124,30 +124,38 @@ public class AuthService {
 
     /**
      * Authenticate user login with enhanced security
+     * Supports both email and ID-based login (student ID, teacher ID)
      */
     public AuthResponse loginUser(LoginRequest request) {
         try {
+            // Determine the identifier (use 'identifier' field, fallback to 'email' for backward compatibility)
+            String loginIdentifier = request.getIdentifier() != null ? request.getIdentifier() : request.getEmail();
+            
+            if (loginIdentifier == null || loginIdentifier.trim().isEmpty()) {
+                throw new RuntimeException("Email or ID is required");
+            }
+
             // Rate limiting check
-            if (securityService.isRateLimited(request.getEmail(), "LOGIN")) {
+            if (securityService.isRateLimited(loginIdentifier, "LOGIN")) {
                 throw new RuntimeException("Too many login attempts. Please try again later.");
             }
 
             // Account lockout check
-            if (securityService.isAccountLocked(request.getEmail())) {
+            if (securityService.isAccountLocked(loginIdentifier)) {
                 throw new RuntimeException("Account is temporarily locked due to multiple failed login attempts. Please try again later.");
             }
 
-            // Find user by email - check database repositories
-            User user = findUserByEmail(request.getEmail());
+            // Find user by email or ID (student/teacher ID)
+            User user = findUserByEmailOrId(loginIdentifier);
             if (user == null) {
-                securityService.recordFailedLoginAttempt(request.getEmail());
-                throw new RuntimeException("Invalid email or password");
+                securityService.recordFailedLoginAttempt(loginIdentifier);
+                throw new RuntimeException("Invalid email/ID or password");
             }
 
             // Verify password
             if (!userService.verifyPassword(request.getPassword(), user.getPassword())) {
-                securityService.recordFailedLoginAttempt(request.getEmail());
-                throw new RuntimeException("Invalid email or password");
+                securityService.recordFailedLoginAttempt(loginIdentifier);
+                throw new RuntimeException("Invalid email/ID or password");
             }
 
             // Check if account is ready (active and verified)
@@ -161,7 +169,7 @@ public class AuthService {
             }
 
             // Record successful login
-            securityService.recordSuccessfulLogin(request.getEmail());
+            securityService.recordSuccessfulLogin(loginIdentifier);
 
             // Generate tokens with shorter access token expiry for security
             String accessToken = jwtService.generateToken(user.getEmail(), getUserRole(user), user.getId());
@@ -177,7 +185,7 @@ public class AuthService {
                 user.getIsActive()
             );
 
-            securityService.recordSecurityEvent(user.getEmail(), "LOGIN_SUCCESS", "Role: " + getUserRole(user));
+            securityService.recordSecurityEvent(user.getEmail(), "LOGIN_SUCCESS", "Role: " + getUserRole(user) + " (via: " + (isEmail(loginIdentifier) ? "email" : "ID") + ")");
             logger.info("User logged in successfully: {}", user.getEmail());
 
             return new AuthResponse(
@@ -583,6 +591,63 @@ public class AuthService {
         }
         
         return null;
+    }
+
+    /**
+     * Find user by student ID
+     * Searches for a student with the given student ID
+     */
+    private User findUserByStudentId(String studentId) {
+        var students = studentRepository.findAll();
+        return students.stream()
+            .filter(s -> s.getStudentId() != null && s.getStudentId().equalsIgnoreCase(studentId))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Find user by teacher ID
+     * Searches for a teacher with the given teacher ID
+     */
+    private User findUserByTeacherId(String teacherId) {
+        var teachers = teacherRepository.findAll();
+        return teachers.stream()
+            .filter(t -> t.getTeacherId() != null && t.getTeacherId().equalsIgnoreCase(teacherId))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Find user by email or ID (student/teacher/staff ID)
+     * Supports flexible login using email or student/teacher ID
+     */
+    private User findUserByEmailOrId(String emailOrId) {
+        // First check if it's an email
+        User user = findUserByEmail(emailOrId);
+        if (user != null) {
+            return user;
+        }
+
+        // Try to find by student ID
+        user = findUserByStudentId(emailOrId);
+        if (user != null) {
+            return user;
+        }
+
+        // Try to find by teacher ID
+        user = findUserByTeacherId(emailOrId);
+        if (user != null) {
+            return user;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if a string is an email format
+     */
+    private boolean isEmail(String identifier) {
+        return identifier != null && identifier.contains("@");
     }
 
     /**

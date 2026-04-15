@@ -48,9 +48,28 @@ authAPI.interceptors.response.use(
 );
 
 const authService = {
-  // Login
-  login: (email, password) =>
-    authAPI.post('/login', { email, password }),
+  // Login - supports both email and ID-based login
+  // email: can be email or null (for ID login)
+  // password: user password
+  // identifier: student/teacher ID (optional, for ID-based login)
+  login: (email, password, identifier = null) => {
+    const loginData = {};
+    
+    if (identifier) {
+      // ID-based login
+      loginData.identifier = identifier;
+    } else if (email) {
+      // Email-based login (backward compatible)
+      loginData.email = email;
+      loginData.identifier = email;
+    } else {
+      throw new Error('Either email or identifier must be provided');
+    }
+    
+    loginData.password = password;
+    
+    return authAPI.post('/login', loginData);
+  },
 
   // Register
   register: (userData) =>
