@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import './ResetPassword.css'
-import kyuLogo from '/src/assets/images-removebg-preview.png'
+import kyuLogo from '../../src/assets/PS.png';
 import { useAuth } from '../context/AuthContext';
 
 function ResetPassword (){

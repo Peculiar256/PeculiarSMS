@@ -1,11 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import axiosInstance from '../../services/axiosInstance';
+import { usePagination } from '../../hooks/usePagination';
+import { applyFilters, getFilterOptions, resetFilters } from '../../utils/filterUtils';
+import { exportToCSV, exportToExcel, exportToPDF } from '../../utils/exporters';
+import { batchAssignClasses, batchAssignSubjects, batchDelete } from '../../utils/batchOperations';
+import { printTeacherList } from '../../utils/printUtils';
+import { getStatusOptions } from '../../utils/statusUtils';
+import CSVImportModal from '../../components/CSVImportModal';
+import StatusBadge from '../../components/StatusBadge';
 import './TeacherSearch.css';
 
 const API_BASE_URL = 'http://localhost:8080/api';
+const ITEMS_PER_PAGE = 10;
 
 const TeacherSearch = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  // Basic state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newTeachersCount, setNewTeachersCount] = useState(0);
   const [viewTeacher, setViewTeacher] = useState(null);
@@ -15,6 +24,7 @@ const TeacherSearch = () => {
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Data from backend
   const [teachers, setTeachers] = useState([]);
@@ -22,6 +32,34 @@ const TeacherSearch = () => {
   const [departments, setDepartments] = useState([]);
   const [uniqueSpecializations, setUniqueSpecializations] = useState([]);
   const [classes, setClasses] = useState([]);
+  
+  // Advanced Filtering State
+  const [filters, setFilters] = useState({
+    searchTerm: '',
+    department: '',
+    qualification: '',
+    specialization: '',
+    gender: '',
+    hireDateFrom: '',
+    hireDateTo: '',
+    status: '', // New: Status filter
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({});
+
+  // CSV Import Modal State
+  const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
+  
+  // Print View State
+  const [isPrintLoading, setIsPrintLoading] = useState(false);
+
+  // Batch Operations State
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedTeachers, setSelectedTeachers] = useState(new Set());
+  const [isBatchOperating, setIsBatchOperating] = useState(false);
+  const [batchError, setBatchError] = useState('');
+  const [showBatchAssignModal, setShowBatchAssignModal] = useState(false);
+  const [batchAssignType, setBatchAssignType] = useState(''); // 'classes' or 'subjects'
   const [isAssignClassModalOpen, setIsAssignClassModalOpen] = useState(false);
   const [selectedTeacherForClassAssignment, setSelectedTeacherForClassAssignment] = useState(null);
   const [selectedClasses, setSelectedClasses] = useState([]);
@@ -35,7 +73,6 @@ const TeacherSearch = () => {
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [assignSubjectError, setAssignSubjectError] = useState('');
   const [assigningSubjects, setAssigningSubjects] = useState(false);
-  const [loadingSubjects, setLoadingSubjects] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -80,18 +117,13 @@ const TeacherSearch = () => {
       const response = await fetch(`${API_BASE_URL}/teachers`);
       if (!response.ok) throw new Error('Failed to fetch teachers');
       const data = await response.json();
-      console.log('Raw API response:', data); // DEBUG: See actual response
       const teacherList = (data.teachers || []).map((teacher) => ({
         ...teacher,
-        // Use teacher_id (string code) for display, but keep numeric id for API calls
         displayId: teacher.teacher_id || teacher.teacherId || 'N/A',
       }));
       setTeachers(teacherList);
+      setFilterOptions(getFilterOptions(teacherList));
       setError('');
-      console.log('Teachers loaded:', teacherList); // Debug log
-      if (teacherList.length > 0) {
-        console.log('First teacher data:', teacherList[0]); // DEBUG: Check field names
-      }
     } catch (err) {
       console.error('Error fetching teachers:', err);
       setError('Failed to load teachers');
@@ -138,7 +170,6 @@ const TeacherSearch = () => {
       const response = await fetch(`${API_BASE_URL}/classes`);
       if (!response.ok) throw new Error(`Failed to fetch classes: ${response.status}`);
       const data = await response.json();
-      console.log('Raw class API response:', data); // DEBUG: See actual response
       
       let classList = [];
       if (Array.isArray(data)) {
@@ -148,13 +179,7 @@ const TeacherSearch = () => {
       } else if (data.data && Array.isArray(data.data)) {
         classList = data.data;
       } else {
-        console.warn('Unexpected classes response format:', data);
         classList = [];
-      }
-      
-      // Validate and log class structure
-      if (classList.length > 0) {
-        console.log('First class object:', classList[0]); // DEBUG: Check field names
       }
       
       setClasses(classList);
@@ -166,17 +191,25 @@ const TeacherSearch = () => {
     }
   };
 
-  // Filter teachers based on search term
+  // Filter teachers based on advanced filters
   const filteredTeachers = useMemo(() => {
-    return teachers.filter((teacher) => {
-      const fullName = `${teacher.firstName || ''} ${teacher.lastName || ''}`.toLowerCase();
-      const matchesSearch =
-        fullName.includes(searchTerm.toLowerCase()) ||
-        teacher.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.teacherCode?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
-    });
-  }, [searchTerm, teachers]);
+    return applyFilters(teachers, filters);
+  }, [teachers, filters]);
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    goToPage,
+    goToFirstPage,
+    goToLastPage,
+    nextPage,
+    prevPage,
+    totalItems,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredTeachers, ITEMS_PER_PAGE);
 
   const totalTeachers = teachers.length;
 
@@ -486,8 +519,6 @@ const TeacherSearch = () => {
     setSelectedSubjects(teacher.subjects || []);
     setAssignSubjectError('');
     setIsAssignSubjectModalOpen(true);
-    // Fetch subjects when modal opens to ensure we have fresh data
-    setLoadingSubjects(false); // subjects already fetched on mount
   };
 
   const closeAssignSubjectModal = () => {
@@ -566,9 +597,179 @@ const TeacherSearch = () => {
     }
   };
 
+  // ===== ADVANCED FILTERING HANDLERS =====
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    goToPage(1); // Reset to first page when filter changes
+  };
+
+  const handleResetFilters = () => {
+    setFilters(resetFilters());
+    goToPage(1);
+  };
+
+  // ===== BATCH OPERATIONS HANDLERS =====
+  const toggleTeacherSelection = (teacherId) => {
+    const newSelected = new Set(selectedTeachers);
+    if (newSelected.has(teacherId)) {
+      newSelected.delete(teacherId);
+    } else {
+      newSelected.add(teacherId);
+    }
+    setSelectedTeachers(newSelected);
+  };
+
+  const selectAllTeachers = () => {
+    if (selectedTeachers.size === filteredTeachers.length) {
+      setSelectedTeachers(new Set());
+    } else {
+      setSelectedTeachers(new Set(filteredTeachers.map((t) => t.id)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedTeachers.size === 0) {
+      setBatchError('No teachers selected');
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedTeachers.size} teacher(s)? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setIsBatchOperating(true);
+      setBatchError('');
+      const results = await batchDelete(Array.from(selectedTeachers));
+
+      if (results.failed.length > 0) {
+        setBatchError(`Deleted ${results.successful.length}, failed: ${results.failed.length}`);
+      } else {
+        setSuccessMessage(`Successfully deleted ${results.successful.length} teacher(s)`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+
+      setSelectedTeachers(new Set());
+      setBatchMode(false);
+      await fetchTeachers();
+    } catch (err) {
+      setBatchError(err.message || 'Batch delete failed');
+    } finally {
+      setIsBatchOperating(false);
+    }
+  };
+
+  const handleBatchAssignClasses = async (classNames) => {
+    if (selectedTeachers.size === 0) {
+      setBatchError('No teachers selected');
+      return;
+    }
+
+    try {
+      setIsBatchOperating(true);
+      setBatchError('');
+      const results = await batchAssignClasses(Array.from(selectedTeachers), classNames);
+
+      if (results.failed.length > 0) {
+        setBatchError(`Assigned to ${results.successful.length}, failed: ${results.failed.length}`);
+      } else {
+        setSuccessMessage(`Successfully assigned classes to ${results.successful.length} teacher(s)`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+
+      setShowBatchAssignModal(false);
+      setSelectedTeachers(new Set());
+      await fetchTeachers();
+    } catch (err) {
+      setBatchError(err.message || 'Batch assign failed');
+    } finally {
+      setIsBatchOperating(false);
+    }
+  };
+
+  const handleBatchAssignSubjects = async (subjectNames) => {
+    if (selectedTeachers.size === 0) {
+      setBatchError('No teachers selected');
+      return;
+    }
+
+    try {
+      setIsBatchOperating(true);
+      setBatchError('');
+      const results = await batchAssignSubjects(Array.from(selectedTeachers), subjectNames);
+
+      if (results.failed.length > 0) {
+        setBatchError(`Assigned to ${results.successful.length}, failed: ${results.failed.length}`);
+      } else {
+        setSuccessMessage(`Successfully assigned subjects to ${results.successful.length} teacher(s)`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+
+      setShowBatchAssignModal(false);
+      setSelectedTeachers(new Set());
+      await fetchTeachers();
+    } catch (err) {
+      setBatchError(err.message || 'Batch assign failed');
+    } finally {
+      setIsBatchOperating(false);
+    }
+  };
+
+  // ===== EXPORT HANDLERS =====
+  const handleExportCSV = () => {
+    const filename = `teachers_${new Date().toISOString().split('T')[0]}.csv`;
+    exportToCSV(filteredTeachers, filename);
+    setSuccessMessage('CSV exported successfully');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handleExportExcel = async () => {
+    const filename = `teachers_${new Date().toISOString().split('T')[0]}.xlsx`;
+    await exportToExcel(filteredTeachers, filename);
+    setSuccessMessage('Excel exported successfully');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handleExportPDF = async () => {
+    const filename = `teachers_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    await exportToPDF(filteredTeachers, filename, filters);
+    setSuccessMessage('PDF exported successfully');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  // ===== PRINT & CSV IMPORT HANDLERS =====
+  const handlePrintView = () => {
+    try {
+      setIsPrintLoading(true);
+      printTeacherList(filteredTeachers, filters);
+      setSuccessMessage('Print view opened!');
+      setTimeout(() => setSuccessMessage(''), 2000);
+    } catch {
+      setError('Failed to open print view');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsPrintLoading(false);
+    }
+  };
+
+  const handleCSVImportComplete = (result) => {
+    if (result.successful && result.successful.length > 0) {
+      setSuccessMessage(`Successfully imported ${result.successful.length} teacher(s)`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      fetchTeachers(); // Refresh the teacher list
+    }
+  };
+
   return (
     <div className="teacher-search-container">
       {error && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{error}</div>}
+      {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
+      {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
       
       <section className="teacher-summary-cards" aria-label="Teacher summary cards">
         <article className="teacher-summary-card teacher-summary-total">
@@ -599,23 +800,174 @@ const TeacherSearch = () => {
       <div className="search-section">
         <div className="teacher-header">
           <h2>Teacher Management</h2>
-          <button type="button" className="btn-add-teacher" onClick={openAddModal}>
-            Add Teacher
-          </button>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
+            <button type="button" className="btn-add-teacher" onClick={openAddModal} style={{ flex: 1, minWidth: '120px' }}>
+              <i className="fa-solid fa-plus"></i> Add Teacher
+            </button>
+            <button type="button" className="btn-export" onClick={() => setShowFilters(!showFilters)} title="Toggle Filters" style={{ flex: 1, minWidth: '100px' }}>
+              <i className="fa-solid fa-filter"></i> Filters
+            </button>
+            <button type="button" className="btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ flex: 1, minWidth: '100px' }}>
+              <i className="fa-solid fa-file-csv"></i>Export CSV
+            </button>
+            <button type="button" className="btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ flex: 1, minWidth: '100px' }}>
+              <i className="fa-solid fa-file-excel"></i>Export as Excel
+            </button>
+            <button type="button" className="btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ flex: 1, minWidth: '100px' }}>
+              <i className="fa-solid fa-file-pdf"></i>Export as PDF
+            </button>
+            <button 
+              type="button" 
+              className="btn-export" 
+              onClick={handlePrintView}
+              disabled={isPrintLoading}
+              title="Print View" 
+              style={{ flex: 1, minWidth: '100px' }}
+            >
+              <i className="fa-solid fa-print"></i> Print
+            </button>
+            <button 
+              type="button" 
+              className="btn-export" 
+              onClick={() => setIsCSVImportOpen(true)}
+              title="Import from CSV" 
+              style={{ flex: 1, minWidth: '100px' }}
+            >
+              <i className="fa-solid fa-upload"></i> Import csv file
+            </button>
+            {!batchMode ? (
+              <button type="button" className="btn-batch" onClick={() => setBatchMode(true)} title="Batch Operations" style={{ flex: 1, minWidth: '100px' }}>
+                <i className="fa-solid fa-check-double"></i> Batch
+              </button>
+            ) : (
+              <button type="button" className="btn-batch-active" onClick={() => { setBatchMode(false); setSelectedTeachers(new Set()); }} title="Exit Batch Mode" style={{ flex: 1, minWidth: '100px' }}>
+                <i className="fa-solid fa-times"></i> Cancel Batch
+              </button>
+            )}
+          </div>
         </div>
-        
-        <div className="search-filters">
+
+        {/* Quick Search Bar (Always Visible) */}
+        <div className="search-filters" style={{ marginTop: '15px' }}>
           <div className="search-input-wrapper">
             <input
               type="text"
-              placeholder="Search by teacher name, subject, or ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by teacher name, email, or ID..."
+              value={filters.searchTerm}
+              onChange={handleFilterChange}
+              name="searchTerm"
               className="search-input"
             />
             <span className="search-icon"><i className="fa-solid fa-magnifying-glass"></i></span>
           </div>
         </div>
+
+        {/* Advanced Filter Panel */}
+        {showFilters && (
+          <div className="advanced-filters-panel" style={{ padding: '15px', background: '#f9f9f9', borderRadius: '4px', marginTop: '15px', border: '1px solid #ddd' }}>
+            <h4 style={{ marginTop: 0 }}>Advanced Filters</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '15px' }}>
+              <div>
+                <label>Search (Name/Email/ID)</label>
+                <input
+                  type="text"
+                  name="searchTerm"
+                  value={filters.searchTerm}
+                  onChange={handleFilterChange}
+                  placeholder="Search..."
+                  className="search-input"
+                />
+              </div>
+
+              <div>
+                <label>Department</label>
+                <select name="department" value={filters.department} onChange={handleFilterChange}>
+                  <option value="">All Departments</option>
+                  {filterOptions.departments?.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Qualification</label>
+                <select name="qualification" value={filters.qualification} onChange={handleFilterChange}>
+                  <option value="">All Qualifications</option>
+                  {filterOptions.qualifications?.map((qual) => (
+                    <option key={qual} value={qual}>{qual}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Specialization</label>
+                <select name="specialization" value={filters.specialization} onChange={handleFilterChange}>
+                  <option value="">All Specializations</option>
+                  {filterOptions.specializations?.map((spec) => (
+                    <option key={spec} value={spec}>{spec}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Gender</label>
+                <select name="gender" value={filters.gender} onChange={handleFilterChange}>
+                  <option value="">All Genders</option>
+                  {filterOptions.genders?.map((gender) => (
+                    <option key={gender} value={gender}>{gender}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Hire Date From</label>
+                <input
+                  type="date"
+                  name="hireDateFrom"
+                  value={filters.hireDateFrom}
+                  onChange={handleFilterChange}
+                />
+              </div>
+
+              <div>
+                <label>Hire Date To</label>
+                <input
+                  type="date"
+                  name="hireDateTo"
+                  value={filters.hireDateTo}
+                  onChange={handleFilterChange}
+                />
+              </div>
+
+              <div>
+                <label>Status</label>
+                <select name="status" value={filters.status} onChange={handleFilterChange}>
+                  {getStatusOptions().map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button type="button" className="btn-reset" onClick={handleResetFilters}>
+              Reset Filters
+            </button>
+          </div>
+        )}
+
+        {/* Batch Operations Bar */}
+        {batchMode && selectedTeachers.size > 0 && (
+          <div style={{ padding: '10px', background: '#fff3cd', borderRadius: '4px', marginTop: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span><strong>{selectedTeachers.size} teacher(s) selected</strong></span>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" className="btn-warning" onClick={() => setShowBatchAssignModal(true)} title="Batch Assign Classes/Subjects">
+                <i className="fa-solid fa-link"></i> Assign
+              </button>
+              <button type="button" className="btn-danger" onClick={handleBatchDelete} disabled={isBatchOperating} title="Batch Delete">
+                <i className="fa-solid fa-trash"></i> {isBatchOperating ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isAddModalOpen && (
@@ -721,8 +1073,8 @@ const TeacherSearch = () => {
               </div>
 
               <div className="teacher-form-actions">
-                <button type="button" className="teacher-cancel-btn" onClick={closeAddModal}>Cancel</button>
-                <button type="submit" className="teacher-save-btn">Save Teacher</button>
+                <button type="button" className="teacher-cancel-btn" onClick={closeAddModal} disabled={loading}>Cancel</button>
+                <button type="submit" className="teacher-save-btn" disabled={loading}>{loading ? 'Saving...' : 'Save Teacher'}</button>
               </div>
             </form>
           </div>
@@ -857,8 +1209,8 @@ const TeacherSearch = () => {
               </div>
 
               <div className="teacher-form-actions">
-                <button type="button" className="teacher-cancel-btn" onClick={closeEditTeacher}>Cancel</button>
-                <button type="submit" className="teacher-save-btn">Save Changes</button>
+                <button type="button" className="teacher-cancel-btn" onClick={closeEditTeacher} disabled={loading}>Cancel</button>
+                <button type="submit" className="teacher-save-btn" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
               </div>
             </form>
           </div>
@@ -868,42 +1220,65 @@ const TeacherSearch = () => {
       <div className="table-wrapper">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '20px' }}>Loading teachers...</div>
-        ) : filteredTeachers.length > 0 ? (
+        ) : paginatedData.length > 0 ? (
           <table className="teachers-table">
             <thead>
               <tr>
+                {batchMode && (
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedTeachers.size === filteredTeachers.length && filteredTeachers.length > 0}
+                      onChange={selectAllTeachers}
+                      title="Select all teachers"
+                    />
+                  </th>
+                )}
                 <th>Teacher Name</th>
                 <th>Teacher ID</th>
                 <th>Specialization</th>
+                {/* <th>Status</th> */}
                 <th>Email</th>
                 <th>Phone Number</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTeachers.map((teacher) => (
+              {paginatedData.map((teacher) => (
                 <tr key={teacher.id}>
+                  {batchMode && (
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedTeachers.has(teacher.id)}
+                        onChange={() => toggleTeacherSelection(teacher.id)}
+                      />
+                    </td>
+                  )}
                   <td>{teacher.firstName} {teacher.lastName}</td>
                   <td><strong>{teacher.displayId || teacher.teacher_id || teacher.teacherId || teacher.id}</strong></td>
                   <td>
                     <span className="subject-badge">{teacher.specialization}</span>
                   </td>
+                  {/* <td>
+                    <StatusBadge teacher={teacher} size="small" />
+                  </td> */}
                   <td className="email">{teacher.email}</td>
                   <td className="phone">{teacher.contactNumber || teacher.phone || '-'}</td>
                   <td>
                     <div className="action-buttons">
                       <button
-                        className="btn btn-primary"
+                        className="btn btn-primary btn-sm"
                         onClick={() => handleViewTeacher(teacher)}
                         title="View Details"
-                      >
+                      > <i className="fa-solid fa-eye"></i>
                         View
                       </button>
                       <button
-                        className="btn btn-warning"
+                        className="btn btn-warning btn-sm"
                         onClick={() => handleEditTeacher(teacher)}
                         title="Edit Teacher"
-                      >
+                      > <i className="fa-solid fa-pen-to-square"></i>
                         Edit
                       </button>
                       <button
@@ -914,17 +1289,17 @@ const TeacherSearch = () => {
                         Assign Classes
                       </button>
                       <button
-                        className="btn btn-success"
+                        className="btn btn-success btn-sm"
                         onClick={() => openAssignSubjectModal(teacher)}
                         title="Assign Subjects"
                       >
                         Assign Subjects
                       </button>
                       <button
-                        className="btn btn-danger"
+                        className="btn btn-danger btn-sm"
                         onClick={() => handleDeleteTeacher(teacher)}
                         title="Delete Teacher"
-                      >
+                      > <i className="fa-solid fa-trash"></i>
                         Delete
                       </button>
                     </div>
@@ -940,8 +1315,34 @@ const TeacherSearch = () => {
         )}
       </div>
 
+      {/* Pagination Controls */}
+      {filteredTeachers.length > 0 && (
+        <div className="pagination-controls" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9f9f9', borderRadius: '4px', marginTop: '15px' }}>
+          <div>
+            <p>Showing {startIndex + 1} to {endIndex} of {totalItems} teachers</p>
+          </div>
+          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+            <button type="button" onClick={goToFirstPage} disabled={currentPage === 1} className="btn btn-sm">
+              <i className="fa-solid fa-chevron-left"></i> First
+            </button>
+            <button type="button" onClick={prevPage} disabled={currentPage === 1} className="btn btn-sm">
+              <i className="fa-solid fa-chevron-left"></i> Prev
+            </button>
+            <span style={{ padding: '0 10px' }}>
+              Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+            </span>
+            <button type="button" onClick={nextPage} disabled={currentPage === totalPages} className="btn btn-sm">
+              Next <i className="fa-solid fa-chevron-right"></i>
+            </button>
+            <button type="button" onClick={goToLastPage} disabled={currentPage === totalPages} className="btn btn-sm">
+              Last <i className="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="table-footer">
-        <p>Showing {filteredTeachers.length} of {teachers.length} teachers</p>
+        <p>Showing {paginatedData.length} of {totalItems} teachers on this page (Total: {totalItems})</p>
       </div>
 
       {isAssignClassModalOpen && (
@@ -1088,6 +1489,122 @@ const TeacherSearch = () => {
           </div>
         </div>
       )}
+
+      {/* Batch Assign Modal */}
+      {showBatchAssignModal && (
+        <div className="teacher-modal-overlay" onClick={() => setShowBatchAssignModal(false)}>
+          <div className="teacher-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="teacher-modal-header">
+              <h3>Batch Assign ({selectedTeachers.size} teachers selected)</h3>
+              <button type="button" className="teacher-modal-close" onClick={() => setShowBatchAssignModal(false)}>x</button>
+            </div>
+
+            <form className="teacher-form" onSubmit={(e) => {
+              e.preventDefault();
+              const type = document.querySelector('input[name="batchAssignType"]:checked')?.value;
+              if (type === 'classes') {
+                const classCheckboxes = document.querySelectorAll('input[name="batchClasses"]:checked');
+                const classes = Array.from(classCheckboxes).map(cb => cb.value);
+                if (classes.length > 0) handleBatchAssignClasses(classes);
+                else alert('Select at least one class');
+              } else if (type === 'subjects') {
+                const subjectCheckboxes = document.querySelectorAll('input[name="batchSubjects"]:checked');
+                const subjects = Array.from(subjectCheckboxes).map(cb => cb.value);
+                if (subjects.length > 0) handleBatchAssignSubjects(subjects);
+                else alert('Select at least one subject');
+              }
+            }}>
+              {batchError && <p className="teacher-form-error">{batchError}</p>}
+
+              <div className="teacher-form-field">
+                <label>What do you want to assign?</label>
+                <div style={{ marginTop: '10px' }}>
+                  <label style={{ marginRight: '20px' }}>
+                    <input type="radio" name="batchAssignType" value="classes" defaultChecked onChange={(e) => setBatchAssignType(e.target.value)} />
+                    Classes
+                  </label>
+                  <label>
+                    <input type="radio" name="batchAssignType" value="subjects" onChange={(e) => setBatchAssignType(e.target.value)} />
+                    Subjects
+                  </label>
+                </div>
+              </div>
+
+              {batchAssignType === 'classes' && (
+                <div className="teacher-form-field">
+                  <label>Select Classes to Assign</label>
+                  <div className="class-selection-container">
+                    {classes.length > 0 ? (
+                      <div className="class-checkboxes">
+                        {classes.map((cls) => {
+                          const classId = cls.id || cls.classId || cls.class_id;
+                          const className = cls.name || cls.className || cls.class_name || 'Unknown';
+                          return (
+                            <div key={classId} className="checkbox-item">
+                              <input
+                                type="checkbox"
+                                id={`batch-class-${classId}`}
+                                name="batchClasses"
+                                value={className}
+                              />
+                              <label htmlFor={`batch-class-${classId}`}>{className}</label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-muted">No classes available</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {batchAssignType === 'subjects' && (
+                <div className="teacher-form-field">
+                  <label>Select Subjects to Assign</label>
+                  <div className="subject-selection-container">
+                    {subjects.length > 0 ? (
+                      <div className="subject-checkboxes">
+                        {subjects.map((subject) => {
+                          const subjectId = subject.id || subject.subjectId || subject.subject_id;
+                          const subjectName = subject.name || subject.subjectName || subject.subject_name || 'Unknown';
+                          return (
+                            <div key={subjectId} className="checkbox-item">
+                              <input
+                                type="checkbox"
+                                id={`batch-subject-${subjectId}`}
+                                name="batchSubjects"
+                                value={subjectName}
+                              />
+                              <label htmlFor={`batch-subject-${subjectId}`}>{subjectName}</label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-muted">No subjects available</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="teacher-form-actions">
+                <button type="button" className="teacher-cancel-btn" onClick={() => setShowBatchAssignModal(false)} disabled={isBatchOperating}>Cancel</button>
+                <button type="submit" className="teacher-save-btn" disabled={isBatchOperating}>
+                  {isBatchOperating ? 'Assigning...' : 'Assign to All Selected'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      <CSVImportModal 
+        isOpen={isCSVImportOpen}
+        onClose={() => setIsCSVImportOpen(false)}
+        onImportComplete={handleCSVImportComplete}
+      />
     </div>
   );
 };

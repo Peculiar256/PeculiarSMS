@@ -35,6 +35,7 @@ function TeacherStudents() {
 	const [selectedClass, setSelectedClass] = useState("All Classes");
 	const [attendance, setAttendance] = useState({});
 	const [teacherClasses, setTeacherClasses] = useState([]);
+	const [teacherSubjects, setTeacherSubjects] = useState([]);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitMessage, setSubmitMessage] = useState("");
 	const [submitError, setSubmitError] = useState("");
@@ -44,11 +45,11 @@ function TeacherStudents() {
 	const [selectedAcademicYear, setSelectedAcademicYear] = useState("2025-2026");
 	const [selectedSubject, setSelectedSubject] = useState("");
 
-	// Fetch teacher's assigned classes
+	// Fetch teacher's assigned classes and subjects
 	useEffect(() => {
 		let mounted = true;
 
-		async function loadTeacherClasses() {
+		async function loadTeacherClassesAndSubjects() {
 			if (!user?.id) {
 				setLoading(false);
 				return;
@@ -56,25 +57,23 @@ function TeacherStudents() {
 
 			try {
 				const token = localStorage.getItem('accessToken');
-				const url = `${API_BASE_URL}/teachers/${user.id}/classes`;
-				console.log(`📍 Fetching teacher classes from: ${url}`);
 				
-				const response = await fetch(url, {
+				// Fetch classes
+				const classesUrl = `${API_BASE_URL}/teachers/${user.id}/classes`;
+				console.log(`📍 Fetching teacher classes from: ${classesUrl}`);
+				
+				const classesResponse = await fetch(classesUrl, {
 					headers: {
 						'Authorization': `Bearer ${token}`,
 						'Content-Type': 'application/json',
 					}
 				});
 
-				console.log(`📊 Response status:`, response.status, response.statusText);
+				console.log(`📊 Classes Response status:`, classesResponse.status, classesResponse.statusText);
 
-				if (response.ok) {
-					const data = await response.json();
-					console.log(`📥 Full API response:`, data);
-					console.log(`📥 All keys in response:`, Object.keys(data));
-					
-					// Try multiple possible field names
-					let classes = data.assignedClasses || data.classes || data.data || [];
+				if (classesResponse.ok) {
+					const data = await classesResponse.json();
+					const classes = data.assignedClasses || data.classes || data.data || [];
 					console.log(`✅ Extracted classes:`, classes);
 					
 					if (mounted) {
@@ -82,20 +81,52 @@ function TeacherStudents() {
 						console.log('✔️ Teacher classes set to state:', classes);
 					}
 				} else {
-					console.warn('❌ Failed to fetch teacher classes - Status:', response.status);
+					console.warn('❌ Failed to fetch teacher classes - Status:', classesResponse.status);
 					if (mounted) {
 						setTeacherClasses([]);
 					}
 				}
+
+				// Fetch subjects
+				const subjectsUrl = `${API_BASE_URL}/teachers/${user.id}/subjects`;
+				console.log(`📍 Fetching teacher subjects from: ${subjectsUrl}`);
+				
+				const subjectsResponse = await fetch(subjectsUrl, {
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json',
+					}
+				});
+
+				console.log(`📊 Subjects Response status:`, subjectsResponse.status, subjectsResponse.statusText);
+
+				if (subjectsResponse.ok) {
+					const data = await subjectsResponse.json();
+					const subjects = Array.isArray(data) 
+						? data 
+						: (data.assignedSubjects || data.subjects || data.data || []);
+					console.log(`✅ Extracted subjects:`, subjects);
+					
+					if (mounted) {
+						setTeacherSubjects(subjects);
+						console.log('✔️ Teacher subjects set to state:', subjects);
+					}
+				} else {
+					console.warn('❌ Failed to fetch teacher subjects - Status:', subjectsResponse.status);
+					if (mounted) {
+						setTeacherSubjects([]);
+					}
+				}
 			} catch (err) {
-				console.error('❌ Error fetching teacher classes:', err);
+				console.error('❌ Error fetching teacher classes/subjects:', err);
 				if (mounted) {
 					setTeacherClasses([]);
+					setTeacherSubjects([]);
 				}
 			}
 		}
 
-		loadTeacherClasses();
+		loadTeacherClassesAndSubjects();
 
 		return () => {
 			mounted = false;
@@ -225,10 +256,14 @@ function TeacherStudents() {
 	}, [selectedClass, students]);
 
 	const availableSubjects = useMemo(() => {
-		// Get unique subjects from filtered students
-		const subjects = [...new Set(filteredStudents.map(s => s.subject).filter(Boolean))];
-		return subjects;
-	}, [filteredStudents]);
+		// Use teacher's assigned subjects from backend
+		if (teacherSubjects.length > 0) {
+			// Handle both object format { name: '...', code: '...' } and string format
+			return teacherSubjects.map(s => typeof s === 'string' ? s : (s.name || s.code || s.subjectName || ''));
+		}
+		// Fallback to deriving from students if no teacher subjects data
+		return [...new Set(filteredStudents.map(s => s.subject).filter(Boolean))];
+	}, [teacherSubjects, filteredStudents]);
 
 	const handleAttendanceChange = (studentId, status) => {
 		setAttendance((prev) => ({
@@ -417,7 +452,7 @@ function TeacherStudents() {
 									<tr key={student.id}>
 										<td>{student.name}</td>
 										<td>{student.className}</td>
-										<td>{student.subject || "No subject"}</td>
+										<td>{selectedSubject || "No subject selected"}</td>
 										<td>
 											<div className="attendance-buttons">
 												<button

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "./Exam.css";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -14,208 +14,245 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend, Title);
 
-// Sample exam data
-const sampleExams = [
-  {
-    id: 1,
-    name: "Mathematics Final Exam",
-    subject: "Mathematics",
-    class: "Form 4A",
-    term: "Term 1",
-    date: "2024-03-15",
-    totalStudents: 45,
-    grades: { A: 8, B: 12, C: 15, D: 8, F: 2 },
-    passCount: 43,
-    failCount: 2,
-  },
-  {
-    id: 2,
-    name: "English Literature Midterm",
-    subject: "English",
-    class: "Form 4B",
-    term: "Term 1",
-    date: "2024-03-10",
-    totalStudents: 42,
-    grades: { A: 5, B: 10, C: 18, D: 7, F: 2 },
-    passCount: 40,
-    failCount: 2,
-  },
-  {
-    id: 3,
-    name: "Physics Practical Exam",
-    subject: "Physics",
-    class: "Form 4A",
-    term: "Term 2",
-    date: "2024-06-05",
-    totalStudents: 40,
-    grades: { A: 10, B: 15, C: 10, D: 4, F: 1 },
-    passCount: 39,
-    failCount: 1,
-  },
-  {
-    id: 4,
-    name: "Chemistry Theory Exam",
-    subject: "Chemistry",
-    class: "Form 4B",
-    term: "Term 2",
-    date: "2024-06-08",
-    totalStudents: 42,
-    grades: { A: 6, B: 14, C: 16, D: 5, F: 1 },
-    passCount: 41,
-    failCount: 1,
-  },
-];
+const API_BASE_URL = "http://localhost:8080/api";
 
 function Exam() {
-  const [exams, setExams] = useState(sampleExams);
+  const [exams, setExams] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterTerm, setFilterTerm] = useState("all");
-  const [filterClass, setFilterClass] = useState("all");
-  const [filterSubject, setFilterSubject] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [selectedExam, setSelectedExam] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [examsPerPage] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState(""); // "success" or "error"
 
   const [formData, setFormData] = useState({
+    code: "",
     name: "",
-    subject: "",
-    class: "",
-    term: "Term 1",
-    date: "",
-    totalStudents: "",
+    type: "BOT",
+    academicYear: new Date().getFullYear().toString(),
+    term: "1",
+    targetClasses: [],
+    level: "O_LEVEL",
+    startDate: "",
+    endDate: "",
   });
 
-  // Get unique filters
-  const uniqueTerms = useMemo(() => {
-    return [...new Set(exams.map((e) => e.term))];
-  }, [exams]);
+  // Fetch exams and classes from backend
+  useEffect(() => {
+    fetchExams();
+    fetchClasses();
+  }, []);
 
-  const uniqueClasses = useMemo(() => {
-    return [...new Set(exams.map((e) => e.class))];
-  }, [exams]);
-
-  const uniqueSubjects = useMemo(() => {
-    return [...new Set(exams.map((e) => e.subject))];
-  }, [exams]);
-
-  // Calculate statistics
-  const statistics = useMemo(() => {
-    const totalExams = exams.length;
-    const totalPassCount = exams.reduce((sum, e) => sum + e.passCount, 0);
-    const totalFailCount = exams.reduce((sum, e) => sum + e.failCount, 0);
-    const totalStudents = exams.reduce((sum, e) => sum + e.totalStudents, 0);
-    const passRate = totalStudents > 0 ? ((totalPassCount / totalStudents) * 100).toFixed(1) : 0;
-    const failRate = totalStudents > 0 ? ((totalFailCount / totalStudents) * 100).toFixed(1) : 0;
-
-    return { totalExams, passRate, failRate, totalPassCount, totalFailCount, totalStudents };
-  }, [exams]);
-
-  // Filter exams
-  const filteredExams = useMemo(() => {
-    return exams.filter((exam) => {
-      const searchMatch =
-        exam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        exam.subject.toLowerCase().includes(searchTerm.toLowerCase());
-      const termMatch = filterTerm === "all" || exam.term === filterTerm;
-      const classMatch = filterClass === "all" || exam.class === filterClass;
-      const subjectMatch = filterSubject === "all" || exam.subject === filterSubject;
-
-      return searchMatch && termMatch && classMatch && subjectMatch;
-    });
-  }, [exams, searchTerm, filterTerm, filterClass, filterSubject]);
-
-  // Pagination
-  const paginatedExams = useMemo(() => {
-    const startIndex = (currentPage - 1) * examsPerPage;
-    return filteredExams.slice(startIndex, startIndex + examsPerPage);
-  }, [filteredExams, currentPage, examsPerPage]);
-
-  const totalPages = Math.ceil(filteredExams.length / examsPerPage);
-
-  // Grade distribution data (overall)
-  const gradeDistribution = useMemo(() => {
-    const totalGrades = { A: 0, B: 0, C: 0, D: 0, F: 0 };
-    exams.forEach((exam) => {
-      Object.keys(exam.grades).forEach((grade) => {
-        totalGrades[grade] += exam.grades[grade];
+  const fetchExams = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch(`${API_BASE_URL}/exams`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       });
-    });
-    return totalGrades;
+
+      if (response.ok) {
+        const data = await response.json();
+        const examsList = Array.isArray(data) ? data : (data.exams || data.data || []);
+        setExams(examsList);
+        console.log('✅ Exams loaded from backend:', examsList);
+      } else {
+        console.warn('⚠️ Failed to fetch exams, using empty list');
+        setExams([]);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching exams:', err);
+      setExams([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch(`${API_BASE_URL}/classes`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const classList = Array.isArray(data) ? data : (data.classes || data.data || []);
+        setClasses(classList);
+        console.log('✅ Classes loaded from backend:', classList);
+      } else {
+        console.warn('⚠️ Failed to fetch classes');
+        setClasses([]);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching classes:', err);
+      setClasses([]);
+    }
+  };
+
+  // Get unique filters
+  // Calculate basic statistics from backend exams
+  const statistics = useMemo(() => {
+    return {
+      totalExams: exams.length,
+      passRate: 0, // Will be calculated later from results data
+      failRate: 0,
+      totalStudents: 0,
+    };
   }, [exams]);
 
-  // Pass/Fail Rate Chart Data
+  // Chart data based on exam types
   const passFailChartData = {
-    labels: ["Passed", "Failed"],
+    labels: ["BOT", "MOT", "EOT", "UCE", "UACE"],
     datasets: [
       {
-        label: "Student Count",
-        data: [statistics.totalPassCount, statistics.totalFailCount],
-        backgroundColor: ["#10b981", "#ef4444"],
-        borderColor: ["#059669", "#dc2626"],
+        label: "Exam Count",
+        data: [
+          exams.filter(e => e.type === "BOT").length,
+          exams.filter(e => e.type === "MOT").length,
+          exams.filter(e => e.type === "EOT").length,
+          exams.filter(e => e.type === "UCE").length,
+          exams.filter(e => e.type === "UACE").length,
+        ],
+        backgroundColor: ["#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#6b7280"],
+        borderColor: ["#1e40af", "#6d28d9", "#d97706", "#dc2626", "#374151"],
         borderWidth: 2,
       },
     ],
   };
 
-  // Grade Distribution Chart Data
+  // Grade distribution by level
   const gradeChartData = {
-    labels: ["A", "B", "C", "D", "F"],
+    labels: ["O_LEVEL", "A_LEVEL"],
     datasets: [
       {
-        label: "Grade Distribution",
-        data: [gradeDistribution.A, gradeDistribution.B, gradeDistribution.C, gradeDistribution.D, gradeDistribution.F],
-        backgroundColor: [
-          "#3b82f6",
-          "#8b5cf6",
-          "#f59e0b",
-          "#ef4444",
-          "#6b7280",
+        label: "Exam Count by Level",
+        data: [
+          exams.filter(e => e.level === "O_LEVEL").length,
+          exams.filter(e => e.level === "A_LEVEL").length,
         ],
-        borderColor: [
-          "#1e40af",
-          "#6d28d9",
-          "#d97706",
-          "#dc2626",
-          "#374151",
-        ],
+        backgroundColor: ["#10b981", "#f59e0b"],
+        borderColor: ["#059669", "#d97706"],
         borderWidth: 2,
       },
     ],
   };
 
-  const handleAddExam = () => {
-    if (!formData.name || !formData.subject || !formData.class || !formData.date || !formData.totalStudents) {
-      alert("Please fill in all required fields");
+  const handleAddExam = async () => {
+    if (!formData.code || !formData.name || !formData.startDate || !formData.endDate) {
+      setMessage("Please fill in all required fields (Exam Code, Name, Start Date, End Date)");
+      setMessageType("error");
       return;
     }
 
-    const newExam = {
-      id: Math.max(...exams.map((e) => e.id), 0) + 1,
-      name: formData.name,
-      subject: formData.subject,
-      class: formData.class,
-      term: formData.term,
-      date: formData.date,
-      totalStudents: parseInt(formData.totalStudents),
-      grades: { A: 0, B: 0, C: 0, D: 0, F: 0 },
-      passCount: 0,
-      failCount: 0,
-    };
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem('accessToken');
 
-    setExams([...exams, newExam]);
-    setIsAddModalOpen(false);
-    setFormData({ name: "", subject: "", class: "", term: "Term 1", date: "", totalStudents: "" });
+      const payload = {
+        code: formData.code,
+        name: formData.name,
+        type: formData.type,
+        academicYear: formData.academicYear,
+        term: parseInt(formData.term),
+        targetClasses: formData.targetClasses,
+        level: formData.level,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        status: "DRAFT",
+      };
+
+      console.log('📤 Creating exam:', payload);
+
+      const response = await fetch(`${API_BASE_URL}/exams`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to create exam");
+      }
+
+      const newExam = await response.json();
+      
+      setExams([...exams, newExam]);
+      setMessage(`✅ Exam "${formData.name}" created successfully!`);
+      setMessageType("success");
+      
+      console.log("✅ Exam created:", newExam);
+      
+      setIsAddModalOpen(false);
+      setFormData({
+        code: "",
+        name: "",
+        type: "BOT",
+        academicYear: new Date().getFullYear().toString(),
+        term: "1",
+        targetClasses: [],
+        level: "O_LEVEL",
+        startDate: "",
+        endDate: "",
+      });
+      
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err) {
+      setMessage(`❌ Failed to create exam: ${err.message}`);
+      setMessageType("error");
+      console.error("Error creating exam:", err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDeleteExam = (id) => {
-    setExams(exams.filter((exam) => exam.id !== id));
-  };
+  const handleDeleteExam = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this exam?")) {
+      return;
+    }
 
-  const handleViewExam = (exam) => {
-    setSelectedExam(exam);
-    setIsDetailsModalOpen(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+
+      console.log('🗑️ Deleting exam ID:', id);
+
+      const response = await fetch(`${API_BASE_URL}/exams/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || "Failed to delete exam");
+      }
+
+      setExams(exams.filter((exam) => exam.id !== id));
+      setMessage("✅ Exam deleted successfully!");
+      setMessageType("success");
+      
+      console.log("✅ Exam deleted");
+      
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err) {
+      setMessage(`❌ Failed to delete exam: ${err.message}`);
+      setMessageType("error");
+      console.error("Error deleting exam:", err);
+    }
   };
 
   const chartOptions = {
@@ -234,6 +271,14 @@ function Exam() {
         <h1>Exam Management</h1>
         <p>Create, manage, and analyze exam results</p>
       </div>
+
+      {/* Message Notification */}
+      {message && (
+        <div className={`message-notification message-${messageType}`}>
+          <span>{message}</span>
+          <button className="close-notification" onClick={() => setMessage('')}>×</button>
+        </div>
+      )}
 
       {/* Statistics Cards */}
       <section className="exam-statistics">
@@ -308,129 +353,72 @@ function Exam() {
           <div className="filter-group">
             <input
               type="text"
-              placeholder="Search exam name or subject..."
+              placeholder="Search exam code, name, or type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="filter-input"
             />
-          </div>
-
-          <div className="filter-group">
-            <label>Term:</label>
-            <select value={filterTerm} onChange={(e) => setFilterTerm(e.target.value)} className="filter-select">
-              <option value="all">All Terms</option>
-              {uniqueTerms.map((term) => (
-                <option key={term} value={term}>
-                  {term}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Class:</label>
-            <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="filter-select">
-              <option value="all">All Classes</option>
-              {uniqueClasses.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Subject:</label>
-            <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)} className="filter-select">
-              <option value="all">All Subjects</option>
-              {uniqueSubjects.map((subject) => (
-                <option key={subject} value={subject}>
-                  {subject}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
       </section>
 
       {/* Exams Table */}
       <section className="exam-table-section">
-        <table className="exam-table">
-          <thead>
-            <tr>
-              <th>Exam Name</th>
-              <th>Subject</th>
-              <th>Class</th>
-              <th>Term</th>
-              <th>Date</th>
-              <th>Pass Rate</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedExams.length > 0 ? (
-              paginatedExams.map((exam) => {
-                const examPassRate = ((exam.passCount / exam.totalStudents) * 100).toFixed(1);
-                return (
-                  <tr key={exam.id}>
-                    <td className="exam-name">{exam.name}</td>
-                    <td>{exam.subject}</td>
-                    <td>{exam.class}</td>
-                    <td>{exam.term}</td>
-                    <td>{new Date(exam.date).toLocaleDateString()}</td>
+        {loading ? (
+          <div className="loading-spinner">
+            <p>Loading exams...</p>
+          </div>
+        ) : (
+          <table className="exam-table">
+            <thead>
+              <tr>
+                <th>Exam Code</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Level</th>
+                <th>Term</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {exams.length > 0 ? (
+                exams.map((exam) => (
+                  <tr key={exam.id || exam.code}>
+                    <td className="exam-code">{exam.code || '-'}</td>
+                    <td className="exam-name">{exam.name || '-'}</td>
+                    <td>{exam.type || '-'}</td>
+                    <td>{exam.level || '-'}</td>
+                    <td>{exam.term ? `Term ${exam.term}` : '-'}</td>
+                    <td>{exam.startDate ? new Date(exam.startDate).toLocaleDateString() : '-'}</td>
+                    <td>{exam.endDate ? new Date(exam.endDate).toLocaleDateString() : '-'}</td>
                     <td>
-                      <span className={`pass-rate-badge ${examPassRate >= 80 ? "high" : examPassRate >= 60 ? "medium" : "low"}`}>
-                        {examPassRate}%
+                      <span className={`status-badge status-${(exam.status || 'DRAFT').toLowerCase()}`}>
+                        {exam.status || 'DRAFT'}
                       </span>
                     </td>
                     <td>
                       <div className="action-buttons">
-                        <button className="btn btn-sm btn-info" onClick={() => handleViewExam(exam)} title="View Details">
-                          <i className="fas fa-eye"></i> View
-                        </button>
                         <button className="btn btn-sm btn-danger" onClick={() => handleDeleteExam(exam.id)} title="Delete Exam">
                           <i className="fas fa-trash"></i> Delete
                         </button>
                       </div>
                     </td>
                   </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan="7" className="text-center text-muted py-4">
-                  <i className="fas fa-inbox me-2"></i>No exams found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="9" className="text-center text-muted py-4">
+                    <i className="fas fa-inbox me-2"></i>No exams found. Create a new exam to get started.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </section>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <nav className="exam-pagination">
-          <ul className="pagination">
-            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}>
-                Previous
-              </button>
-            </li>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <li key={page} className={`page-item ${currentPage === page ? "active" : ""}`}>
-                <button className="page-link" onClick={() => setCurrentPage(page)}>
-                  {page}
-                </button>
-              </li>
-            ))}
-            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}>
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
-      )}
 
       {/* Add Exam Modal */}
       {isAddModalOpen && (
@@ -444,153 +432,133 @@ function Exam() {
             </div>
             <div className="exam-modal-body">
               <div className="form-group">
+                <label>Exam Code * (e.g., BOT1-2024-S1)</label>
+                <input
+                  type="text"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  placeholder="e.g., BOT1-2024"
+                />
+              </div>
+              <div className="form-group">
                 <label>Exam Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Mathematics Final Exam"
-                />
-              </div>
-              <div className="form-group">
-                <label>Subject *</label>
-                <input
-                  type="text"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  placeholder="e.g., Mathematics"
+                  placeholder="e.g., Beginning of Term Exam 2024"
                 />
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Class *</label>
-                  <input
-                    type="text"
-                    value={formData.class}
-                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                    placeholder="e.g., Form 4A"
-                  />
+                  <label>Exam Type *</label>
+                  <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
+                    <option value="BOT">BOT (Beginning of Term)</option>
+                    <option value="MOT">MOT (Middle of Term)</option>
+                    <option value="EOT">EOT (End of Term)</option>
+                    <option value="UCE">UCE (National O-Level)</option>
+                    <option value="UACE">UACE (National A-Level)</option>
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label>Term *</label>
-                  <select value={formData.term} onChange={(e) => setFormData({ ...formData, term: e.target.value })}>
-                    <option value="Term 1">Term 1</option>
-                    <option value="Term 2">Term 2</option>
-                    <option value="Term 3">Term 3</option>
+                  <label>Level *</label>
+                  <select value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })}>
+                    <option value="O_LEVEL">O-Level</option>
+                    <option value="A_LEVEL">A-Level</option>
                   </select>
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Date *</label>
+                  <label>Academic Year *</label>
                   <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    type="text"
+                    value={formData.academicYear}
+                    onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                    placeholder="e.g., 2024"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Total Students *</label>
+                  <label>Term *</label>
+                  <select value={formData.term} onChange={(e) => setFormData({ ...formData, term: e.target.value })}>
+                    <option value="1">Term 1</option>
+                    <option value="2">Term 2</option>
+                    <option value="3">Term 3</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Target Classes * (Select one or more)</label>
+                <div className="classes-checklist">
+                  {classes.length > 0 ? (
+                    classes.map((cls) => (
+                      <div key={cls.id || cls.name} className="checkbox-item">
+                        <input
+                          type="checkbox"
+                          id={`class-${cls.id || cls.name}`}
+                          checked={formData.targetClasses.includes(cls.name || cls.code)}
+                          onChange={(e) => {
+                            const classValue = cls.name || cls.code;
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                targetClasses: [...formData.targetClasses, classValue]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                targetClasses: formData.targetClasses.filter(c => c !== classValue)
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`class-${cls.id || cls.name}`}>
+                          {cls.name || cls.code}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted">No classes available. Please create classes first.</p>
+                  )}
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Start Date *</label>
                   <input
-                    type="number"
-                    value={formData.totalStudents}
-                    onChange={(e) => setFormData({ ...formData, totalStudents: e.target.value })}
-                    placeholder="e.g., 45"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>End Date *</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   />
                 </div>
               </div>
             </div>
             <div className="exam-modal-footer">
-              <button className="btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setMessage('');
+                }}
+                disabled={submitting}
+              >
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleAddExam}>
-                Add Exam
+              <button 
+                className="btn btn-primary" 
+                onClick={handleAddExam}
+                disabled={submitting}
+              >
+                {submitting ? 'Creating...' : 'Add Exam'}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Exam Details Modal */}
-      {isDetailsModalOpen && selectedExam && (
-        <div className="exam-modal-overlay" onClick={() => setIsDetailsModalOpen(false)}>
-          <div className="exam-modal exam-modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="exam-modal-header">
-              <h3>{selectedExam.name}</h3>
-              <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}>
-                ×
-              </button>
-            </div>
-            <div className="exam-modal-body">
-              <div className="exam-details-grid">
-                <div className="detail-item">
-                  <label>Subject</label>
-                  <p>{selectedExam.subject}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Class</label>
-                  <p>{selectedExam.class}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Term</label>
-                  <p>{selectedExam.term}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Date</label>
-                  <p>{new Date(selectedExam.date).toLocaleDateString()}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Total Students</label>
-                  <p>{selectedExam.totalStudents}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Pass Rate</label>
-                  <p className="pass-rate-badge high">
-                    {((selectedExam.passCount / selectedExam.totalStudents) * 100).toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="exam-details-section">
-                <h4>Grade Distribution</h4>
-                <div className="grade-distribution">
-                  {Object.entries(selectedExam.grades).map(([grade, count]) => (
-                    <div key={grade} className="grade-item">
-                      <span className="grade-label">{grade}</span>
-                      <div className="grade-bar">
-                        <div
-                          className="grade-fill"
-                          style={{
-                            width: `${(count / selectedExam.totalStudents) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                      <span className="grade-count">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="exam-details-section">
-                <h4>Statistics</h4>
-                <div className="statistics-grid">
-                  <div className="stat">
-                    <label>Passed</label>
-                    <p className="stat-value pass">{selectedExam.passCount}</p>
-                  </div>
-                  <div className="stat">
-                    <label>Failed</label>
-                    <p className="stat-value fail">{selectedExam.failCount}</p>
-                  </div>
-                  <div className="stat">
-                    <label>Pass Rate</label>
-                    <p className="stat-value">
-                      {((selectedExam.passCount / selectedExam.totalStudents) * 100).toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

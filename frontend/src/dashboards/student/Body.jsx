@@ -1,7 +1,44 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import studentService from "../../services/studentService";
 import './Body.css';
 
 function Body() {
+    const { user, refreshUserProfile } = useAuth();
+    const [dashboardData, setDashboardData] = useState({
+        coursesCount: 0,
+        gpa: 0,
+        attendancePercentage: 0,
+        pendingAssignments: 0,
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const fetchDashboardData = async () => {
+            try {
+                setLoading(true);
+                
+                // Refresh user profile from server first
+                const freshUser = await refreshUserProfile();
+                if (!freshUser) {
+                  console.warn('Could not refresh user profile');
+                }
+                
+                const data = await studentService.getDashboardData(user.id);
+                setDashboardData(data);
+                console.log('📊 Dashboard data loaded:', data);
+            } catch (err) {
+                console.error('Failed to fetch dashboard data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, [user?.id, refreshUserProfile]);
+
     return (
         <div className="container-fluid py-4">
             {/* Welcome Banner */}
@@ -9,7 +46,7 @@ function Body() {
                 <div className="col-12">
                     <div className="welcome-banner">
                         <div className="banner-content">
-                            <h1>Welcome back, Student!</h1>
+                            <h1>Welcome back, {user?.fullName || 'Student'}!</h1>
                             <p>Stay on top of your courses and grades</p>
                         </div>
                         <div className="banner-icon">
@@ -27,7 +64,7 @@ function Body() {
                             <i className="fa-solid fa-book"></i>
                         </div>
                         <div className="card-content">
-                            <h3>6</h3>
+                            <h3>{loading ? '-' : dashboardData.coursesCount}</h3>
                             <p>Active Courses</p>
                         </div>
                     </div>
@@ -39,7 +76,7 @@ function Body() {
                             <i className="fa-solid fa-star"></i>
                         </div>
                         <div className="card-content">
-                            <h3>3.8</h3>
+                            <h3>{loading ? '-' : dashboardData.gpa}</h3>
                             <p>GPA</p>
                         </div>
                     </div>
@@ -51,7 +88,7 @@ function Body() {
                             <i className="fa-solid fa-clipboard-check"></i>
                         </div>
                         <div className="card-content">
-                            <h3>92%</h3>
+                            <h3>{loading ? '-' : `${dashboardData.attendancePercentage}%`}</h3>
                             <p>Attendance</p>
                         </div>
                     </div>
@@ -63,7 +100,7 @@ function Body() {
                             <i className="fa-solid fa-tasks"></i>
                         </div>
                         <div className="card-content">
-                            <h3>3</h3>
+                            <h3>{loading ? '-' : dashboardData.pendingAssignments}</h3>
                             <p>Pending Submissions</p>
                         </div>
                     </div>

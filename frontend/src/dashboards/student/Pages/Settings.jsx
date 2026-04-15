@@ -6,10 +6,17 @@ function Settings() {
         pushNotifications: false,
         weeklyReminders: true,
         publicProfile: false,
+        fullName: "Student User",
+        email: "student@school.com",
+        phone: "+1 (555) 123-4567",
     });
 
     const handleToggle = (key) => {
         setSettings({ ...settings, [key]: !settings[key] });
+    };
+
+    const handleInputChange = (field, value) => {
+        setSettings({ ...settings, [field]: value });
     };
 
     return (
@@ -30,15 +37,31 @@ function Settings() {
                     <div className="card-body">
                         <div style={{ marginBottom: '16px' }}>
                             <label className="form-label fw-bold">Full Name</label>
-                            <input type="text" className="form-control" value="Student User" />
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                value={settings.fullName}
+                                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                            />
                         </div>
                         <div style={{ marginBottom: '16px' }}>
                             <label className="form-label fw-bold">Email</label>
-                            <input type="email" className="form-control" value="student@school.com" />
+                            <input 
+                                type="email" 
+                                className="form-control" 
+                                value={settings.email}
+                                onChange={(e) => handleInputChange('email', e.target.value)}
+                            />
                         </div>
                         <div style={{ marginBottom: '16px' }}>
                             <label className="form-label fw-bold">Phone Number</label>
-                            <input type="tel" className="form-control" placeholder="+1 (555) 123-4567" />
+                            <input 
+                                type="tel" 
+                                className="form-control" 
+                                value={settings.phone}
+                                onChange={(e) => handleInputChange('phone', e.target.value)}
+                                placeholder="+1 (555) 123-4567"
+                            />
                         </div>
                         <div>
                             <button className="btn btn-primary">

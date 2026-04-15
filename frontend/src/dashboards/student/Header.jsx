@@ -1,11 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import profilePic from '/src/assets/Me.jpeg'
 import './Header.css'
 import { useLogout } from '../../hooks/useLogout';
 
 function Header() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const handleLogout = useLogout();
     return (
         <header className="navbar navbar-expand bg-white sticky-top shadow-sm p-3">
@@ -56,7 +58,7 @@ function Header() {
                             <a className="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <img src={profilePic} alt="User" className="rounded-circle object-fit-cover shadow-sm" width="40" height="40" />
                                 <div className="d-none d-md-block text-start">
-                                    <p className="m-0 fw-semibold fs-6 lh-1 text-dark">Student User</p>
+                                    <p className="m-0 fw-semibold fs-6 lh-1 text-dark">{user?.fullName || 'Student'}</p>
                                     <small className="text-muted" style={{ fontSize: '12px' }}>Student</small>
                                 </div>
                             </a>

@@ -30,6 +30,8 @@ function Grading() {
   const [students, setStudents] = useState([]);
   const [teacherClasses, setTeacherClasses] = useState([]);
   const [teacherSubjects, setTeacherSubjects] = useState([]);
+  const [exams, setExams] = useState([]);
+  const [selectedExam, setSelectedExam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -113,6 +115,51 @@ function Grading() {
       mounted = false;
     };
   }, [user]);
+
+  // Fetch available exams
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadExams() {
+      try {
+        const token = localStorage.getItem('accessToken');
+        
+        const examsUrl = `${API_BASE_URL}/exams`;
+        console.log(`📍 Fetching exams from: ${examsUrl}`);
+        
+        const response = await fetch(examsUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (response.ok) {
+          const examsData = await response.json();
+          const examsList = Array.isArray(examsData) ? examsData : (examsData.exams || examsData.data || []);
+          
+          if (mounted) {
+            setExams(examsList);
+            // Set first exam as default if available
+            if (examsList.length > 0) {
+              setSelectedExam(examsList[0]);
+              console.log('✔️ Exams loaded:', examsList);
+            }
+          }
+        } else {
+          console.warn('❌ Failed to fetch exams');
+        }
+      } catch (err) {
+        console.error('❌ Error fetching exams:', err);
+      }
+    }
+
+    loadExams();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Fetch students for teacher's assigned classes
   useEffect(() => {
@@ -294,20 +341,26 @@ function Grading() {
   };
 
   const handleSubmit = async () => {
+    if (!selectedExam) {
+      setMessage("Please select an exam first.");
+      setMessageType("error");
+      return;
+    }
+
     const entries = filteredStudents
       .filter((student) => enteredMarks[student.id] !== undefined && enteredMarks[student.id] !== "")
       .map((student) => ({
         studentId: student.id,
-        subjectCode: subject,  // Map 'subject' to 'subjectCode'
-        subjectName: subject,  // Also send subject name for reference
-        marksObtained: Number(enteredMarks[student.id]),  // Map 'marks' to 'marksObtained'
+        subjectCode: subject,
+        subjectName: subject,
+        marksObtained: Number(enteredMarks[student.id]),
         grade: getAutoGrade(student.id),
-        className: student.className,  // Add required className
-        term: 1,
-        academicYear: new Date().getFullYear().toString(),
-        gradingScale: "O_LEVEL",  // Add required grading scale
-        examId: 1,  // TODO: Get actual exam ID from context or API
-        maxMarks: 100,  // Add max marks
+        className: student.className,
+        term: selectedExam.term || 1,
+        academicYear: selectedExam.academicYear || new Date().getFullYear().toString(),
+        gradingScale: "O_LEVEL",
+        examId: selectedExam.id,  // ✅ Use actual exam ID from selected exam
+        maxMarks: 100,
         isPrincipal: false,
         isSubsidiary: false,
       }));
@@ -320,11 +373,18 @@ function Grading() {
 
     try {
       setSubmitting(true);
+      const token = localStorage.getItem('accessToken');
       
-      // Submit to backend
+      console.log('📤 Submitting marks for exam:', selectedExam.name);
+      console.log('   Exam ID:', selectedExam.id);
+      console.log('   Token present:', !!token);
+      console.log('   Entries:', entries.length);
+      
+      // Submit to backend with authentication
       const response = await fetch(`${API_BASE_URL}/results/bulk`, {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(entries),
@@ -340,16 +400,17 @@ function Grading() {
       // Also save to localStorage for backup
       const payload = {
         subject: subject,
+        exam: selectedExam.name,
         entries,
         status: "submitted",
         submittedAt: new Date().toISOString()
       };
       localStorage.setItem(`teacher-${subject}-grade-submitted`, JSON.stringify(payload));
 
-      setMessage(`${entries.length} marks submitted successfully for ${subject}!`);
+      setMessage(`${entries.length} marks submitted successfully for ${subject} in ${selectedExam.name}!`);
       setMessageType("success");
       
-      console.log("Marks submitted successfully:", result);
+      console.log("✅ Marks submitted successfully:", result);
       
       // Clear entered marks after successful submission
       setTimeout(() => {
@@ -358,7 +419,7 @@ function Grading() {
     } catch (err) {
       setMessage(`Failed to submit marks: ${err.message}`);
       setMessageType("error");
-      console.error("Error submitting marks:", err);
+      console.error("❌ Error submitting marks:", err);
     } finally {
       setSubmitting(false);
     }
@@ -374,6 +435,29 @@ function Grading() {
       </div>
 
       <div className="grading-filters-grid">
+        <div className="grading-field">
+          <label htmlFor="exam-select">Exam *</label>
+          <select
+            id="exam-select"
+            value={selectedExam?.id || ""}
+            onChange={(event) => {
+              const examId = parseInt(event.target.value);
+              const selected = exams.find(e => e.id === examId);
+              setSelectedExam(selected);
+              setMessage("");
+              setEnteredMarks({});
+            }}
+            required
+          >
+            <option value="">Select Exam</option>
+            {exams.map((exam) => (
+              <option key={exam.id} value={exam.id}>
+                {exam.name} - {exam.academicYear} Term {exam.term}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="grading-field">
           <label htmlFor="student-search">Search Student</label>
           <input

@@ -10,11 +10,24 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state from localStorage
   useEffect(() => {
-    const storedUser = authService.getUser();
-    if (storedUser) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      const storedUser = authService.getUser();
+      if (storedUser) {
+        setUser(storedUser);
+        
+        // Try to refresh user profile from backend if token exists
+        if (authService.isAuthenticated()) {
+          const freshUser = await authService.refreshUserProfile();
+          if (freshUser) {
+            setUser(freshUser);
+          }
+          // If refresh fails, continue with stored user - no need for error logging here
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -121,6 +134,21 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   }, []);
 
+  const refreshUserProfile = useCallback(async () => {
+    try {
+      const freshUser = await authService.refreshUserProfile();
+      if (freshUser) {
+        setUser(freshUser);
+        console.log('✅ User profile refreshed:', freshUser);
+        return freshUser;
+      }
+    } catch (err) {
+      console.error('Failed to refresh user profile:', err);
+      setError('Failed to refresh profile');
+    }
+    return null;
+  }, []);
+
   const isAuthenticated = !!user;
   const userRole = user?.role || null;
 
@@ -137,6 +165,7 @@ export const AuthProvider = ({ children }) => {
     verifyEmail,
     changePassword,
     logout,
+    refreshUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,5 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import axiosInstance from '../../services/axiosInstance';
+import { exportToCSV, exportToExcel, exportToPDF } from '../../utils/exporters';
+import { printTeacherList } from '../../utils/printUtils';
+import CSVImportModal from '../../components/CSVImportModal';
 import './StudentSearch.css';
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -20,6 +23,9 @@ const StudentSearch = () => {
 
   const [formError, setFormError] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
+  const [isPrintLoading, setIsPrintLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Form data
   const [formData, setFormData] = useState({
@@ -286,6 +292,50 @@ const StudentSearch = () => {
     }
   };
 
+  // ===== EXPORT & PRINT HANDLERS =====
+  const handleExportCSV = () => {
+    const filename = `students_${new Date().toISOString().split('T')[0]}.csv`;
+    exportToCSV(filteredStudents, filename);
+    setSuccessMessage('CSV exported successfully');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handleExportExcel = async () => {
+    const filename = `students_${new Date().toISOString().split('T')[0]}.xlsx`;
+    await exportToExcel(filteredStudents, filename);
+    setSuccessMessage('Excel exported successfully');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handleExportPDF = async () => {
+    const filename = `students_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    await exportToPDF(filteredStudents, filename);
+    setSuccessMessage('PDF exported successfully');
+    setTimeout(() => setSuccessMessage(''), 2000);
+  };
+
+  const handlePrintView = () => {
+    try {
+      setIsPrintLoading(true);
+      printTeacherList(filteredStudents);
+      setSuccessMessage('Print view opened!');
+      setTimeout(() => setSuccessMessage(''), 2000);
+    } catch {
+      setError('Failed to open print view');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsPrintLoading(false);
+    }
+  };
+
+  const handleCSVImportComplete = (result) => {
+    if (result.successful && result.successful.length > 0) {
+      setSuccessMessage(`Successfully imported ${result.successful.length} student(s)`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      fetchStudents(); // Refresh the student list
+    }
+  };
+
   const getStatusBadge = (isActive) => {
     const status = isActive !== false ? 'active' : 'inactive';
     return <span className={`status-badge status-${status}`}>{status}</span>;
@@ -312,11 +362,44 @@ const StudentSearch = () => {
 
   return (
     <div className="student-search-container">
+      {error && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{error}</div>}
+      {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
+      
       <div className="search-header">
         <h2>Student Management</h2>
-        <button className="btn btn-add-student" onClick={() => setIsAddModalOpen(true)}>
-          Add Student
-        </button>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
+          <button className="btn btn-add-student" onClick={() => setIsAddModalOpen(true)} style={{ flex: 1, minWidth: '120px' }}>
+            <i className="fa-solid fa-plus"></i> Add Student
+          </button>
+          <button type="button" className="btn btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ flex: 1, minWidth: '100px' }}>
+            <i className="fa-solid fa-file-csv"></i> CSV
+          </button>
+          <button type="button" className="btn btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ flex: 1, minWidth: '100px' }}>
+            <i className="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button type="button" className="btn btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ flex: 1, minWidth: '100px' }}>
+            <i className="fa-solid fa-file-pdf"></i> PDF
+          </button>
+          <button 
+            type="button" 
+            className="btn btn-export" 
+            onClick={handlePrintView}
+            disabled={isPrintLoading}
+            title="Print View" 
+            style={{ flex: 1, minWidth: '100px' }}
+          >
+            <i className="fa-solid fa-print"></i> Print
+          </button>
+          <button 
+            type="button" 
+            className="btn btn-export" 
+            onClick={() => setIsCSVImportOpen(true)}
+            title="Import from CSV" 
+            style={{ flex: 1, minWidth: '100px' }}
+          >
+            <i className="fa-solid fa-upload"></i> Import
+          </button>
+        </div>
       </div>
 
       <section className="summary-cards">
@@ -449,8 +532,8 @@ const StudentSearch = () => {
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => { setIsAddModalOpen(false); resetForm(); }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>Save Student</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setIsAddModalOpen(false); resetForm(); }} disabled={loading}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Student'}</button>
               </div>
             </form>
           </div>
@@ -547,8 +630,8 @@ const StudentSearch = () => {
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>Save Changes</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)} disabled={loading}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
               </div>
             </form>
           </div>
@@ -631,9 +714,9 @@ const StudentSearch = () => {
                   <td>{getStatusBadge(student.isActive)}</td>
                   <td>
                     <div className="action-buttons">
-                      <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }}>View</button>
-                      <button className="btn btn-warning btn-sm" onClick={() => handleEditStudent(student)}>Edit</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => { setSelectedStudent(student); setIsDeleteModalOpen(true); }}>Delete</button>
+                      <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }}> <i className="fa-solid fa-eye"></i> View</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => handleEditStudent(student)}> <i className="fa-solid fa-pen-to-square"></i> Edit</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => { setSelectedStudent(student); setIsDeleteModalOpen(true); }}> <i className="fa-solid fa-trash"></i> Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -648,6 +731,13 @@ const StudentSearch = () => {
       <div className="table-footer">
         <p>Showing {filteredStudents.length} of {students.length} students</p>
       </div>
+
+      {/* CSV Import Modal */}
+      <CSVImportModal 
+        isOpen={isCSVImportOpen}
+        onClose={() => setIsCSVImportOpen(false)}
+        onImportComplete={handleCSVImportComplete}
+      />
     </div>
   );
 };

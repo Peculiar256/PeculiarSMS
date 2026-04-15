@@ -1,10 +1,12 @@
 
 import React from "react";
+import { useAuth } from "../../context/AuthContext";
 import profilePic from '../../assets/Me.jpeg';
 import './SideBar.css';
 import { NavLink, useLocation } from "react-router-dom";
 
 function SideBar() {
+    const { user } = useAuth();
     const location = useLocation();
     
     // Helper to determine active class
@@ -17,9 +19,9 @@ function SideBar() {
                 <div className="profile-img-container">
                     <img src={profilePic} alt="Student" />
                 </div>
-                <h3>Student User</h3>
+                <h3>{user?.fullName || 'Student'}</h3>
                 <span className="role-badge">Student</span>
-                <p className="user-email">student@school.com</p>
+                <p className="user-email">{user?.email || 'student@school.com'}</p>
             </div>
 
             <hr className="sidebar-divider" />

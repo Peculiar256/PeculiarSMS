@@ -379,7 +379,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .btn-primary {
@@ -606,6 +606,270 @@
 
 @media (max-width: 520px) {
   .teacher-summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== NEW PROFESSIONAL FEATURES ===== */
+
+/* Export Buttons */
+.btn-export, .btn-batch, .btn-reset, .btn-batch-active {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-export {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-export:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 91, 187, 0.3);
+}
+
+.btn-batch {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-batch:hover {
+  background-color: #1e7e34;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-batch-active {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-batch-active:hover {
+  background-color: #c82333;
+}
+
+.btn-reset {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 14px;
+}
+
+.btn-reset:hover {
+  background-color: #5a6268;
+}
+
+/* Advanced Filters Panel */
+.advanced-filters-panel {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  border-radius: 6px;
+  margin-top: 15px;
+  border-left: 4px solid #007bff;
+  animation: slideDown 0.3s ease-out;
+}
+
+.advanced-filters-panel h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.advanced-filters-panel select,
+.advanced-filters-panel input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.advanced-filters-panel select:focus,
+.advanced-filters-panel input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.advanced-filters-panel label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #555;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Batch Mode Indicator */
+.batch-mode-indicator {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  margin-top: 15px;
+  border: 1px solid #e0e0e0;
+}
+
+.pagination-controls p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.pagination-controls div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sm:hover:not(:disabled) {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.btn-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Success/Error Banner */
+.success-banner {
+  color: #155724 !important;
+  background-color: #d4edda !important;
+  border: 1px solid #c3e6cb;
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.error-banner {
+  color: #721c24 !important;
+  background-color: #f8d7da !important;
+  border: 1px solid #f5c6cb;
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Teacher Header Enhanced */
+.teacher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.teacher-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.teacher-header > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-grow: 1;
+  justify-content: flex-start;
+}
+
+/* Batch Selection */
+.checkbox-item input[type="checkbox"] {
+  w cursor: pointer;
+  margin-right: 8px;
+}
+
+.checkbox-item label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Responsive Updates */
+@media (max-width: 768px) {
+  .teacher-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .teacher-header > div {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-export, .btn-batch, .btn-reset, .btn-batch-active, .btn-add-teacher {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pagination-controls {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .pagination-controls div {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .advanced-filters-panel {
     grid-template-columns: 1fr;
   }
 }
