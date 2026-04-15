@@ -26,48 +26,48 @@ function App() {
       <Route path="/forgotpassword" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Protected Routes - Student */}
-      <Route 
+      {/* Protected Routes - Student - COMMENTED OUT */}
+      {/* <Route 
         path="/student/*" 
         element={
           <ProtectedRoute requiredRole="STUDENT">
             <StudentDashboard />
           </ProtectedRoute>
         } 
-      />
+      /> */}
 
-      {/* Protected Routes - Teacher */}
-      <Route 
+      {/* Protected Routes - Teacher - COMMENTED OUT */}
+      {/* <Route 
         path="/teacher/*" 
         element={
           <ProtectedRoute requiredRole="TEACHER">
             <TeacherDashboard />
           </ProtectedRoute>
         } 
-      />
+      /> */}
 
-      {/* Protected Routes - Admin */}
-      <Route 
+      {/* Protected Routes - Admin - COMMENTED OUT */}
+      {/* <Route 
         path="/admin/*" 
         element={
           <ProtectedRoute requiredRole="ADMIN">
             <AdminDashboard />
           </ProtectedRoute>
         } 
-      />
+      /> */}
 
-      {/* Protected Routes - Librarian */}
-      <Route 
+      {/* Protected Routes - Librarian - COMMENTED OUT */}
+      {/* <Route 
         path="/librarian" 
         element={
           <ProtectedRoute requiredRole="LIBRARIAN">
             <Libriarian />
           </ProtectedRoute>
         } 
-      />
+      /> */}
 
-      {/* Protected Routes - Admin Additional Views */}
-      <Route 
+      {/* Protected Routes - Admin Additional Views - COMMENTED OUT */}
+      {/* <Route 
         path="/search" 
         element={
           <ProtectedRoute requiredRole="ADMIN">
@@ -90,7 +90,24 @@ function App() {
             <Attendance />
           </ProtectedRoute>
         } 
-      />
+      /> */}
+
+      {/* Public Routes - Student Dashboard */}
+      <Route path="/student/*" element={<StudentDashboard />} />
+
+      {/* Public Routes - Teacher Dashboard */}
+      <Route path="/teacher/*" element={<TeacherDashboard />} />
+
+      {/* Public Routes - Admin Dashboard */}
+      <Route path="/admin/*" element={<AdminDashboard />} />
+
+      {/* Public Routes - Librarian Dashboard */}
+      <Route path="/librarian" element={<Libriarian />} />
+
+      {/* Public Routes - Admin Additional Views */}
+      <Route path="/search" element={<StudentSearch />} />
+      <Route path="/teachersearch" element={<TeacherSearch />} />
+      <Route path="/attendance" element={<Attendance />} />
 
       {/* Catch-all redirect to login */}
       <Route path="/" element={<LoginForm />} />
