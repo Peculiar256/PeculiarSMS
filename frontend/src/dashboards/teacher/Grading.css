@@ -51,6 +51,44 @@
   gap: 14px;
 }
 
+.grading-charts-section {
+  margin-top: 18px;
+}
+
+.grading-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.grading-chart-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.grading-chart-header {
+  margin-bottom: 8px;
+}
+
+.grading-chart-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.grading-chart-header p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.grading-chart-canvas {
+  height: 280px;
+}
+
 .grading-grid {
   margin-top: 16px;
   display: grid;

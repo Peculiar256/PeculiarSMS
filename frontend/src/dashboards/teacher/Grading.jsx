@@ -1,9 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import CSVImportModal from "../../components/CSVImportModal";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Legend,
+  LinearScale,
+  Tooltip,
+} from "chart.js";
+import { Bar, Doughnut } from "react-chartjs-2";
 import "./Grading.css";
 
 const API_BASE_URL = "http://localhost:8080/api";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 // Grade calculation function
 function getGrade(mark) {
@@ -740,6 +752,149 @@ function Grading() {
     setImportMessage(`Imported marks for ${updatedCount} students.`);
   };
 
+  const scoreBucketLabels = ["0-39", "40-49", "50-59", "60-69", "70-79", "80-100"];
+  const gradeLabels = ["D1", "D2", "C3", "C4", "C5", "C6", "P7", "P8", "F9"];
+
+  const chartMetrics = useMemo(() => {
+    const gradedEntries = [];
+
+    filteredStudents.forEach((student) => {
+      const rawMark = enteredMarks[student.id];
+      if (rawMark === undefined || rawMark === "") {
+        return;
+      }
+
+      const mark = Number(rawMark);
+      if (Number.isNaN(mark)) {
+        return;
+      }
+
+      gradedEntries.push({
+        mark,
+        grade: getGrade(mark),
+      });
+    });
+
+    const scoreBucketCounts = [0, 0, 0, 0, 0, 0];
+    const gradeCountMap = {
+      D1: 0,
+      D2: 0,
+      C3: 0,
+      C4: 0,
+      C5: 0,
+      C6: 0,
+      P7: 0,
+      P8: 0,
+      F9: 0,
+    };
+
+    gradedEntries.forEach((entry) => {
+      const mark = entry.mark;
+      if (mark < 40) scoreBucketCounts[0] += 1;
+      else if (mark < 50) scoreBucketCounts[1] += 1;
+      else if (mark < 60) scoreBucketCounts[2] += 1;
+      else if (mark < 70) scoreBucketCounts[3] += 1;
+      else if (mark < 80) scoreBucketCounts[4] += 1;
+      else scoreBucketCounts[5] += 1;
+
+      gradeCountMap[entry.grade] += 1;
+    });
+
+    const gradedCount = gradedEntries.length;
+    const totalStudents = filteredStudents.length;
+    const pendingCount = Math.max(totalStudents - gradedCount, 0);
+    const averageMark = gradedCount
+      ? (gradedEntries.reduce((sum, entry) => sum + entry.mark, 0) / gradedCount).toFixed(1)
+      : "0.0";
+
+    return {
+      gradedCount,
+      pendingCount,
+      totalStudents,
+      averageMark,
+      scoreBucketCounts,
+      gradeCounts: gradeLabels.map((grade) => gradeCountMap[grade]),
+    };
+  }, [filteredStudents, enteredMarks]);
+
+  const scoreBucketsData = useMemo(
+    () => ({
+      labels: scoreBucketLabels,
+      datasets: [
+        {
+          label: "Students",
+          data: chartMetrics.scoreBucketCounts,
+          backgroundColor: "#4f6edc",
+          borderRadius: 8,
+        },
+      ],
+    }),
+    [chartMetrics.scoreBucketCounts]
+  );
+
+  const scoreBucketsOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+          },
+        },
+      },
+    }),
+    []
+  );
+
+  const hasStudentsInView = chartMetrics.totalStudents > 0;
+  const gradeDistributionData = useMemo(
+    () => ({
+      labels: hasStudentsInView ? [...gradeLabels, "Pending"] : ["No Data"],
+      datasets: [
+        {
+          label: "Grades",
+          data: hasStudentsInView ? [...chartMetrics.gradeCounts, chartMetrics.pendingCount] : [1],
+          backgroundColor: hasStudentsInView
+            ? [
+                "#1d4ed8",
+                "#2563eb",
+                "#0284c7",
+                "#0891b2",
+                "#0d9488",
+                "#059669",
+                "#d97706",
+                "#dc2626",
+                "#991b1b",
+                "#9ca3af",
+              ]
+            : ["#d1d5db"],
+          borderWidth: 0,
+        },
+      ],
+    }),
+    [hasStudentsInView, chartMetrics.gradeCounts, chartMetrics.pendingCount]
+  );
+
+  const gradeDistributionOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+      },
+    }),
+    []
+  );
+
   return (
     <div className="grading-card">
       <div className="grading-header-row">
@@ -828,6 +983,32 @@ function Grading() {
           </select>
         </div>
 
+      </div>
+
+      <div className="grading-charts-section">
+        <div className="grading-charts-grid">
+          <div className="grading-chart-card">
+            <div className="grading-chart-header">
+              <h3>Score Range Distribution</h3>
+              <p>
+                {chartMetrics.gradedCount}/{chartMetrics.totalStudents} graded, Avg {chartMetrics.averageMark}
+              </p>
+            </div>
+            <div className="grading-chart-canvas">
+              <Bar data={scoreBucketsData} options={scoreBucketsOptions} />
+            </div>
+          </div>
+
+          <div className="grading-chart-card">
+            <div className="grading-chart-header">
+              <h3>Grade Distribution</h3>
+              <p>{chartMetrics.pendingCount} pending mark(s)</p>
+            </div>
+            <div className="grading-chart-canvas">
+              <Doughnut data={gradeDistributionData} options={gradeDistributionOptions} />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="student-table-section">
