@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import './FeaturePages.css';
 
 function AssignmentManagement() {
+    const uploadInputRef = useRef(null);
     const [assignments, setAssignments] = useState([
         { id: 1, title: 'Mathematics Homework', class: 'S.4A', dueDate: '2026-04-10', submissions: 25, total: 30, status: 'active' },
         { id: 2, title: 'English Essay', class: 'S.5', dueDate: '2026-04-12', submissions: 28, total: 35, status: 'active' },
@@ -15,6 +16,10 @@ function AssignmentManagement() {
         dueDate: '',
         description: ''
     });
+
+    const handleUploadClick = () => {
+        uploadInputRef.current?.click();
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -156,6 +161,15 @@ function AssignmentManagement() {
                                 ></textarea>
                             </div>
                             <div className="modal-footer">
+                                <input
+                                    ref={uploadInputRef}
+                                    type="file"
+                                    style={{ display: 'none' }}
+                                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+                                />
+                                <button type="button" className="btn btn-secondary" onClick={handleUploadClick}>
+                                    <i className="fa-solid fa-upload"></i> Upload
+                                </button>
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary">Create Assignment</button>
                             </div>
