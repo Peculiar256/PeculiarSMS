@@ -18,6 +18,45 @@ function getGrade(mark) {
   return "F9";
 }
 
+function escapeCsvCell(value) {
+  const normalized = String(value ?? "");
+  if (/[",\n]/.test(normalized)) {
+    return `"${normalized.replace(/"/g, '""')}"`;
+  }
+  return normalized;
+}
+
+function parseCsvLine(line) {
+  const values = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+
+    if (char === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
 function Grading() {
   const { user } = useAuth();
   const [searchText, setSearchText] = useState("");
@@ -37,6 +76,8 @@ function Grading() {
   const [error, setError] = useState("");
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
+  const [importMessage, setImportMessage] = useState("");
+  const [importError, setImportError] = useState("");
 
   // Fetch teacher's assigned classes and subjects
   useEffect(() => {
@@ -425,6 +466,256 @@ function Grading() {
     }
   };
 
+  const buildExportRows = () => {
+    return filteredStudents.map((student) => {
+      const rawMark = enteredMarks[student.id];
+      const marks = rawMark === undefined || rawMark === "" ? "" : Number(rawMark);
+
+      return {
+        studentId: student.studentId || student.id,
+        studentName: student.name,
+        className: student.className,
+        subject,
+        exam: selectedExam?.name || "",
+        marks,
+        grade: marks === "" ? "-" : getGrade(marks),
+      };
+    });
+  };
+
+  const handleExportCSV = () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to export.");
+      setMessageType("error");
+      return;
+    }
+
+    const headers = ["Student ID", "Student Name", "Class", "Subject", "Exam", "Marks", "Grade"];
+    const dataRows = rows.map((row) => [
+      row.studentId,
+      row.studentName,
+      row.className,
+      row.subject,
+      row.exam,
+      row.marks,
+      row.grade,
+    ]);
+
+    const csvContent = [headers.join(","), ...dataRows.map((row) => row.map(escapeCsvCell).join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.href = url;
+    link.setAttribute("download", `grading_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportExcel = async () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to export.");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      const XLSX = await import("xlsx");
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Grading");
+      XLSX.writeFile(workbook, `grading_${new Date().toISOString().split("T")[0]}.xlsx`);
+    } catch (exportError) {
+      setMessage(`Failed to export Excel: ${exportError.message}`);
+      setMessageType("error");
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to export.");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      const jsPDF = (await import("jspdf")).jsPDF;
+      const autoTable = (await import("jspdf-autotable")).default;
+      const doc = new jsPDF({ orientation: "landscape" });
+
+      doc.setFontSize(14);
+      doc.text("Grading Report", 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Subject: ${subject || "N/A"}`, 14, 22);
+      doc.text(`Exam: ${selectedExam?.name || "N/A"}`, 14, 28);
+
+      autoTable(doc, {
+        startY: 34,
+        head: [["Student ID", "Student Name", "Class", "Subject", "Exam", "Marks", "Grade"]],
+        body: rows.map((row) => [
+          row.studentId,
+          row.studentName,
+          row.className,
+          row.subject,
+          row.exam,
+          row.marks,
+          row.grade,
+        ]),
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [0, 123, 255] },
+      });
+
+      doc.save(`grading_${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (exportError) {
+      setMessage(`Failed to export PDF: ${exportError.message}`);
+      setMessageType("error");
+    }
+  };
+
+  const handlePrint = () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to print.");
+      setMessageType("error");
+      return;
+    }
+
+    const printWindow = window.open("", "", "height=700,width=1100");
+    if (!printWindow) {
+      setMessage("Unable to open print window.");
+      setMessageType("error");
+      return;
+    }
+
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr><td>${row.studentId}</td><td>${row.studentName}</td><td>${row.className}</td><td>${row.subject}</td><td>${row.exam}</td><td>${row.marks}</td><td>${row.grade}</td></tr>`
+      )
+      .join("");
+
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Grading Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h2 { margin-bottom: 8px; }
+          p { margin: 4px 0 12px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+          th { background: #f3f4f6; }
+        </style>
+      </head>
+      <body>
+        <h2>Grading Report</h2>
+        <p>Subject: ${subject || "N/A"} | Exam: ${selectedExam?.name || "N/A"}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Subject</th>
+              <th>Exam</th>
+              <th>Marks</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  const handleImport = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setImportMessage("");
+    setImportError("");
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setImportError("Please upload a CSV file.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+      try {
+        const csvText = String(loadEvent.target?.result || "");
+        const lines = csvText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+        if (lines.length < 2) {
+          throw new Error("CSV file is empty.");
+        }
+
+        const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
+        const studentIdIndex = headers.findIndex((header) => header === "student id" || header === "studentid");
+        const marksIndex = headers.findIndex((header) => header === "marks" || header === "mark");
+
+        if (studentIdIndex === -1 || marksIndex === -1) {
+          throw new Error("CSV must include Student ID and Marks columns.");
+        }
+
+        const nextMarks = { ...enteredMarks };
+        let updatedCount = 0;
+
+        for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
+          const values = parseCsvLine(lines[lineIndex]);
+          const importedId = String(values[studentIdIndex] || "").trim();
+          const importedMark = Number(values[marksIndex]);
+
+          if (!importedId || Number.isNaN(importedMark)) {
+            continue;
+          }
+
+          const match = students.find(
+            (student) => String(student.studentId || student.id).trim().toLowerCase() === importedId.toLowerCase()
+          );
+
+          if (!match) {
+            continue;
+          }
+
+          nextMarks[match.id] = Math.max(0, Math.min(100, importedMark));
+          updatedCount += 1;
+        }
+
+        if (updatedCount === 0) {
+          throw new Error("No matching students found in CSV.");
+        }
+
+        setEnteredMarks(nextMarks);
+        setImportMessage(`Imported marks for ${updatedCount} students.`);
+      } catch (importException) {
+        setImportError(importException.message || "Failed to import CSV.");
+      } finally {
+        event.target.value = "";
+      }
+    };
+
+    reader.onerror = () => {
+      setImportError("Unable to read the selected file.");
+      event.target.value = "";
+    };
+
+    reader.readAsText(file);
+  };
+
   return (
     <div className="grading-card">
       <div className="grading-header-row">
@@ -517,6 +808,26 @@ function Grading() {
 
       <div className="student-table-section">
         <label className="table-label">Students Table</label>
+        <div className="teacher-students-toolbar d-flex flex-wrap gap-2">
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportCSV}>
+            <i className="fa-solid fa-file-csv"></i> CSV
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportExcel}>
+            <i className="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportPDF}>
+            <i className="fa-solid fa-file-pdf"></i> PDF
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handlePrint}>
+            <i className="fa-solid fa-print"></i> Print
+          </button>
+          <label className="btn btn-primary teacher-toolbar-btn mb-0">
+            <i className="fa-solid fa-upload"></i> Import
+            <input type="file" accept=".csv" onChange={handleImport} style={{ display: "none" }} />
+          </label>
+        </div>
+        {importMessage && <p className="grading-message grading-message-success">{importMessage}</p>}
+        {importError && <p className="grading-message grading-message-error">{importError}</p>}
         <div className="teacher-students-table-wrap">
           <table className="teacher-students-table">
             <thead>
