@@ -1,5 +1,28 @@
 import React, { useState } from 'react';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
+    PointElement,
+    LineElement,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import './FeaturePages.css';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
+    PointElement,
+    LineElement,
+    Tooltip,
+    Legend
+);
 
 function StudentProgressTracker() {
     const [selectedClass, setSelectedClass] = useState('S.4A');
@@ -27,6 +50,12 @@ function StudentProgressTracker() {
     const classStudents = students[selectedClass] || [];
     const atRiskCount = classStudents.filter(s => s.risk).length;
     const excellentCount = classStudents.filter(s => s.avgScore >= 85).length;
+    const avgAttendance = classStudents.length > 0
+        ? (classStudents.reduce((sum, student) => sum + student.attendance, 0) / classStudents.length).toFixed(0)
+        : 0;
+    const avgScore = classStudents.length > 0
+        ? (classStudents.reduce((sum, student) => sum + student.avgScore, 0) / classStudents.length).toFixed(1)
+        : 0;
 
     const getTrendIcon = (trend) => {
         if (trend === 'up') return <i className="fa-solid fa-arrow-up text-success"></i>;
@@ -34,17 +63,148 @@ function StudentProgressTracker() {
         return <i className="fa-solid fa-minus text-muted"></i>;
     };
 
-    const getTrendColor = (trend) => {
-        if (trend === 'up') return '#10b981';
-        if (trend === 'down') return '#ef4444';
-        return '#6b7280';
-    };
-
     const getPerformanceLevel = (score) => {
         if (score >= 90) return { label: 'Excellent', color: '#10b981' };
         if (score >= 80) return { label: 'Good', color: '#3b82f6' };
         if (score >= 70) return { label: 'Average', color: '#f59e0b' };
         return { label: 'Below Average', color: '#ef4444' };
+    };
+
+    const scoreBandCounts = [
+        classStudents.filter(student => student.avgScore >= 90).length,
+        classStudents.filter(student => student.avgScore >= 80 && student.avgScore < 90).length,
+        classStudents.filter(student => student.avgScore >= 70 && student.avgScore < 80).length,
+        classStudents.filter(student => student.avgScore < 70).length,
+    ];
+
+    const scoreDistributionData = {
+        labels: ['Excellent', 'Good', 'Average', 'Below Avg'],
+        datasets: [
+            {
+                label: 'Students',
+                data: scoreBandCounts,
+                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
+                borderRadius: 6,
+                maxBarThickness: 56,
+            },
+        ],
+    };
+
+    const riskDistributionData = {
+        labels: ['At Risk', 'Stable'],
+        datasets: [
+            {
+                data: [atRiskCount, Math.max(classStudents.length - atRiskCount, 0)],
+                backgroundColor: ['#2c4ebb', '#22c55e'],
+                borderWidth: 0,
+            },
+        ],
+    };
+
+    const classSummaryBarOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.parsed.y} students`,
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
+                },
+                grid: {
+                    color: '#e2e8f0',
+                },
+            },
+            x: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
+    };
+
+    const riskChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.raw}`,
+                },
+            },
+        },
+        cutout: '65%',
+    };
+
+    const getStudentTrendChartData = (student) => {
+        const history = progressHistory[student.id] || [student.avgScore];
+        return {
+            labels: history.map((_, idx) => `T${idx + 1}`),
+            datasets: [
+                {
+                    label: 'Score',
+                    data: history,
+                    borderColor: '#2c4ebb',
+                    backgroundColor: 'rgba(44, 78, 187, 0.15)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 4,
+                    tension: 0.3,
+                },
+                {
+                    label: 'Attendance',
+                    data: history.map(() => student.attendance),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    tension: 0,
+                },
+            ],
+        };
+    };
+
+    const studentTrendOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.y}%`,
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: (value) => `${value}%`,
+                },
+                grid: {
+                    color: '#e2e8f0',
+                },
+            },
+            x: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
     };
 
     return (
@@ -94,9 +254,37 @@ function StudentProgressTracker() {
                 </div>
                 <div className="stat-box">
                     <div className="stat-number">
-                        {(classStudents.reduce((a, b) => a + b.attendance, 0) / classStudents.length).toFixed(0)}%
+                        {avgAttendance}%
                     </div>
                     <div className="stat-label">Avg Attendance</div>
+                </div>
+            </div>
+
+            {/* Class Summary Charts */}
+            <div className="grid-2 progress-summary-grid">
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Score Distribution - {selectedClass}</h3>
+                    </div>
+                    <div className="card-body">
+                        <div className="tracker-chart-wrap">
+                            <Bar data={scoreDistributionData} options={classSummaryBarOptions} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Risk Distribution</h3>
+                    </div>
+                    <div className="card-body">
+                        <div className="tracker-chart-wrap">
+                            <Doughnut data={riskDistributionData} options={riskChartOptions} />
+                        </div>
+                        <p className="tracker-chart-note">
+                            Class average score: <strong>{avgScore}/100</strong>
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -187,6 +375,13 @@ function StudentProgressTracker() {
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="section">
+                                                    <h4>Attendance vs Score Trend</h4>
+                                                    <div className="student-line-chart-wrap">
+                                                        <Line data={getStudentTrendChartData(student)} options={studentTrendOptions} />
                                                     </div>
                                                 </div>
 

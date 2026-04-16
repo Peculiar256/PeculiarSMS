@@ -203,6 +203,31 @@ function StudentPerformanceReport() {
                 </div>
             </div>
 
+            {/* Subject-wise Analysis */}
+            <div className="grid-2">
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Subject Performance</h3>
+                    </div>
+                    <div className="card-body">
+                        <div style={{ height: '280px' }}>
+                            <Bar data={subjectChartData} options={subjectChartOptions} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Grade Distribution</h3>
+                    </div>
+                    <div className="card-body">
+                        <div style={{ height: '280px' }}>
+                            <Doughnut data={gradeChartData} options={gradeChartOptions} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Performance Table */}
             <div className="card">
                 <div className="card-header">
@@ -239,9 +264,9 @@ function StudentPerformanceReport() {
                                             <span className="score-highlight">{student.overallAvg}</span>
                                         </td>
                                         <td>
-                                            <span 
-                                                className="grade-badge" 
-                                                style={{ 
+                                            <span
+                                                className="grade-badge"
+                                                style={{
                                                     backgroundColor: getGradeBackground(student.grade),
                                                     color: getGradeColor(student.grade)
                                                 }}
@@ -256,31 +281,6 @@ function StudentPerformanceReport() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-
-            {/* Subject-wise Analysis */}
-            <div className="grid-2">
-                <div className="card">
-                    <div className="card-header">
-                        <h3>Subject Performance</h3>
-                    </div>
-                    <div className="card-body">
-                        <div style={{ height: '280px' }}>
-                            <Bar data={subjectChartData} options={subjectChartOptions} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-header">
-                        <h3>Grade Distribution</h3>
-                    </div>
-                    <div className="card-body">
-                        <div style={{ height: '280px' }}>
-                            <Doughnut data={gradeChartData} options={gradeChartOptions} />
-                        </div>
                     </div>
                 </div>
             </div>

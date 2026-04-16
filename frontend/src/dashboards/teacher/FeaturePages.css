@@ -998,6 +998,29 @@
     gap: 8px;
 }
 
+.progress-summary-grid {
+    margin-top: 0;
+}
+
+.tracker-chart-wrap {
+    height: 280px;
+}
+
+.tracker-chart-note {
+    margin: 16px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+}
+
+.student-line-chart-wrap {
+    height: 240px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .page-header {
@@ -1031,5 +1054,14 @@
 
     .student-metrics {
         width: 100%;
+    }
+
+    .tracker-chart-wrap {
+        height: 240px;
+    }
+
+    .student-line-chart-wrap {
+        height: 220px;
+        padding: 10px;
     }
 }
