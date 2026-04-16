@@ -117,6 +117,14 @@
 }
 
 /* Assignment Styles */
+.assignment-analytics-grid {
+    margin-top: 0;
+}
+
+.chart-wrap {
+    height: 300px;
+}
+
 .assignments-list {
     display: flex;
     flex-direction: column;
