@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import CSVImportModal from "../../components/CSVImportModal";
 import "./TeacherStudents.css";
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -227,7 +228,6 @@ function printStudentList(filteredStudents, attendance, selectedSubject) {
 
 function TeacherStudents() {
 	const { user } = useAuth();
-	const fileInputRef = useRef(null);
 	const [students, setStudents] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -245,6 +245,7 @@ function TeacherStudents() {
 	const [selectedSubject, setSelectedSubject] = useState("");
 	const [importMessage, setImportMessage] = useState("");
 	const [importError, setImportError] = useState("");
+	const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
 
 	// Fetch teacher's assigned classes and subjects
 	useEffect(() => {
@@ -548,54 +549,87 @@ function TeacherStudents() {
 	const handleImportClick = () => {
 		setImportError("");
 		setImportMessage("");
-		fileInputRef.current?.click();
+		setIsCSVImportOpen(true);
 	};
 
-	const handleImportStudents = (event) => {
-		const file = event.target.files?.[0];
-		if (!file) {
+	const parseStudentCSVFile = async (file) => {
+		const csvText = await file.text();
+		const lines = csvText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+		if (lines.length < 2) {
+			throw new Error("CSV file is empty");
+		}
+
+		const headers = parseCsvLine(lines[0]).map((header) => header.trim().toLowerCase());
+		const data = [];
+
+		for (let index = 1; index < lines.length; index += 1) {
+			const values = parseCsvLine(lines[index]);
+			const row = {};
+
+			headers.forEach((header, headerIndex) => {
+				row[header] = (values[headerIndex] || "").trim();
+			});
+
+			data.push({
+				id: row.id || `IMPORTED-${Date.now()}-${index}`,
+				name: row.name || row.fullname || row.studentname || `${row.firstname || ""} ${row.lastname || ""}`.trim(),
+				className: row.classname || row.class || row.currentclass || (selectedClass === "All Classes" ? "Unassigned" : selectedClass),
+				subject: row.subject || row.subjectname || "Imported Student",
+				attendanceStatus: row.attendance || row.status || "",
+				schoolClassId: undefined,
+			});
+		}
+
+		return { rows: lines, data };
+	};
+
+	const validateStudentRow = (row) => {
+		const errors = [];
+		if (!row.name) {
+			errors.push("Name is required");
+		}
+
+		return {
+			isValid: errors.length === 0,
+			errors,
+		};
+	};
+
+	const downloadStudentTemplate = () => {
+		const headers = "id,name,classname,subject,attendance";
+		const sample = "STU1001,Jane Doe,S2,Mathematics,Present";
+		const csvContent = `${headers}\n${sample}`;
+		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+
+		link.href = url;
+		link.setAttribute("download", "student_import_template.csv");
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+	};
+
+	const handleStudentImportComplete = (result) => {
+		const importedStudents = (result?.successful || []).map((student, index) => ({
+			id: student.id || `IMPORTED-${Date.now()}-${index}`,
+			name: student.name,
+			className: student.className || (selectedClass === "All Classes" ? "Unassigned" : selectedClass),
+			subject: student.subject || "Imported Student",
+			schoolClassId: undefined,
+			attendanceStatus: student.attendanceStatus || "",
+		}));
+
+		if (importedStudents.length === 0) {
+			setImportError("No valid student rows were found in the CSV file");
 			return;
 		}
 
-		if (!file.name.toLowerCase().endsWith(".csv")) {
-			setImportError("Please upload a CSV file");
-			if (fileInputRef.current) {
-				fileInputRef.current.value = "";
-			}
-			return;
-		}
-
-		const reader = new FileReader();
-		reader.onload = (loadEvent) => {
-			try {
-				const csvText = String(loadEvent.target?.result || "");
-				const importedStudents = parseImportedStudents(csvText, selectedClass === "All Classes" ? "" : selectedClass);
-
-				if (importedStudents.length === 0) {
-					setImportError("No valid student rows were found in the CSV file");
-					return;
-				}
-
-				setStudents((previousStudents) => [...previousStudents, ...importedStudents]);
-				setImportMessage(`Imported ${importedStudents.length} student(s) successfully`);
-				setImportError("");
-			} catch (importException) {
-				setImportError(`Failed to import CSV: ${importException.message}`);
-			} finally {
-				if (fileInputRef.current) {
-					fileInputRef.current.value = "";
-				}
-			}
-		};
-
-		reader.onerror = () => {
-			setImportError("Failed to read the selected file");
-			if (fileInputRef.current) {
-				fileInputRef.current.value = "";
-			}
-		};
-
-		reader.readAsText(file);
+		setStudents((previousStudents) => [...previousStudents, ...importedStudents]);
+		setImportMessage(`Imported ${importedStudents.length} student(s) successfully`);
+		setImportError("");
 	};
 
 	const handleSubmitAttendance = async () => {
@@ -765,13 +799,6 @@ function TeacherStudents() {
 					<button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleImportClick}>
 						<i className="fa-solid fa-upload"></i> Import
 					</button>
-					<input
-						ref={fileInputRef}
-						type="file"
-						accept=".csv"
-						onChange={handleImportStudents}
-						style={{ display: "none" }}
-					/>
 				</div>
 
 				{importMessage && <p className="teacher-students-success">{importMessage}</p>}
@@ -851,6 +878,27 @@ function TeacherStudents() {
 					</button>
 				</div>
 			)}
+
+			<CSVImportModal
+				isOpen={isCSVImportOpen}
+				onClose={() => setIsCSVImportOpen(false)}
+				onImportComplete={handleStudentImportComplete}
+				parseFile={parseStudentCSVFile}
+				validateRow={validateStudentRow}
+				downloadTemplate={downloadStudentTemplate}
+				modalTitle="Import Students from CSV"
+				processingText="Importing students..."
+				entityName="student"
+				requiredFields={["Name"]}
+				optionalFields={["ID", "Class Name", "Subject", "Attendance"]}
+				previewColumns={[
+					{ key: "id", label: "Student ID" },
+					{ key: "name", label: "Name" },
+					{ key: "className", label: "Class" },
+					{ key: "subject", label: "Subject" },
+					{ key: "attendanceStatus", label: "Attendance" },
+				]}
+			/>
 		</section>
 	);
 }

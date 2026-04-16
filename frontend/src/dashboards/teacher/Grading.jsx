@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import CSVImportModal from "../../components/CSVImportModal";
 import "./Grading.css";
 
 const API_BASE_URL = "http://localhost:8080/api";
@@ -78,6 +79,7 @@ function Grading() {
   const [subjects, setSubjects] = useState([]);
   const [importMessage, setImportMessage] = useState("");
   const [importError, setImportError] = useState("");
+  const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
 
   // Fetch teacher's assigned classes and subjects
   useEffect(() => {
@@ -638,82 +640,104 @@ function Grading() {
     printWindow.print();
   };
 
-  const handleImport = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+  const parseGradingCSV = async (file) => {
+    const csvText = await file.text();
+    const lines = csvText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+    if (lines.length < 2) {
+      throw new Error("CSV file is empty.");
+    }
+
+    const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase().replace(/\s+/g, ""));
+    const studentIdIndex = headers.findIndex((header) => header === "studentid");
+    const marksIndex = headers.findIndex((header) => header === "marks" || header === "mark");
+
+    if (studentIdIndex === -1 || marksIndex === -1) {
+      throw new Error("CSV must include Student ID and Marks columns.");
+    }
+
+    const data = lines.slice(1).map((line) => {
+      const values = parseCsvLine(line);
+      return {
+        studentId: String(values[studentIdIndex] || "").trim(),
+        marks: String(values[marksIndex] || "").trim(),
+      };
+    });
+
+    return { rows: lines, data };
+  };
+
+  const validateGradingRow = (row) => {
+    const errors = [];
+
+    if (!row.studentId) {
+      errors.push("Student ID is required");
+    }
+
+    const numericMark = Number(row.marks);
+    if (row.marks === "" || Number.isNaN(numericMark)) {
+      errors.push("Marks must be a valid number");
+    } else if (numericMark < 0 || numericMark > 100) {
+      errors.push("Marks must be between 0 and 100");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  };
+
+  const downloadGradingTemplate = () => {
+    const template = ["student_id,marks", "STU1001,78", "STU1002,64", "STU1003,89"].join("\n");
+    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "grading_import_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleGradingImportComplete = (result) => {
+    const successfulRows = result?.successful || [];
+    if (successfulRows.length === 0) {
+      setImportError("No valid grading records were imported.");
       return;
     }
 
-    setImportMessage("");
-    setImportError("");
+    const nextMarks = { ...enteredMarks };
+    let updatedCount = 0;
 
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      setImportError("Please upload a CSV file.");
-      event.target.value = "";
-      return;
-    }
+    successfulRows.forEach((row) => {
+      const studentId = String(row.studentId || "").trim().toLowerCase();
+      const mark = Number(row.marks);
 
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      try {
-        const csvText = String(loadEvent.target?.result || "");
-        const lines = csvText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-
-        if (lines.length < 2) {
-          throw new Error("CSV file is empty.");
-        }
-
-        const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
-        const studentIdIndex = headers.findIndex((header) => header === "student id" || header === "studentid");
-        const marksIndex = headers.findIndex((header) => header === "marks" || header === "mark");
-
-        if (studentIdIndex === -1 || marksIndex === -1) {
-          throw new Error("CSV must include Student ID and Marks columns.");
-        }
-
-        const nextMarks = { ...enteredMarks };
-        let updatedCount = 0;
-
-        for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
-          const values = parseCsvLine(lines[lineIndex]);
-          const importedId = String(values[studentIdIndex] || "").trim();
-          const importedMark = Number(values[marksIndex]);
-
-          if (!importedId || Number.isNaN(importedMark)) {
-            continue;
-          }
-
-          const match = students.find(
-            (student) => String(student.studentId || student.id).trim().toLowerCase() === importedId.toLowerCase()
-          );
-
-          if (!match) {
-            continue;
-          }
-
-          nextMarks[match.id] = Math.max(0, Math.min(100, importedMark));
-          updatedCount += 1;
-        }
-
-        if (updatedCount === 0) {
-          throw new Error("No matching students found in CSV.");
-        }
-
-        setEnteredMarks(nextMarks);
-        setImportMessage(`Imported marks for ${updatedCount} students.`);
-      } catch (importException) {
-        setImportError(importException.message || "Failed to import CSV.");
-      } finally {
-        event.target.value = "";
+      if (!studentId || Number.isNaN(mark)) {
+        return;
       }
-    };
 
-    reader.onerror = () => {
-      setImportError("Unable to read the selected file.");
-      event.target.value = "";
-    };
+      const match = students.find(
+        (student) => String(student.studentId || student.id).trim().toLowerCase() === studentId
+      );
 
-    reader.readAsText(file);
+      if (!match) {
+        return;
+      }
+
+      nextMarks[match.id] = Math.max(0, Math.min(100, mark));
+      updatedCount += 1;
+    });
+
+    if (updatedCount === 0) {
+      setImportError("Imported CSV had no student IDs matching this class list.");
+      return;
+    }
+
+    setEnteredMarks(nextMarks);
+    setImportError("");
+    setImportMessage(`Imported marks for ${updatedCount} students.`);
   };
 
   return (
@@ -807,7 +831,6 @@ function Grading() {
       </div>
 
       <div className="student-table-section">
-        <label className="table-label">Students Table</label>
         <div className="teacher-students-toolbar d-flex flex-wrap gap-2">
           <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportCSV}>
             <i className="fa-solid fa-file-csv"></i> CSV
@@ -821,14 +844,14 @@ function Grading() {
           <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handlePrint}>
             <i className="fa-solid fa-print"></i> Print
           </button>
-          <label className="btn btn-primary teacher-toolbar-btn mb-0">
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={() => setIsCSVImportOpen(true)}>
             <i className="fa-solid fa-upload"></i> Import
-            <input type="file" accept=".csv" onChange={handleImport} style={{ display: "none" }} />
-          </label>
+          </button>
         </div>
         {importMessage && <p className="grading-message grading-message-success">{importMessage}</p>}
         {importError && <p className="grading-message grading-message-error">{importError}</p>}
         <div className="teacher-students-table-wrap">
+        <label className="table-label">Students Table</label>
           <table className="teacher-students-table">
             <thead>
               <tr>
@@ -896,6 +919,24 @@ function Grading() {
           {message}
         </p>
       )}
+
+      <CSVImportModal
+        isOpen={isCSVImportOpen}
+        onClose={() => setIsCSVImportOpen(false)}
+        onImportComplete={handleGradingImportComplete}
+        parseFile={parseGradingCSV}
+        validateRow={validateGradingRow}
+        downloadTemplate={downloadGradingTemplate}
+        modalTitle="Import Student Marks from CSV"
+        processingText="Importing student marks..."
+        entityName="record"
+        requiredFields={["Student ID", "Marks (0-100)"]}
+        optionalFields={[]}
+        previewColumns={[
+          { key: "studentId", label: "Student ID" },
+          { key: "marks", label: "Marks" },
+        ]}
+      />
     </div>
   );
 }
