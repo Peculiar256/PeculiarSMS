@@ -1,6 +1,5 @@
 package com.academix.server.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -437,45 +436,11 @@ public class StudentService {
         fees.put("studentName", student.getFullName());
         fees.put("currentClass", student.getCurrentClass());
         fees.put("residenceStatus", student.getResidenceStatus());
-        
-        // Sample fees data
-        int totalFees = student.getResidenceStatus() == Student.ResidenceStatus.BOARDING ? 450000 : 350000;
-        int paidAmount = (int)(totalFees * 0.75); // 75% paid
-        int balance = totalFees - paidAmount;
-        
-        fees.put("totalFees", totalFees);
-        fees.put("paidAmount", paidAmount);
-        fees.put("balance", balance);
-        fees.put("currency", "UGX");
-        fees.put("academicYear", "2025/2026");
-        fees.put("term", "2");
-        
-        // Sample payment records
-        List<Map<String, Object>> payments = new java.util.ArrayList<>();
-        payments.add(Map.of(
-            "date", "2025-02-10",
-            "amount", 100000,
-            "method", "Bank Transfer",
-            "reference", "TRF-20250210-001",
-            "status", "Completed"
-        ));
-        payments.add(Map.of(
-            "date", "2025-03-15",
-            "amount", 125000,
-            "method", "Cash",
-            "reference", "CSH-20250315-002",
-            "status", "Completed"
-        ));
-        payments.add(Map.of(
-            "date", "2025-04-20",
-            "amount", 100000,
-            "method", "Cheque",
-            "reference", "CHQ-20250420-003",
-            "status", "Completed"
-        ));
-        
-        fees.put("payments", payments);
-        fees.put("paymentDeadline", "2025-06-30");
+        fees.put("message", "Fees module not yet implemented");
+        fees.put("totalFees", 0);
+        fees.put("paidAmount", 0);
+        fees.put("balance", 0);
+        fees.put("payments", List.of()); // Placeholder for actual payments
         
         return fees;
     }
@@ -492,45 +457,12 @@ public class StudentService {
         attendance.put("studentId", student.getStudentId());
         attendance.put("studentName", student.getFullName());
         attendance.put("currentClass", student.getCurrentClass());
-        
-        // Sample attendance data
-        int totalDays = 100;
-        int presentDays = 85;
-        int absentDays = 15;
-        double attendancePercentage = (double) presentDays / totalDays * 100;
-        
-        attendance.put("totalDays", totalDays);
-        attendance.put("presentDays", presentDays);
-        attendance.put("absentDays", absentDays);
-        attendance.put("attendancePercentage", String.format("%.1f", attendancePercentage));
-        attendance.put("status", attendancePercentage >= 80 ? "Good" : "Poor");
-        attendance.put("academicYear", "2025/2026");
-        
-        // Sample attendance records
-        List<Map<String, Object>> records = new java.util.ArrayList<>();
-        java.time.LocalDate date = java.time.LocalDate.now().minusDays(100);
-        String[] statuses = {"Present", "Present", "Present", "Present", "Absent", "Present", "Present"};
-        
-        for (int i = 0; i < 100; i++) {
-            records.add(Map.of(
-                "date", date.toString(),
-                "status", statuses[i % 7],
-                "day", date.getDayOfWeek().toString()
-            ));
-            date = date.plusDays(1);
-        }
-        
-        // Monthly summary
-        List<Map<String, Object>> monthlyAttendance = new java.util.ArrayList<>();
-        monthlyAttendance.add(Map.of("month", "January", "present", 18, "absent", 2));
-        monthlyAttendance.add(Map.of("month", "February", "present", 17, "absent", 3));
-        monthlyAttendance.add(Map.of("month", "March", "present", 20, "absent", 0));
-        monthlyAttendance.add(Map.of("month", "April", "present", 15, "absent", 5));
-        monthlyAttendance.add(Map.of("month", "May", "present", 15, "absent", 5));
-        
-        attendance.put("records", records);
-        attendance.put("monthlyAttendance", monthlyAttendance);
-        attendance.put("lastMarked", java.time.LocalDateTime.now().toString());
+        attendance.put("message", "Attendance module not yet implemented");
+        attendance.put("totalDays", 0);
+        attendance.put("presentDays", 0);
+        attendance.put("absentDays", 0);
+        attendance.put("attendancePercentage", 0.0);
+        attendance.put("records", List.of()); // Placeholder for actual records
         
         return attendance;
     }
