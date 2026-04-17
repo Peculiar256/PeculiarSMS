@@ -19,7 +19,7 @@ From the project root:
 
 ```bash
 cd server
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 Backend runs on:
@@ -51,7 +51,7 @@ Terminal 1:
 
 ```bash
 cd server
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 Terminal 2:
@@ -79,7 +79,7 @@ Then run backend again:
 
 ```bash
 cd server
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 ### Port 5173 already in use (frontend)
