@@ -2,7 +2,43 @@ import React, { useRef, useState } from 'react';
 import { parseCSV, validateTeacherRow, downloadCSVTemplate } from '../utils/csvImporter';
 import '../css/CSVImportModal.css';
 
-const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
+const DEFAULT_REQUIRED_FIELDS = [
+  'First Name',
+  'Last Name',
+  'Email (must be valid)',
+  'Contact Number',
+  'Gender (MALE/FEMALE)'
+];
+
+const DEFAULT_OPTIONAL_FIELDS = [
+  'Department',
+  'Qualification',
+  'Specialization'
+];
+
+const DEFAULT_PREVIEW_COLUMNS = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'email', label: 'Email' },
+  { key: 'contactNumber', label: 'Phone' },
+  { key: 'gender', label: 'Gender' },
+  { key: 'department', label: 'Department' }
+];
+
+const CSVImportModal = ({
+  isOpen,
+  onClose,
+  onImportComplete,
+  parseFile = parseCSV,
+  validateRow = validateTeacherRow,
+  downloadTemplate = downloadCSVTemplate,
+  modalTitle = 'Import Teachers from CSV',
+  processingText = 'Importing records...',
+  entityName = 'teacher',
+  requiredFields = DEFAULT_REQUIRED_FIELDS,
+  optionalFields = DEFAULT_OPTIONAL_FIELDS,
+  previewColumns = DEFAULT_PREVIEW_COLUMNS
+}) => {
   const [importStep, setImportStep] = useState('upload'); // upload, preview, processing, complete
   const [selectedFile, setSelectedFile] = useState(null);
   const [parsedData, setParsedData] = useState([]);
@@ -27,15 +63,15 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
     setErrorMessage('');
 
     try {
-      const { rows, data } = await parseCSV(file);
+      const { rows, data } = await parseFile(file);
       setParsedData(data);
 
       // Validate all rows
-      const results = data.map((teacher, index) => {
-        const validation = validateTeacherRow(teacher, index + 2); // +2 because of header row
+      const results = data.map((record, index) => {
+        const validation = validateRow(record, index + 2); // +2 because of header row
         return {
           rowNumber: index + 2,
-          data: teacher,
+          data: record,
           ...validation
         };
       });
@@ -49,7 +85,7 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
   };
 
   const handleTemplateDownload = () => {
-    downloadCSVTemplate();
+    downloadTemplate();
   };
 
   const invalidRows = validationResults.filter(r => !r.isValid);
@@ -101,7 +137,7 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
       if (totalFailed === 0) {
         setImportStatus('success');
         setErrorMessage(
-          `Successfully imported ${successfulImports.length} teacher${successfulImports.length !== 1 ? 's' : ''}`
+          `Successfully imported ${successfulImports.length} ${entityName}${successfulImports.length !== 1 ? 's' : ''}`
         );
         onImportComplete?.({
           successful: successfulImports,
@@ -111,11 +147,16 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
       } else if (successfulImports.length > 0) {
         setImportStatus('warning');
         setErrorMessage(
-          `Imported ${successfulImports.length} teachers, but ${totalFailed} had issues`
+          `Imported ${successfulImports.length} ${entityName}${successfulImports.length !== 1 ? 's' : ''}, but ${totalFailed} had issues`
         );
+        onImportComplete?.({
+          successful: successfulImports,
+          failed: failedImports,
+          invalidRows
+        });
       } else {
         setImportStatus('error');
-        setErrorMessage('Import failed - no teachers could be added');
+        setErrorMessage(`Import failed - no ${entityName}s could be added`);
       }
     } catch (error) {
       setImportStep('complete');
@@ -146,7 +187,7 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content csv-import-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>📥 Import Teachers from CSV</h2>
+          <h2>📥 {modalTitle}</h2>
           <button className="close-btn" onClick={handleClose}>✕</button>
         </div>
 
@@ -204,21 +245,21 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
                   <div className="requirements-column">
                     <h4>Required Fields:</h4>
                     <ul>
-                      <li>First Name</li>
-                      <li>Last Name</li>
-                      <li>Email (must be valid)</li>
-                      <li>Contact Number</li>
-                      <li>Gender (MALE/FEMALE)</li>
+                      {requiredFields.map((field) => (
+                        <li key={field}>{field}</li>
+                      ))}
                     </ul>
                   </div>
-                  <div className="requirements-column">
-                    <h4>Optional Fields:</h4>
-                    <ul>
-                      <li>Department</li>
-                      <li>Qualification</li>
-                      <li>Specialization</li>
-                    </ul>
-                  </div>
+                  {optionalFields.length > 0 && (
+                    <div className="requirements-column">
+                      <h4>Optional Fields:</h4>
+                      <ul>
+                        {optionalFields.map((field) => (
+                          <li key={field}>{field}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -266,23 +307,17 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
                   <table>
                     <thead>
                       <tr>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Gender</th>
-                        <th>Department</th>
+                        {previewColumns.map((column) => (
+                          <th key={column.key}>{column.label}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       {validRows.slice(0, 10).map((row, idx) => (
                         <tr key={idx}>
-                          <td>{row.data.firstName}</td>
-                          <td>{row.data.lastName}</td>
-                          <td>{row.data.email}</td>
-                          <td>{row.data.contactNumber}</td>
-                          <td>{row.data.gender}</td>
-                          <td>{row.data.department || '-'}</td>
+                          {previewColumns.map((column) => (
+                            <td key={column.key}>{row.data[column.key] ?? '-'}</td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
@@ -307,7 +342,7 @@ const CSVImportModal = ({ isOpen, onClose, onImportComplete }) => {
                 <div className="progress-circle">
                   <div className="progress-number">{importProgress}%</div>
                 </div>
-                <p>Importing teachers...</p>
+                <p>{processingText}</p>
                 <div className="progress-bar">
                   <div
                     className="progress-fill"

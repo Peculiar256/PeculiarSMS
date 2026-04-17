@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import './FeaturePages.css';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 function StudentPerformanceReport() {
     const [selectedClass, setSelectedClass] = useState('S.4A');
@@ -55,6 +67,91 @@ function StudentPerformanceReport() {
     };
 
     const stats = getPerformanceStats();
+    const studentCount = classStudents.length;
+
+    const getSubjectAverage = (field) => {
+        if (studentCount === 0) return 0;
+        return Number((classStudents.reduce((sum, student) => sum + student[field], 0) / studentCount).toFixed(1));
+    };
+
+    const subjectChartData = {
+        labels: ['Mathematics', 'English', 'Science'],
+        datasets: [
+            {
+                label: 'Average Score',
+                data: [
+                    getSubjectAverage('mathAvg'),
+                    getSubjectAverage('engAvg'),
+                    getSubjectAverage('scienceAvg'),
+                ],
+                backgroundColor: ['#2c4ebb', '#3b82f6', '#0ea5e9'],
+                borderRadius: 8,
+                maxBarThickness: 56,
+            },
+        ],
+    };
+
+    const subjectChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.parsed.y}%`,
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: (value) => `${value}%`,
+                },
+                grid: {
+                    color: '#e2e8f0',
+                },
+            },
+            x: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
+    };
+
+    const gradeLabels = ['A+', 'A', 'B', 'C', 'D'];
+    const gradeCounts = gradeLabels.map((grade) => classStudents.filter((student) => student.grade === grade).length);
+
+    const gradeChartData = {
+        labels: gradeLabels,
+        datasets: [
+            {
+                label: 'Students',
+                data: gradeCounts,
+                backgroundColor: gradeLabels.map((grade) => getGradeColor(grade)),
+                borderWidth: 0,
+            },
+        ],
+    };
+
+    const gradeChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.raw}`,
+                },
+            },
+        },
+    };
 
     return (
         <div className="feature-page">
@@ -101,8 +198,33 @@ function StudentPerformanceReport() {
                     <div className="stat-label">Lowest Score</div>
                 </div>
                 <div className="stat-box">
-                    <div className="stat-number">{classStudents.length}</div>
+                    <div className="stat-number">{studentCount}</div>
                     <div className="stat-label">Students</div>
+                </div>
+            </div>
+
+            {/* Subject-wise Analysis */}
+            <div className="grid-2">
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Subject Performance</h3>
+                    </div>
+                    <div className="card-body">
+                        <div style={{ height: '280px' }}>
+                            <Bar data={subjectChartData} options={subjectChartOptions} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Grade Distribution</h3>
+                    </div>
+                    <div className="card-body">
+                        <div style={{ height: '280px' }}>
+                            <Doughnut data={gradeChartData} options={gradeChartOptions} />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -142,9 +264,9 @@ function StudentPerformanceReport() {
                                             <span className="score-highlight">{student.overallAvg}</span>
                                         </td>
                                         <td>
-                                            <span 
-                                                className="grade-badge" 
-                                                style={{ 
+                                            <span
+                                                className="grade-badge"
+                                                style={{
                                                     backgroundColor: getGradeBackground(student.grade),
                                                     color: getGradeColor(student.grade)
                                                 }}
@@ -159,60 +281,6 @@ function StudentPerformanceReport() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-
-            {/* Subject-wise Analysis */}
-            <div className="grid-2">
-                <div className="card">
-                    <div className="card-header">
-                        <h3>Subject Performance</h3>
-                    </div>
-                    <div className="card-body">
-                        <div className="subject-stats">
-                            {['Mathematics', 'English', 'Science'].map((subject, idx) => {
-                                const field = subject === 'Mathematics' ? 'mathAvg' : subject === 'English' ? 'engAvg' : 'scienceAvg';
-                                const avg = (classStudents.reduce((a, b) => a + b[field], 0) / classStudents.length).toFixed(1);
-                                return (
-                                    <div key={idx} className="subject-stat">
-                                        <h5>{subject}</h5>
-                                        <div className="progress-bar">
-                                            <div className="progress-fill" style={{ width: `${avg}%` }}></div>
-                                        </div>
-                                        <p className="stat-value">{avg}%</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-header">
-                        <h3>Grade Distribution</h3>
-                    </div>
-                    <div className="card-body">
-                        <div className="grade-distribution">
-                            {['A+', 'A', 'B', 'C', 'D'].map(grade => {
-                                const count = classStudents.filter(s => s.grade === grade).length;
-                                return (
-                                    <div key={grade} className="grade-bar">
-                                        <span className="grade-label">{grade}</span>
-                                        <div className="bar-container">
-                                            <div 
-                                                className="bar" 
-                                                style={{ 
-                                                    width: `${(count / classStudents.length) * 100}%`,
-                                                    backgroundColor: getGradeColor(grade)
-                                                }}
-                                            ></div>
-                                        </div>
-                                        <span className="count">{count}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
                     </div>
                 </div>
             </div>

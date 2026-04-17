@@ -47,6 +47,42 @@
 	margin: 10px 0;
 }
 
+.teacher-students-toolbar {
+	margin: 8px 0 14px;
+	width: 100%;
+}
+
+.teacher-toolbar-btn {
+	padding: 8px 14px;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 600;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 100px;
+	transition: all 0.3s ease;
+	background-color: #007bff;
+	border-color: #007bff;
+	color: #ffffff;
+	box-shadow: none;
+}
+
+.teacher-toolbar-btn:hover,
+.teacher-toolbar-btn:focus-visible {
+	background-color: #0056b3;
+	border-color: #0056b3;
+	color: #ffffff;
+	transform: translateY(-2px);
+	box-shadow: 0 2px 8px rgba(0, 91, 187, 0.3);
+}
+
+.teacher-toolbar-btn:focus-visible {
+	outline: none;
+}
+
 .teacher-students-table-wrap {
 	overflow-x: auto;
 }
@@ -187,5 +223,14 @@
 
 	.attendance-buttons {
 		flex-wrap: wrap;
+	}
+
+	.teacher-students-toolbar {
+		flex-direction: column;
+	}
+
+	.teacher-toolbar-btn {
+		width: 100%;
+		justify-content: center;
 	}
 }
