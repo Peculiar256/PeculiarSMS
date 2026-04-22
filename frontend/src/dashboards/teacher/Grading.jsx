@@ -1,8 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import CSVImportModal from "../../components/CSVImportModal";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Legend,
+  LinearScale,
+  Tooltip,
+} from "chart.js";
+import { Bar, Doughnut } from "react-chartjs-2";
 import "./Grading.css";
 
 const API_BASE_URL = "http://localhost:8080/api";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 // Grade calculation function
 function getGrade(mark) {
@@ -16,6 +29,45 @@ function getGrade(mark) {
   if (mark >= 40) return "P7";
   if (mark >= 34) return "P8";
   return "F9";
+}
+
+function escapeCsvCell(value) {
+  const normalized = String(value ?? "");
+  if (/[",\n]/.test(normalized)) {
+    return `"${normalized.replace(/"/g, '""')}"`;
+  }
+  return normalized;
+}
+
+function parseCsvLine(line) {
+  const values = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+
+    if (char === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
 }
 
 function Grading() {
@@ -37,6 +89,9 @@ function Grading() {
   const [error, setError] = useState("");
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
+  const [importMessage, setImportMessage] = useState("");
+  const [importError, setImportError] = useState("");
+  const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
 
   // Fetch teacher's assigned classes and subjects
   useEffect(() => {
@@ -425,6 +480,421 @@ function Grading() {
     }
   };
 
+  const buildExportRows = () => {
+    return filteredStudents.map((student) => {
+      const rawMark = enteredMarks[student.id];
+      const marks = rawMark === undefined || rawMark === "" ? "" : Number(rawMark);
+
+      return {
+        studentId: student.studentId || student.id,
+        studentName: student.name,
+        className: student.className,
+        subject,
+        exam: selectedExam?.name || "",
+        marks,
+        grade: marks === "" ? "-" : getGrade(marks),
+      };
+    });
+  };
+
+  const handleExportCSV = () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to export.");
+      setMessageType("error");
+      return;
+    }
+
+    const headers = ["Student ID", "Student Name", "Class", "Subject", "Exam", "Marks", "Grade"];
+    const dataRows = rows.map((row) => [
+      row.studentId,
+      row.studentName,
+      row.className,
+      row.subject,
+      row.exam,
+      row.marks,
+      row.grade,
+    ]);
+
+    const csvContent = [headers.join(","), ...dataRows.map((row) => row.map(escapeCsvCell).join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.href = url;
+    link.setAttribute("download", `grading_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportExcel = async () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to export.");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      const XLSX = await import("xlsx");
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Grading");
+      XLSX.writeFile(workbook, `grading_${new Date().toISOString().split("T")[0]}.xlsx`);
+    } catch (exportError) {
+      setMessage(`Failed to export Excel: ${exportError.message}`);
+      setMessageType("error");
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to export.");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      const jsPDF = (await import("jspdf")).jsPDF;
+      const autoTable = (await import("jspdf-autotable")).default;
+      const doc = new jsPDF({ orientation: "landscape" });
+
+      doc.setFontSize(14);
+      doc.text("Grading Report", 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Subject: ${subject || "N/A"}`, 14, 22);
+      doc.text(`Exam: ${selectedExam?.name || "N/A"}`, 14, 28);
+
+      autoTable(doc, {
+        startY: 34,
+        head: [["Student ID", "Student Name", "Class", "Subject", "Exam", "Marks", "Grade"]],
+        body: rows.map((row) => [
+          row.studentId,
+          row.studentName,
+          row.className,
+          row.subject,
+          row.exam,
+          row.marks,
+          row.grade,
+        ]),
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [0, 123, 255] },
+      });
+
+      doc.save(`grading_${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (exportError) {
+      setMessage(`Failed to export PDF: ${exportError.message}`);
+      setMessageType("error");
+    }
+  };
+
+  const handlePrint = () => {
+    const rows = buildExportRows();
+    if (rows.length === 0) {
+      setMessage("No students available to print.");
+      setMessageType("error");
+      return;
+    }
+
+    const printWindow = window.open("", "", "height=700,width=1100");
+    if (!printWindow) {
+      setMessage("Unable to open print window.");
+      setMessageType("error");
+      return;
+    }
+
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr><td>${row.studentId}</td><td>${row.studentName}</td><td>${row.className}</td><td>${row.subject}</td><td>${row.exam}</td><td>${row.marks}</td><td>${row.grade}</td></tr>`
+      )
+      .join("");
+
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Grading Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h2 { margin-bottom: 8px; }
+          p { margin: 4px 0 12px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+          th { background: #f3f4f6; }
+        </style>
+      </head>
+      <body>
+        <h2>Grading Report</h2>
+        <p>Subject: ${subject || "N/A"} | Exam: ${selectedExam?.name || "N/A"}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Subject</th>
+              <th>Exam</th>
+              <th>Marks</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  const parseGradingCSV = async (file) => {
+    const csvText = await file.text();
+    const lines = csvText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+
+    if (lines.length < 2) {
+      throw new Error("CSV file is empty.");
+    }
+
+    const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase().replace(/\s+/g, ""));
+    const studentIdIndex = headers.findIndex((header) => header === "studentid");
+    const marksIndex = headers.findIndex((header) => header === "marks" || header === "mark");
+
+    if (studentIdIndex === -1 || marksIndex === -1) {
+      throw new Error("CSV must include Student ID and Marks columns.");
+    }
+
+    const data = lines.slice(1).map((line) => {
+      const values = parseCsvLine(line);
+      return {
+        studentId: String(values[studentIdIndex] || "").trim(),
+        marks: String(values[marksIndex] || "").trim(),
+      };
+    });
+
+    return { rows: lines, data };
+  };
+
+  const validateGradingRow = (row) => {
+    const errors = [];
+
+    if (!row.studentId) {
+      errors.push("Student ID is required");
+    }
+
+    const numericMark = Number(row.marks);
+    if (row.marks === "" || Number.isNaN(numericMark)) {
+      errors.push("Marks must be a valid number");
+    } else if (numericMark < 0 || numericMark > 100) {
+      errors.push("Marks must be between 0 and 100");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  };
+
+  const downloadGradingTemplate = () => {
+    const template = ["student_id,marks", "STU1001,78", "STU1002,64", "STU1003,89"].join("\n");
+    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "grading_import_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleGradingImportComplete = (result) => {
+    const successfulRows = result?.successful || [];
+    if (successfulRows.length === 0) {
+      setImportError("No valid grading records were imported.");
+      return;
+    }
+
+    const nextMarks = { ...enteredMarks };
+    let updatedCount = 0;
+
+    successfulRows.forEach((row) => {
+      const studentId = String(row.studentId || "").trim().toLowerCase();
+      const mark = Number(row.marks);
+
+      if (!studentId || Number.isNaN(mark)) {
+        return;
+      }
+
+      const match = students.find(
+        (student) => String(student.studentId || student.id).trim().toLowerCase() === studentId
+      );
+
+      if (!match) {
+        return;
+      }
+
+      nextMarks[match.id] = Math.max(0, Math.min(100, mark));
+      updatedCount += 1;
+    });
+
+    if (updatedCount === 0) {
+      setImportError("Imported CSV had no student IDs matching this class list.");
+      return;
+    }
+
+    setEnteredMarks(nextMarks);
+    setImportError("");
+    setImportMessage(`Imported marks for ${updatedCount} students.`);
+  };
+
+  const scoreBucketLabels = ["0-39", "40-49", "50-59", "60-69", "70-79", "80-100"];
+  const gradeLabels = ["D1", "D2", "C3", "C4", "C5", "C6", "P7", "P8", "F9"];
+
+  const chartMetrics = useMemo(() => {
+    const gradedEntries = [];
+
+    filteredStudents.forEach((student) => {
+      const rawMark = enteredMarks[student.id];
+      if (rawMark === undefined || rawMark === "") {
+        return;
+      }
+
+      const mark = Number(rawMark);
+      if (Number.isNaN(mark)) {
+        return;
+      }
+
+      gradedEntries.push({
+        mark,
+        grade: getGrade(mark),
+      });
+    });
+
+    const scoreBucketCounts = [0, 0, 0, 0, 0, 0];
+    const gradeCountMap = {
+      D1: 0,
+      D2: 0,
+      C3: 0,
+      C4: 0,
+      C5: 0,
+      C6: 0,
+      P7: 0,
+      P8: 0,
+      F9: 0,
+    };
+
+    gradedEntries.forEach((entry) => {
+      const mark = entry.mark;
+      if (mark < 40) scoreBucketCounts[0] += 1;
+      else if (mark < 50) scoreBucketCounts[1] += 1;
+      else if (mark < 60) scoreBucketCounts[2] += 1;
+      else if (mark < 70) scoreBucketCounts[3] += 1;
+      else if (mark < 80) scoreBucketCounts[4] += 1;
+      else scoreBucketCounts[5] += 1;
+
+      gradeCountMap[entry.grade] += 1;
+    });
+
+    const gradedCount = gradedEntries.length;
+    const totalStudents = filteredStudents.length;
+    const pendingCount = Math.max(totalStudents - gradedCount, 0);
+    const averageMark = gradedCount
+      ? (gradedEntries.reduce((sum, entry) => sum + entry.mark, 0) / gradedCount).toFixed(1)
+      : "0.0";
+
+    return {
+      gradedCount,
+      pendingCount,
+      totalStudents,
+      averageMark,
+      scoreBucketCounts,
+      gradeCounts: gradeLabels.map((grade) => gradeCountMap[grade]),
+    };
+  }, [filteredStudents, enteredMarks]);
+
+  const scoreBucketsData = useMemo(
+    () => ({
+      labels: scoreBucketLabels,
+      datasets: [
+        {
+          label: "Students",
+          data: chartMetrics.scoreBucketCounts,
+          backgroundColor: "#4f6edc",
+          borderRadius: 8,
+        },
+      ],
+    }),
+    [chartMetrics.scoreBucketCounts]
+  );
+
+  const scoreBucketsOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+          },
+        },
+      },
+    }),
+    []
+  );
+
+  const hasStudentsInView = chartMetrics.totalStudents > 0;
+  const gradeDistributionData = useMemo(
+    () => ({
+      labels: hasStudentsInView ? [...gradeLabels, "Pending"] : ["No Data"],
+      datasets: [
+        {
+          label: "Grades",
+          data: hasStudentsInView ? [...chartMetrics.gradeCounts, chartMetrics.pendingCount] : [1],
+          backgroundColor: hasStudentsInView
+            ? [
+                "#1d4ed8",
+                "#2563eb",
+                "#0284c7",
+                "#0891b2",
+                "#0d9488",
+                "#059669",
+                "#d97706",
+                "#dc2626",
+                "#991b1b",
+                "#9ca3af",
+              ]
+            : ["#d1d5db"],
+          borderWidth: 0,
+        },
+      ],
+    }),
+    [hasStudentsInView, chartMetrics.gradeCounts, chartMetrics.pendingCount]
+  );
+
+  const gradeDistributionOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+      },
+    }),
+    []
+  );
+
   return (
     <div className="grading-card">
       <div className="grading-header-row">
@@ -515,9 +985,54 @@ function Grading() {
 
       </div>
 
+      <div className="grading-charts-section">
+        <div className="grading-charts-grid">
+          <div className="grading-chart-card">
+            <div className="grading-chart-header">
+              <h3>Score Range Distribution</h3>
+              <p>
+                {chartMetrics.gradedCount}/{chartMetrics.totalStudents} graded, Avg {chartMetrics.averageMark}
+              </p>
+            </div>
+            <div className="grading-chart-canvas">
+              <Bar data={scoreBucketsData} options={scoreBucketsOptions} />
+            </div>
+          </div>
+
+          <div className="grading-chart-card">
+            <div className="grading-chart-header">
+              <h3>Grade Distribution</h3>
+              <p>{chartMetrics.pendingCount} pending mark(s)</p>
+            </div>
+            <div className="grading-chart-canvas">
+              <Doughnut data={gradeDistributionData} options={gradeDistributionOptions} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="student-table-section">
-        <label className="table-label">Students Table</label>
+        <div className="teacher-students-toolbar d-flex flex-wrap gap-2">
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportCSV}>
+            <i className="fa-solid fa-file-csv"></i> CSV
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportExcel}>
+            <i className="fa-solid fa-file-excel"></i> Excel
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handleExportPDF}>
+            <i className="fa-solid fa-file-pdf"></i> PDF
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={handlePrint}>
+            <i className="fa-solid fa-print"></i> Print
+          </button>
+          <button type="button" className="btn btn-primary teacher-toolbar-btn" onClick={() => setIsCSVImportOpen(true)}>
+            <i className="fa-solid fa-upload"></i> Import
+          </button>
+        </div>
+        {importMessage && <p className="grading-message grading-message-success">{importMessage}</p>}
+        {importError && <p className="grading-message grading-message-error">{importError}</p>}
         <div className="teacher-students-table-wrap">
+        <label className="table-label">Students Table</label>
           <table className="teacher-students-table">
             <thead>
               <tr>
@@ -585,6 +1100,24 @@ function Grading() {
           {message}
         </p>
       )}
+
+      <CSVImportModal
+        isOpen={isCSVImportOpen}
+        onClose={() => setIsCSVImportOpen(false)}
+        onImportComplete={handleGradingImportComplete}
+        parseFile={parseGradingCSV}
+        validateRow={validateGradingRow}
+        downloadTemplate={downloadGradingTemplate}
+        modalTitle="Import Student Marks from CSV"
+        processingText="Importing student marks..."
+        entityName="record"
+        requiredFields={["Student ID", "Marks (0-100)"]}
+        optionalFields={[]}
+        previewColumns={[
+          { key: "studentId", label: "Student ID" },
+          { key: "marks", label: "Marks" },
+        ]}
+      />
     </div>
   );
 }

@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import './FeaturePages.css';
 
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
 function AssignmentManagement() {
+    const uploadInputRef = useRef(null);
     const [assignments, setAssignments] = useState([
         { id: 1, title: 'Mathematics Homework', class: 'S.4A', dueDate: '2026-04-10', submissions: 25, total: 30, status: 'active' },
         { id: 2, title: 'English Essay', class: 'S.5', dueDate: '2026-04-12', submissions: 28, total: 35, status: 'active' },
@@ -15,6 +28,10 @@ function AssignmentManagement() {
         dueDate: '',
         description: ''
     });
+
+    const handleUploadClick = () => {
+        uploadInputRef.current?.click();
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -37,6 +54,90 @@ function AssignmentManagement() {
         return '#ef4444';
     };
 
+    const assignmentCount = assignments.length;
+    const activeCount = assignments.filter((assignment) => assignment.status === 'active').length;
+    const avgSubmission = assignmentCount
+        ? Math.round(
+            (assignments.reduce((acc, assignment) => acc + (assignment.submissions / assignment.total), 0) /
+                assignmentCount) *
+                100
+        )
+        : 0;
+
+    const submissionRateData = {
+        labels: assignments.map((assignment) => assignment.title),
+        datasets: [
+            {
+                label: 'Submission Rate',
+                data: assignments.map((assignment) => Math.round((assignment.submissions / assignment.total) * 100)),
+                backgroundColor: assignments.map((assignment) =>
+                    getSubmissionColor(assignment.submissions, assignment.total)
+                ),
+                borderRadius: 8,
+                maxBarThickness: 44,
+            },
+        ],
+    };
+
+    const submissionRateOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.parsed.y}% submitted`,
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: (value) => `${value}%`,
+                },
+                grid: {
+                    color: '#e2e8f0',
+                },
+            },
+            x: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
+    };
+
+    const statusData = {
+        labels: ['Active', 'Closed'],
+        datasets: [
+            {
+                label: 'Assignments',
+                data: [activeCount, assignmentCount - activeCount],
+                backgroundColor: ['#10b981', '#64748b'],
+                borderWidth: 0,
+            },
+        ],
+    };
+
+    const statusOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.raw}`,
+                },
+            },
+        },
+    };
+
     return (
         <div className="feature-page">
             {/* Header */}
@@ -53,16 +154,40 @@ function AssignmentManagement() {
             {/* Stats Cards */}
             <div className="stats-row">
                 <div className="stat-box">
-                    <div className="stat-number">{assignments.length}</div>
+                    <div className="stat-number">{assignmentCount}</div>
                     <div className="stat-label">Total Assignments</div>
                 </div>
                 <div className="stat-box">
-                    <div className="stat-number">{assignments.filter(a => a.status === 'active').length}</div>
+                    <div className="stat-number">{activeCount}</div>
                     <div className="stat-label">Active</div>
                 </div>
                 <div className="stat-box">
-                    <div className="stat-number">{Math.round(assignments.reduce((acc, a) => acc + (a.submissions / a.total), 0) / assignments.length * 100)}%</div>
+                    <div className="stat-number">{avgSubmission}%</div>
                     <div className="stat-label">Avg Submission</div>
+                </div>
+            </div>
+
+            {/* Assignment Analytics */}
+            <div className="grid-2 assignment-analytics-grid">
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Submission Rate by Assignment</h3>
+                    </div>
+                    <div className="card-body">
+                        <div className="chart-wrap">
+                            <Bar data={submissionRateData} options={submissionRateOptions} />
+                        </div>
+                    </div>
+                </div>
+                <div className="card">
+                    <div className="card-header">
+                        <h3>Status Distribution</h3>
+                    </div>
+                    <div className="card-body">
+                        <div className="chart-wrap">
+                            <Doughnut data={statusData} options={statusOptions} />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -156,6 +281,15 @@ function AssignmentManagement() {
                                 ></textarea>
                             </div>
                             <div className="modal-footer">
+                                <input
+                                    ref={uploadInputRef}
+                                    type="file"
+                                    style={{ display: 'none' }}
+                                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+                                />
+                                <button type="button" className="btn btn-secondary" onClick={handleUploadClick}>
+                                    <i className="fa-solid fa-upload"></i> Upload
+                                </button>
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary">Create Assignment</button>
                             </div>
