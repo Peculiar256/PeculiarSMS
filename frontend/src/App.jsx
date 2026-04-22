@@ -7,6 +7,7 @@ import StudentRegistration from '/src/auth/StudentRegistration.jsx'
 import TeacherRegistration from "/src/auth/TeacherRegistration.jsx"
 import AdminDashboard from "./dashboards/admin/AdminDashboard";
 import TeacherDashboard from "./dashboards/teacher/TeacherDashboard";
+import ParentDashboard from "./dashboards/parent/ParentDashboard";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import VerifyEmail from "./auth/VerifyEmail";
@@ -97,6 +98,9 @@ function App() {
 
       {/* Public Routes - Teacher Dashboard */}
       <Route path="/teacher/*" element={<TeacherDashboard />} />
+
+      {/* Public Routes - Parent Dashboard */}
+      <Route path="/parent/*" element={<ParentDashboard />} />
 
       {/* Public Routes - Admin Dashboard */}
       <Route path="/admin/*" element={<AdminDashboard />} />
