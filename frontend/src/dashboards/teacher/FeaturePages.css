@@ -45,6 +45,17 @@
     margin-bottom: 24px;
 }
 
+.attendance-export-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.attendance-export-btn {
+    width: 100%;
+    justify-content: center;
+}
+
 .stat-box {
     background: white;
     padding: 20px;
