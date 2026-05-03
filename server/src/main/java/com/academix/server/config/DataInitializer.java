@@ -5,10 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.academix.server.model.Staff;
 import com.academix.server.repository.StaffRepository;
+import com.academix.server.service.UserService;
 
 /**
  * Initialize database with admin user on application startup
@@ -20,7 +20,7 @@ public class DataInitializer {
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
     
     @Bean
-    CommandLineRunner initializeData(StaffRepository staffRepository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initializeData(StaffRepository staffRepository, UserService userService) {
         return args -> {
             logger.info("=== Starting Database Initialization ===");
             
@@ -43,24 +43,39 @@ public class DataInitializer {
                 // Create and save admin user
                 Staff admin = new Staff();
                 admin.setEmail("admin@sms.com");
-                admin.setPassword(passwordEncoder.encode("Admin@123"));
                 admin.setFirstName("System");
                 admin.setLastName("Administrator");
-                admin.setStaffId("ADM001");
                 admin.setDepartment("Administration");
                 admin.setPosition("System Administrator");
-                admin.setNin("00000000000000");
+                admin.setNin("CM123456789ASD");
                 admin.setPhoneNumber("+256701234567");
                 admin.setNationality("Ugandan");
                 admin.setGender("MALE");
                 admin.setDateOfBirth(java.time.LocalDate.of(1990, 1, 1));
                 admin.setEmailVerified(true);  // Auto-verify email
                 admin.setIsActive(true);
+                admin.setIsDeleted(false);
                 
-                staffRepository.save(admin);
+                // Set raw password before encoding
+                admin.setPassword("Admin@123");
+                
+                // Use userService to properly encode the password
+                userService.prepareUserForSaving(admin);
+                
+                // Save to database first to get the auto-generated ID
+                admin = staffRepository.save(admin);
+                
+                // Generate and set the staffId based on the database ID
+                String staffId = "STAFF" + String.format("%06d", admin.getId());
+                admin.setStaffId(staffId);
+                
+                // Save again with the staffId
+                admin = staffRepository.save(admin);
+                
                 logger.info("✓ Admin user created successfully");
                 logger.info("  Email: admin@sms.com");
                 logger.info("  Password: Admin@123");
+                logger.info("  Staff ID: {}", staffId);
                 logger.info("  Email Verified: true");
                 
                 logger.info("=== Database Initialization Complete ===");
