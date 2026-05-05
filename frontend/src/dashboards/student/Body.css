@@ -62,7 +62,11 @@
     align-items: center;
     justify-content: center;
     font-size: 28px;
-    color: white;
+    color: white !important;
+}
+
+.dashboard-card .card-icon i {
+    color: white !important;
 }
 
 .card-icon.enrolled {
