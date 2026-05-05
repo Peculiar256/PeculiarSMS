@@ -21,6 +21,14 @@ function AdminCards (){
         day: 'numeric' 
     });
 
+    // Get greeting based on time of day
+    const getTimeGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 18) return "Good Afternoon";
+        return "Good Evening";
+    };
+
     // Fetch dashboard statistics from backend
     useEffect(() => {
         const fetchStats = async () => {
@@ -68,11 +76,20 @@ function AdminCards (){
         <div className="admin-container">
             <div className="banner-container">
                 <div className="banner-content">
-                    <h1>Dashboard Overview</h1>
-                    <p>Welcome back, Admin! Here's what's happening today.</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                        <i className="fa-solid fa-sun" style={{ fontSize: "24px", color: "#fbbf24" }}></i>
+                        <h1 style={{ margin: 0, fontSize: "28px", color: "white" }}>{getTimeGreeting()}, Admin!</h1>
+                    </div>
+                    <p style={{ margin: "8px 0 0 0", fontSize: "14px", color: "rgba(255, 255, 255, 0.95)" }}>
+                        <i className="fa-solid fa-chart-line" style={{ marginRight: "8px", color: "#e0f2fe" }}></i>
+                        You have a great day ahead. Monitor your school operations and make data-driven decisions.
+                    </p>
                 </div>
                 <div className="banner-date">
-                    <span>{currentDate}</span>
+                    <div style={{ textAlign: "right" }}>
+                        <p style={{ margin: 0, fontSize: "12px", color: "rgba(255, 255, 255, 0.8)", marginBottom: "4px" }}>TODAY</p>
+                        <span style={{ fontSize: "14px", fontWeight: "600", color: "white" }}>{currentDate}</span>
+                    </div>
                 </div>
             </div>
 

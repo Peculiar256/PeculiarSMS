@@ -132,14 +132,13 @@ function Subjects() {
     const normalizedTerm = searchTerm.trim().toLowerCase();
 
     return subjects.filter((subject) => {
-      const isActive = subject.isActive !== false;
       const matchesSearch = subject.code.toLowerCase().includes(normalizedTerm) || 
                            subject.name.toLowerCase().includes(normalizedTerm);
       const matchesType = filterType === "all" || 
                          (filterType === "Compulsory" && subject.isCompulsory === true) ||
                          (filterType === "Elective" && subject.isCompulsory === false);
 
-      return isActive && matchesSearch && matchesType;
+      return matchesSearch && matchesType;
     });
   }, [searchTerm, filterType, subjects]);
 
@@ -151,6 +150,15 @@ function Subjects() {
 
   const totalPages = Math.ceil(filteredSubjects.length / subjectsPerPage);
 
+  const resolveDepartmentName = (departmentValue) => {
+    if (!departmentValue) {
+      return null;
+    }
+
+    const selectedDepartment = departments.find((dept) => String(dept.id) === String(departmentValue));
+    return selectedDepartment?.name || departmentValue;
+  };
+
   // Handle add subject
   const handleAddSubject = async (e) => {
     e.preventDefault();
@@ -161,11 +169,7 @@ function Subjects() {
 
     setLoading(true);
     try {
-      // Map department name/value to ID
-      let departmentId = null;
-      if (formData.department) {
-        departmentId = parseInt(formData.department);
-      }
+      const department = resolveDepartmentName(formData.department);
 
       const subjectData = {
         code: formData.code,
@@ -179,7 +183,7 @@ function Subjects() {
         maxMarksPerPaper: parseInt(formData.maxMarksPerPaper) || 100,
         creditUnits: parseInt(formData.creditUnits) || 1,
         description: formData.description,
-        departmentId: departmentId,
+        department,
         isActive: formData.isActive,
       };
 
@@ -194,8 +198,9 @@ function Subjects() {
       setError(null);
     } catch (err) {
       console.error('Error adding subject:', err);
-      if (err.response?.data?.message) {
-        alert(`Error: ${err.response.data.message}`);
+      const backendMessage = err.response?.data?.message || err.response?.data?.error;
+      if (backendMessage) {
+        alert(`Error: ${backendMessage}`);
       } else {
         alert('Failed to add subject. Please try again.');
       }
@@ -300,6 +305,7 @@ function Subjects() {
   // Open edit modal
   const openEditModal = (subject) => {
     setSelectedSubject(subject);
+    const subjectDepartment = departments.find((dept) => dept.name === subject.department || String(dept.id) === String(subject.department));
     setFormData({
       code: subject.code,
       name: subject.name,
@@ -312,7 +318,7 @@ function Subjects() {
       maxMarksPerPaper: subject.maxMarksPerPaper || 100,
       creditUnits: subject.creditUnits || 1,
       description: subject.description || "",
-      department: subject.department || "",
+      department: subjectDepartment ? String(subjectDepartment.id) : "",
       isActive: subject.isActive !== false,
     });
     setIsEditModalOpen(true);
