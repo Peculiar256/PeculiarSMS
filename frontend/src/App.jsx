@@ -28,47 +28,47 @@ function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected Routes - Student - COMMENTED OUT */}
-      {/* <Route 
+      <Route 
         path="/student/*" 
         element={
           <ProtectedRoute requiredRole="STUDENT">
             <StudentDashboard />
           </ProtectedRoute>
         } 
-      /> */}
+      />
 
       {/* Protected Routes - Teacher - COMMENTED OUT */}
-      {/* <Route 
+      <Route 
         path="/teacher/*" 
         element={
           <ProtectedRoute requiredRole="TEACHER">
             <TeacherDashboard />
           </ProtectedRoute>
         } 
-      /> */}
+      />
 
       {/* Protected Routes - Admin - COMMENTED OUT */}
-      {/* <Route 
+      <Route 
         path="/admin/*" 
         element={
           <ProtectedRoute requiredRole="ADMIN">
             <AdminDashboard />
           </ProtectedRoute>
         } 
-      /> */}
+      />
 
       {/* Protected Routes - Librarian - COMMENTED OUT */}
-      {/* <Route 
+      <Route 
         path="/librarian" 
         element={
           <ProtectedRoute requiredRole="LIBRARIAN">
             <Libriarian />
           </ProtectedRoute>
         } 
-      /> */}
+      />
 
       {/* Protected Routes - Admin Additional Views - COMMENTED OUT */}
-      {/* <Route 
+      <Route 
         path="/search" 
         element={
           <ProtectedRoute requiredRole="ADMIN">
@@ -91,27 +91,27 @@ function App() {
             <Attendance />
           </ProtectedRoute>
         } 
-      /> */}
+      />
 
       {/* Public Routes - Student Dashboard */}
-      <Route path="/student/*" element={<StudentDashboard />} />
+      {/* <Route path="/student/*" element={<StudentDashboard />} /> */}
 
       {/* Public Routes - Teacher Dashboard */}
-      <Route path="/teacher/*" element={<TeacherDashboard />} />
+      {/* <Route path="/teacher/*" element={<TeacherDashboard />} /> */}
 
       {/* Public Routes - Parent Dashboard */}
-      <Route path="/parent/*" element={<ParentDashboard />} />
+      {/* <Route path="/parent/*" element={<ParentDashboard />} /> */}
 
       {/* Public Routes - Admin Dashboard */}
-      <Route path="/admin/*" element={<AdminDashboard />} />
+      {/* <Route path="/admin/*" element={<AdminDashboard />} /> */}
 
       {/* Public Routes - Librarian Dashboard */}
-      <Route path="/librarian" element={<Libriarian />} />
+      {/* <Route path="/librarian" element={<Libriarian />} /> */}
 
       {/* Public Routes - Admin Additional Views */}
-      <Route path="/search" element={<StudentSearch />} />
-      <Route path="/teachersearch" element={<TeacherSearch />} />
-      <Route path="/attendance" element={<Attendance />} />
+      {/* <Route path="/search" element={<StudentSearch />} /> */}
+      {/* <Route path="/teachersearch" element={<TeacherSearch />} /> */}
+      {/* <Route path="/attendance" element={<Attendance />} /> */}
 
       {/* Catch-all redirect to login */}
       <Route path="/" element={<LoginForm />} />

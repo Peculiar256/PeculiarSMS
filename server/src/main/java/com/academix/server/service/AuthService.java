@@ -75,43 +75,119 @@ public class AuthService {
             // Generate secure password for the user
             String generatedPassword = emailService.generateSecurePassword(10);
 
-            // Create new student (or appropriate user type)
-            Student student = new Student();
-            student.setFirstName(request.getFirstName());
-            student.setOtherNames(request.getOtherNames());
-            student.setLastName(request.getLastName());
-            student.setEmail(request.getEmail());
-            student.setPassword(generatedPassword);
-            student.setPhoneNumber(request.getPhoneNumber());
-            student.setDistrict(request.getDistrict());
-            student.setGender(request.getGender());
-            student.setCreatedAt(LocalDateTime.now());
-            student.setUpdatedAt(LocalDateTime.now());
-            student.setIsActive(true);
-            student.setIsDeleted(false);
-            student.setEmailVerified(false);
+            // Determine user type based on role and create appropriate entity
+            User user = null;
+            String role = request.getRole() != null ? request.getRole().toUpperCase() : "STUDENT";
 
-            // Hash password
-            userService.prepareUserForSaving(student);
+            if ("TEACHER".equals(role)) {
+                Teacher teacher = new Teacher();
+                teacher.setFirstName(request.getFirstName());
+                teacher.setOtherNames(request.getOtherNames());
+                teacher.setLastName(request.getLastName());
+                teacher.setEmail(request.getEmail());
+                teacher.setPassword(generatedPassword);
+                teacher.setPhoneNumber(request.getPhoneNumber());
+                teacher.setDistrict(request.getDistrict());
+                teacher.setGender(request.getGender());
+                teacher.setCreatedAt(LocalDateTime.now());
+                teacher.setUpdatedAt(LocalDateTime.now());
+                teacher.setIsActive(true);
+                teacher.setIsDeleted(false);
+                teacher.setEmailVerified(false);
+                
+                userService.prepareUserForSaving(teacher);
+                String verificationToken = userService.generateEmailVerificationToken(teacher);
+                teacher = teacherRepository.save(teacher);
+                
+                // Generate unique teacher ID
+                String teacherId = "TCH" + String.format("%06d", teacher.getId());
+                teacher.setTeacherId(teacherId);
+                teacher = teacherRepository.save(teacher);
+                
+                user = teacher;
+                
+                // Send emails
+                emailService.sendEmailVerificationEmail(teacher.getEmail(), verificationToken, teacher.getFullName());
+                try {
+                    emailService.sendUserCredentialsEmail(teacher.getEmail(), teacher.getFullName(), generatedPassword);
+                } catch (Exception credentialsError) {
+                    logger.warn("Credentials email failed but registration continues: {}", credentialsError.getMessage());
+                }
+            } else if ("ADMIN".equals(role)) {
+                Staff staff = new Staff();
+                staff.setFirstName(request.getFirstName());
+                staff.setOtherNames(request.getOtherNames());
+                staff.setLastName(request.getLastName());
+                staff.setEmail(request.getEmail());
+                staff.setPassword(generatedPassword);
+                staff.setPhoneNumber(request.getPhoneNumber());
+                staff.setDistrict(request.getDistrict());
+                staff.setGender(request.getGender());
+                staff.setCreatedAt(LocalDateTime.now());
+                staff.setUpdatedAt(LocalDateTime.now());
+                staff.setIsActive(true);
+                staff.setIsDeleted(false);
+                staff.setEmailVerified(false);
+                
+                userService.prepareUserForSaving(staff);
+                String verificationToken = userService.generateEmailVerificationToken(staff);
+                staff = staffRepository.save(staff);
+                
+                // Generate unique staff ID
+                String staffId = "STAFF" + String.format("%06d", staff.getId());
+                staff.setStaffId(staffId);
+                staff = staffRepository.save(staff);
+                
+                user = staff;
+                
+                // Send emails
+                emailService.sendEmailVerificationEmail(staff.getEmail(), verificationToken, staff.getFullName());
+                try {
+                    emailService.sendUserCredentialsEmail(staff.getEmail(), staff.getFullName(), generatedPassword);
+                } catch (Exception credentialsError) {
+                    logger.warn("Credentials email failed but registration continues: {}", credentialsError.getMessage());
+                }
+            } else {
+                // Default to STUDENT
+                Student student = new Student();
+                student.setFirstName(request.getFirstName());
+                student.setOtherNames(request.getOtherNames());
+                student.setLastName(request.getLastName());
+                student.setEmail(request.getEmail());
+                student.setPassword(generatedPassword);
+                student.setPhoneNumber(request.getPhoneNumber());
+                student.setDistrict(request.getDistrict());
+                student.setGender(request.getGender());
+                student.setCreatedAt(LocalDateTime.now());
+                student.setUpdatedAt(LocalDateTime.now());
+                student.setIsActive(true);
+                student.setIsDeleted(false);
+                student.setEmailVerified(false);
 
-            // Generate email verification token
-            String verificationToken = userService.generateEmailVerificationToken(student);
+                userService.prepareUserForSaving(student);
+                String verificationToken = userService.generateEmailVerificationToken(student);
+                student = studentRepository.save(student);
 
-            // Save user to database
-            student = studentRepository.save(student);
+                // Generate unique student ID based on the auto-generated database ID
+                String studentId = "STU" + String.format("%06d", student.getId());
+                student.setStudentId(studentId);
+                student = studentRepository.save(student);
 
-            // Send verification email
-            emailService.sendEmailVerificationEmail(student.getEmail(), verificationToken, student.getFullName());
-            
-            // Also send credentials email for immediate login capability
-            try {
-                emailService.sendUserCredentialsEmail(student.getEmail(), student.getFullName(), generatedPassword);
-            } catch (Exception credentialsError) {
-                logger.warn("Credentials email failed but registration continues: {}", credentialsError.getMessage());
+                user = student;
+                
+                // Send verification email
+                emailService.sendEmailVerificationEmail(student.getEmail(), verificationToken, student.getFullName());
+                
+                // Also send credentials email for immediate login capability
+                try {
+                    emailService.sendUserCredentialsEmail(student.getEmail(), student.getFullName(), generatedPassword);
+                } catch (Exception credentialsError) {
+                    logger.warn("Credentials email failed but registration continues: {}", credentialsError.getMessage());
+                }
             }
 
-            securityService.recordSecurityEvent(student.getEmail(), "USER_REGISTERED", "Role: " + getUserRole(student));
-            logger.info("User registered successfully: {}", student.getEmail());
+            securityService.recordSecurityEvent(user.getEmail(), "USER_REGISTERED", "Role: " + getUserRole(user) + ", ID: " + getGeneratedId(user));
+            logger.info("User registered successfully: {} with ID: {}", user.getEmail(), getGeneratedId(user));
 
             return new AuthResponse("Registration successful! Your login credentials have been sent to your email. Please also verify your email for full account activation.");
 
@@ -569,6 +645,22 @@ public class AuthService {
     }
 
     /**
+     * Get the generated ID for a user (studentId, teacherId, staffId, etc.)
+     */
+    private String getGeneratedId(User user) {
+        if (user instanceof Student) {
+            return ((Student) user).getStudentId();
+        }
+        if (user instanceof Teacher) {
+            return ((Teacher) user).getTeacherId();
+        }
+        if (user instanceof Staff) {
+            return ((Staff) user).getStaffId();
+        }
+        return null;
+    }
+
+    /**
      * Find user by email across all repositories (database only)
      */
     private User findUserByEmail(String email) {
@@ -618,8 +710,20 @@ public class AuthService {
     }
 
     /**
+     * Find user by staff ID
+     * Searches for a staff member with the given staff ID
+     */
+    private User findUserByStaffId(String staffId) {
+        var staffMembers = staffRepository.findAll();
+        return staffMembers.stream()
+            .filter(s -> s.getStaffId() != null && s.getStaffId().equalsIgnoreCase(staffId))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
      * Find user by email or ID (student/teacher/staff ID)
-     * Supports flexible login using email or student/teacher ID
+     * Supports flexible login using email or student/teacher/staff ID
      */
     private User findUserByEmailOrId(String emailOrId) {
         // First check if it's an email
@@ -636,6 +740,12 @@ public class AuthService {
 
         // Try to find by teacher ID
         user = findUserByTeacherId(emailOrId);
+        if (user != null) {
+            return user;
+        }
+
+        // Try to find by staff ID
+        user = findUserByStaffId(emailOrId);
         if (user != null) {
             return user;
         }
