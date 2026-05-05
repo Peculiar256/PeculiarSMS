@@ -34,6 +34,7 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [originalRecords, setOriginalRecords] = useState([]);
+  const [viewMode, setViewMode] = useState("analytics"); // NEW: Toggle between analytics and table
 
   // Fetch data on component mount
   useEffect(() => {
@@ -254,8 +255,53 @@ const Attendance = () => {
       <div className="attendance-header mb-4">
         <h1 className="mb-2">Attendance Tracker</h1>
         <p className="text-muted mb-0">Track, review, and manage student attendance records.</p>
+        
+        {/* NEW: View Toggle Buttons */}
+        <div style={{marginTop: "16px", display: "flex", gap: "12px"}}>
+          <button
+            onClick={() => setViewMode("analytics")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "analytics" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "analytics" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-chart-bar"></i> Analytics
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "table" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "table" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-table"></i> Attendance Table
+          </button>
+        </div>
       </div>
 
+      {/* ANALYTICS VIEW */}
+      {viewMode === "analytics" && (
+        <>
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-lg-3">
           <div className="attendance-card present-card">
@@ -298,7 +344,11 @@ const Attendance = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
 
+      {/* TABLE VIEW */}
+      {viewMode === "table" && (
       <div className="card">
         <div className="card-body">
           <h2 className="mb-4 fs-5">Student Attendance Records</h2>
@@ -493,6 +543,7 @@ const Attendance = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

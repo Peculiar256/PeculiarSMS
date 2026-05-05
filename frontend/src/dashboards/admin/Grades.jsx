@@ -23,6 +23,7 @@ const Grades = () => {
   const [classFilter, setClassFilter] = useState("all"); // NEW: Class filter
   const [successMessage, setSuccessMessage] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [viewMode, setViewMode] = useState("analytics"); // NEW: Toggle between analytics and table
 
   // Fetch results from backend
   useEffect(() => {
@@ -47,10 +48,14 @@ const Grades = () => {
 
         const results = await response.json();
         
+        // Log the data structure to debug
+        console.log("Results from backend:", results[0]);
+        
         // Map backend Result model to frontend format
         const mappedRows = results.map((result, index) => ({
           id: `RESULT-${result.id}`,
-          student: result.studentNumber || `Student ${result.studentId}`, // Fallback to student ID
+          student: result.studentName || result.studentNumber || `Student ${result.studentId}`,
+          studentId: result.studentNumber || result.studentId,
           className: result.className,
           average: result.percentage || 0,
           subject: result.subjectName || result.subjectCode,
@@ -247,9 +252,10 @@ const Grades = () => {
       return;
     }
 
-    const headers = ['Student', 'Class', 'Subject', 'Average (%)', 'Grade', 'Term', 'Performance', 'Remarks'];
+    const headers = ['Student Name', 'Student ID', 'Class', 'Subject', 'Average (%)', 'Grade', 'Term', 'Performance', 'Remarks'];
     const rows = filteredRows.map((row) => [
       row.student,
+      row.studentId,
       row.className,
       row.subject,
       row.average,
@@ -309,6 +315,7 @@ const Grades = () => {
 
       const tableData = filteredRows.map((row) => [
         row.student,
+        row.studentId,
         row.className,
         row.subject,
         row.average,
@@ -318,7 +325,7 @@ const Grades = () => {
       ]);
 
       autoTable(doc, {
-        head: [['Student', 'Class', 'Subject', 'Avg (%)', 'Grade', 'Term', 'Performance']],
+        head: [['Student Name', 'Student ID', 'Class', 'Subject', 'Avg (%)', 'Grade', 'Term', 'Performance']],
         body: tableData,
         startY: 40,
         margin: { top: 40 },
@@ -352,11 +359,12 @@ const Grades = () => {
             return {
               id: `IMPORTED-${index}`,
               student: values[0]?.trim() || '',
-              className: values[1]?.trim() || '',
-              subject: values[2]?.trim() || '',
-              average: Number(values[3]) || 0,
-              grade: values[4]?.trim() || '',
-              term: `term${values[5]?.toLowerCase().replace('term', '')}` || 'term1',
+              studentId: values[1]?.trim() || `IMP-${index}`,
+              className: values[2]?.trim() || '',
+              subject: values[3]?.trim() || '',
+              average: Number(values[4]) || 0,
+              grade: values[5]?.trim() || '',
+              term: `term${values[6]?.toLowerCase().replace('term', '')}` || 'term1',
               examCode: `IMP-${index}`,
             };
           });
@@ -377,6 +385,48 @@ const Grades = () => {
       <div className="grades-header">
         <h1>Manage Student Grades and Academic Performance</h1>
         <p>Review subject outcomes, track class trends, and support struggling learners.</p>
+        
+        {/* NEW: View Toggle Buttons */}
+        <div style={{marginTop: "16px", display: "flex", gap: "12px"}}>
+          <button
+            onClick={() => setViewMode("analytics")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "analytics" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "analytics" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-chart-bar"></i> Analytics
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "table" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "table" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-table"></i> Grades Table
+          </button>
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -409,6 +459,9 @@ const Grades = () => {
         </div>
       ) : (
         <>
+          {/* ANALYTICS VIEW */}
+          {viewMode === "analytics" && (
+            <>
           <div className="grades-cards">
         <div className="grades-card class-average">
           <div>
@@ -465,7 +518,11 @@ const Grades = () => {
           </div>
         </div>
       </div>
+            </>
+          )}
 
+      {/* TABLE VIEW */}
+      {viewMode === "table" && (
       <div className="grades-table-panel">
         <div className="grades-table-header">
           <h2>Student Results</h2>
@@ -588,7 +645,8 @@ const Grades = () => {
           <table>
             <thead>
               <tr>
-                <th>Student</th>
+                <th>Student Name</th>
+                <th>Student ID</th>
                 <th>Class</th>
                 <th>Avarage</th>
                 <th>Grades</th>
@@ -601,7 +659,8 @@ const Grades = () => {
               {filteredRows.length > 0 ? (
                 filteredRows.map((row) => (
                   <tr key={row.id}>
-                    <td>{row.student}</td>
+                    <td><strong style={{color: "#0f172a", fontSize: "14px"}}>{row.student}</strong></td>
+                    <td><span style={{color: "#64748b", fontSize: "12px"}}>{row.studentId}</span></td>
                     <td>{row.className}</td>
                     <td>{row.average}%</td>
                     <td><span style={{fontWeight: "600", color: "#667eea"}}>{row.grade || getGradeLabel(row.average)}</span></td>
@@ -617,7 +676,7 @@ const Grades = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="no-grade-results">
+                  <td colSpan="8" className="no-grade-results">
                     No grade records match your filters.
                   </td>
                 </tr>
@@ -626,6 +685,7 @@ const Grades = () => {
           </table>
         </div>
       </div>
+      )}
         </>
       )}
     </div>

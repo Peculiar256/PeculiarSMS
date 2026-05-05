@@ -25,6 +25,7 @@ function Exam() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(""); // "success" or "error"
+  const [viewMode, setViewMode] = useState("analytics"); // NEW: Toggle between analytics and table
 
   const [formData, setFormData] = useState({
     code: "",
@@ -270,6 +271,48 @@ function Exam() {
       <div className="exam-header">
         <h1>Exam Management</h1>
         <p>Create, manage, and analyze exam results</p>
+        
+        {/* NEW: View Toggle Buttons */}
+        <div style={{marginTop: "16px", display: "flex", gap: "12px"}}>
+          <button
+            onClick={() => setViewMode("analytics")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "analytics" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "analytics" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-chart-bar"></i> Analytics
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "table" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "table" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-table"></i> Exams Table
+          </button>
+        </div>
       </div>
 
       {/* Message Notification */}
@@ -280,6 +323,9 @@ function Exam() {
         </div>
       )}
 
+      {/* ANALYTICS VIEW */}
+      {viewMode === "analytics" && (
+        <>
       {/* Statistics Cards */}
       <section className="exam-statistics">
         <div className="exam-stat-card">
@@ -339,9 +385,13 @@ function Exam() {
           </div>
         </div>
       </section>
+        </>
+      )}
 
-      {/* Filters and Search */}
-      <section className="exam-filters-section">
+      {/* TABLE VIEW */}
+      {viewMode === "table" && (
+        <>
+          <section className="exam-filters-section">
         <div className="exam-header-actions">
           <h2>Exams List</h2>
           <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
@@ -419,6 +469,8 @@ function Exam() {
           </table>
         )}
       </section>
+        </>
+      )}
 
       {/* Add Exam Modal */}
       {isAddModalOpen && (
