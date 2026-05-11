@@ -1,9 +1,8 @@
 package com.academix.server.audit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,8 +15,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Aspect
 @Component
@@ -26,11 +28,10 @@ public class AuditAspect {
     private static final Logger logger = LoggerFactory.getLogger(AuditAspect.class);
 
     private final AuditService auditService;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AuditAspect(AuditService auditService, ObjectMapper objectMapper) {
+    public AuditAspect(AuditService auditService) {
         this.auditService = auditService;
-        this.objectMapper = objectMapper;
     }
 
     @Around("within(com.academix.server.controller..*)")
