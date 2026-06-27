@@ -87,10 +87,10 @@ function SideBar() {
                     <span>Departments</span>
                 </NavLink>
 
-                {/* <a href="#" className="sidebar-link settings-link">
+                <a href="#" className="sidebar-link settings-link">
                     <i className="fa-solid fa-gear"></i>
                     <span>Settings</span>
-                </a> */}
+                </a>
             </nav>
 
             {/* Sidebar Footer */}
