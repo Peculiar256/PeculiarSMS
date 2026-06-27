@@ -86,7 +86,7 @@ public abstract class User {
     private String disabilityStatus;
 
     @NotBlank(message = "Gender is required")
-    @Pattern(regexp = "^(MALE|FEMALE|OTHER)$", message = "Gender must be MALE, FEMALE, or OTHER")
+    @Pattern(regexp = "^(MALE|FEMALE)$", message = "Gender must be MALE, FEMALE, or OTHER")
     @Column(nullable = false, length = 10)
     private String gender;
 
