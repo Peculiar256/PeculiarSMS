@@ -830,7 +830,7 @@
 
 /* Batch Selection */
 .checkbox-item input[type="checkbox"] {
-  w cursor: pointer;
+  cursor: pointer;
   margin-right: 8px;
 }
 

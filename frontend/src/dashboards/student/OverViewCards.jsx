@@ -83,31 +83,31 @@ function OverViewCards(){
     return(
         <div className="overCards">
             <div className="Card">
-                <i className="fa-solid fa-users" style={{border:"1px solid #2c4ebb", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center", color:"#2c4ebb",marginBottom:"5px"}}></i>
+                <i className="fa-solid fa-users" style={{border:"1px solid #2c4ebb", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center", color:"white", backgroundColor:"#2c4ebb", marginBottom:"5px"}}></i>
                 <h1>{stats.loading ? "-" : `${stats.attendance}%`}</h1>
                 <p>Attendance</p>
             </div>
 
             <div className="Card">
-                <i className="fa-solid fa-person-chalkboard" style={{border:"1px solid green", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px",display:"grid", placeItems:"center",color:"green",marginBottom:"5px"}}></i>
+                <i className="fa-solid fa-person-chalkboard" style={{border:"1px solid green", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px",display:"grid", placeItems:"center",color:"white", backgroundColor:"green", marginBottom:"5px"}}></i>
                 <h1>{stats.loading ? "-" : stats.assignmentsDue}</h1>
                 <p>Assignments Due</p>
             </div>
 
             <div className="Card">
-                <i className="fa-solid fa-graduation-cap" style={{border:"1px solid orange", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center",color:"orange",marginBottom:"5px"}}></i>
+                <i className="fa-solid fa-graduation-cap" style={{border:"1px solid orange", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center",color:"white", backgroundColor:"orange", marginBottom:"5px"}}></i>
                 <h1>{stats.loading ? "-" : stats.averageGrade}</h1>
                 <p>Average Grade</p>
             </div>
 
             <div className="Card">
-                <i className="fa-solid fa-font-awesome" style={{border:"1px solid #2c4ebb", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center",color:"#2c4ebb",marginBottom:"5px"}}></i>
+                <i className="fa-solid fa-font-awesome" style={{border:"1px solid #2c4ebb", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center",color:"white", backgroundColor:"#2c4ebb", marginBottom:"5px"}}></i>
                 <h1>{stats.loading ? "-" : stats.reports}</h1>
                 <p>Reports</p>
             </div>
 
             <div className="Card">
-                <i className="fa-solid fa-comment" style={{border:"1px solid green", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center",color:"green",marginBottom:"5px"}}></i>
+                <i className="fa-solid fa-comment" style={{border:"1px solid green", borderRadius:"50%",width:"50px", height: "50px", fontSize:"15px", display:"grid", placeItems:"center",color:"white", backgroundColor:"green", marginBottom:"5px"}}></i>
                 <h1>{stats.loading ? "-" : `$${stats.feeDue}`}</h1>
                 <p>Fee/Finance</p>
             </div>
