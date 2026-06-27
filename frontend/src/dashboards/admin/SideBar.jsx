@@ -87,10 +87,11 @@ function SideBar() {
                     <span>Departments</span>
                 </NavLink>
 
-                <a href="#" className="sidebar-link settings-link">
+                <NavLink to="/admin/settings" className={isActive("/admin/settings")}>
                     <i className="fa-solid fa-gear"></i>
                     <span>Settings</span>
-                </a>
+                </NavLink>
+
             </nav>
 
             {/* Sidebar Footer */}
