@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useAuth } from "../../context/AuthContext";
-import profilePic from '../../assets/Me.jpeg';
+import profilePic from '../../assets/bd.jpeg';
 import './SideBar.css';
 import { NavLink, useLocation } from "react-router-dom";
 

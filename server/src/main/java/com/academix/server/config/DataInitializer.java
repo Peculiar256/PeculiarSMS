@@ -72,11 +72,11 @@ public class DataInitializer {
                 // Save again with the staffId
                 admin = staffRepository.save(admin);
                 
-                logger.info("✓ Admin user created successfully");
-                logger.info("  Email: admin@sms.com");
-                logger.info("  Password: Admin@123");
-                logger.info("  Staff ID: {}", staffId);
-                logger.info("  Email Verified: true");
+                // logger.info("✓ Admin user created successfully");
+                // logger.info("  Email: admin@sms.com");
+                // logger.info("  Password: Admin@123");
+                // logger.info("  Staff ID: {}", staffId);
+                // logger.info("  Email Verified: true");
                 
                 logger.info("=== Database Initialization Complete ===");
                 
