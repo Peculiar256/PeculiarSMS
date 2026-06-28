@@ -372,56 +372,77 @@
 }
 
 .btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  /* text-transform: uppercase; */
+   padding: 6px 12px;
+   border: none;
+   border-radius: 4px;
+   font-size: 12px;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.3s ease;
 }
 
 .btn-primary {
-  background-color: #4CAF50;
-  color: white;
+   background-color: #4CAF50;
+   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #45a049;
-  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+   background-color: #45a049;
+   box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
 }
 
 .btn-warning {
-  background-color: #ff9800;
-  color: white;
+   background-color: #ff9800;
+   color: white;
 }
 
 .btn-warning:hover {
-  background-color: #e68900;
-  box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
+   background-color: #e68900;
+   box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
 }
 
 .btn-danger {
-  background-color: #dc3545;
-  color: white;
-  border: 1px solid #dc3545;
-  font-weight: 600;
-  transition: all 0.3s ease;
+   background-color: #dc3545;
+   color: white;
+   border: 1px solid #dc3545;
+   font-weight: 600;
+   transition: all 0.3s ease;
 }
 
 .btn-danger:hover {
-  background-color: #c82333;
-  border-color: #c82333;
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-  transform: translateY(-2px);
+   background-color: #c82333;
+   border-color: #c82333;
+   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+   transform: translateY(-2px);
 }
 
 .btn-danger:active {
-  background-color: #bd2130;
-  border-color: #bd2130;
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+    background-color: #bd2130;
+    border-color: #bd2130;
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #28a745;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #218838;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-success:active {
+    background-color: #1e7e34;
+    border-color: #1e7e34;
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
 }
 
 .no-results {
@@ -446,16 +467,6 @@
   .teacher-summary-cards {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
-}
-
-.btn-danger {
-  background-color: #f44336;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #da190b;
-  box-shadow: 0 2px 6px rgba(244, 67, 54, 0.3);
 }
 
 .btn-info {

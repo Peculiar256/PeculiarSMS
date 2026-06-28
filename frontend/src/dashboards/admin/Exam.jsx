@@ -486,7 +486,7 @@ function Exam() {
                           className={`btn ${exam.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
                           onClick={() => openStatusModal(exam)}
                           title={exam.isActive !== false ? 'Deactivate' : 'Activate'}
-                          style={{ padding: '5px 10px', minWidth: '38px' }}
+                          style={{ padding: '5px 10px', minWidth: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           <i className={`fas ${exam.isActive !== false ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                         </button>

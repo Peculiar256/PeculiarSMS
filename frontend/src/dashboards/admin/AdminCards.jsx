@@ -73,7 +73,7 @@ function AdminCards (){
     }, []);
 
     return (
-        <div className="admin-container">
+        <div className="admin-container" style={{marginBottom: "-40px"}}>
             <div className="banner-container">
                 <div className="banner-content">
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>

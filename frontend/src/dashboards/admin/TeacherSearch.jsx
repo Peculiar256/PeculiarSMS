@@ -10,7 +10,6 @@ import CSVImportModal from '../../components/CSVImportModal';
 import StatusBadge from '../../components/StatusBadge';
 import './TeacherSearch.css';
 
-const API_BASE_URL = 'http://localhost:8080/api';
 const ITEMS_PER_PAGE = 10;
 
 const TeacherSearch = () => {
@@ -114,12 +113,11 @@ const TeacherSearch = () => {
   }, []);
 
   // API fetch functions
-  const fetchTeachers = async () => {
+const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/teachers`);
-      if (!response.ok) throw new Error('Failed to fetch teachers');
-      const data = await response.json();
+      const response = await axiosInstance.get('/teachers');
+      const data = response.data;
       const teacherList = (data.teachers || []).map((teacher) => ({
         ...teacher,
         displayId: teacher.teacher_id || teacher.teacherId || 'N/A',
@@ -138,9 +136,8 @@ const TeacherSearch = () => {
 
   const fetchSubjects = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/subjects`);
-      if (!response.ok) throw new Error('Failed to fetch subjects');
-      const data = await response.json();
+      const response = await axiosInstance.get('/subjects');
+      const data = response.data;
       const subjectList = Array.isArray(data) ? data : data.subjects || [];
       setSubjects(subjectList);
 
@@ -149,7 +146,6 @@ const TeacherSearch = () => {
       setUniqueSpecializations(specializations.sort());
     } catch (err) {
       console.error('Error fetching subjects:', err);
-      // If JSON is invalid, it's likely a recursion depth issue on server
       setSubjects([]);
       setUniqueSpecializations([]);
     }
@@ -157,9 +153,8 @@ const TeacherSearch = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/departments`);
-      if (!response.ok) throw new Error('Failed to fetch departments');
-      const data = await response.json();
+      const response = await axiosInstance.get('/departments');
+      const data = response.data;
       const deptList = data.data || [];
       setDepartments(
         deptList.map((d) => (typeof d === 'string' ? d : d.name || d)).filter(Boolean)
@@ -173,9 +168,8 @@ const TeacherSearch = () => {
   const fetchClasses = async () => {
     try {
       setLoadingClasses(true);
-      const response = await fetch(`${API_BASE_URL}/classes`);
-      if (!response.ok) throw new Error(`Failed to fetch classes: ${response.status}`);
-      const data = await response.json();
+      const response = await axiosInstance.get('/classes');
+      const data = response.data;
       
       let classList = [];
       if (Array.isArray(data)) {
@@ -275,6 +269,17 @@ const TeacherSearch = () => {
     });
   };
 
+const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return '';
+    let cleaned = phone.replace(/^(\+256|0)/, '');
+    return '+256' + cleaned;
+  };
+
   const handleAddTeacher = async (e) => {
     e.preventDefault();
 
@@ -307,60 +312,47 @@ const TeacherSearch = () => {
       return;
     }
 
+    if (!validateEmail(email)) {
+      setFormError('Invalid email format');
+      return;
+    }
+
     try {
       const teacherPayload = {
         firstName,
         lastName,
         email,
-        phoneNumber: contactNumber, // Backend expects phoneNumber, not contactNumber
+        phoneNumber: formatPhoneNumber(contactNumber),
         dateOfBirth,
         gender,
         nationality,
-        qualifications: qualification, // Backend expects qualifications (plural)
+        qualifications: qualification,
         specialization,
         department,
-        dateJoined: hireDate, // Backend expects dateJoined, not hireDate
+        dateJoined: hireDate,
       };
 
-      console.log('Teacher payload being sent:', teacherPayload); // Debug log
+      console.log('Teacher payload being sent:', teacherPayload);
       
-      const response = await fetch(`${API_BASE_URL}/teachers`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(teacherPayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create teacher');
-      }
+      const response = await axiosInstance.post('/teachers', teacherPayload);
 
       setNewTeachersCount((prev) => prev + 1);
       resetForm();
       closeAddModal();
-      fetchTeachers(); // Refresh the list
+      fetchTeachers();
     } catch (err) {
-      setFormError(err.message || 'Failed to create teacher');
+      setFormError(err.response?.data?.message || err.message || 'Failed to create teacher');
       console.error('Error creating teacher:', err);
     }
   };
 
   // Handle action buttons
-  const handleViewTeacher = async (teacher) => {
+const handleViewTeacher = async (teacher) => {
     try {
-      // Fetch complete teacher details for the modal
-      const response = await fetch(`${API_BASE_URL}/teachers/${teacher.id}`);
-      if (!response.ok) {
-        console.warn('Could not fetch complete teacher details, using available data');
-        setViewTeacher(teacher);
-        return;
-      }
-      const completeTeacher = await response.json();
-      console.log('Complete teacher data from API:', completeTeacher); // Debug log
-      
-      // Map backend field names to frontend expectations
+      const response = await axiosInstance.get(`/teachers/${teacher.id}`);
+      const completeTeacher = response.data;
+      console.log('Complete teacher data from API:', completeTeacher);
+
       const mappedTeacher = {
         ...completeTeacher,
         id: completeTeacher.id || teacher.id,
@@ -380,11 +372,10 @@ const TeacherSearch = () => {
         specialization: completeTeacher.specialization || completeTeacher.primarySubject || teacher.specialization,
         phone: completeTeacher.phoneNumber || teacher.phone,
       };
-      console.log('Mapped teacher data:', mappedTeacher); // Debug log
+      console.log('Mapped teacher data:', mappedTeacher);
       setViewTeacher(mappedTeacher);
     } catch (err) {
       console.error('Error fetching teacher details:', err);
-      // Fallback to available data
       setViewTeacher(teacher);
     }
   };
@@ -426,7 +417,7 @@ const TeacherSearch = () => {
     setTeacherToEditId('');
   };
 
-  const handleSaveEditedTeacher = async (e) => {
+const handleSaveEditedTeacher = async (e) => {
     e.preventDefault();
 
     const firstName = editFormData.firstName.trim();
@@ -445,54 +436,34 @@ const TeacherSearch = () => {
         firstName,
         lastName,
         email,
-        phoneNumber: contactNumber, // Backend expects phoneNumber, not contactNumber
+        phoneNumber: formatPhoneNumber(contactNumber),
         dateOfBirth: editFormData.dateOfBirth,
         gender: editFormData.gender,
         nationality: editFormData.nationality,
-        qualifications: editFormData.qualification, // Backend expects qualifications (plural)
+        qualifications: editFormData.qualification,
         specialization: editFormData.specialization,
         department: editFormData.department,
-        dateJoined: editFormData.hireDate, // Backend expects dateJoined, not hireDate
+        dateJoined: editFormData.hireDate,
       };
 
-      console.log('Update payload being sent:', updatePayload); // Debug log
+      console.log('Update payload being sent:', updatePayload);
       
-      const response = await fetch(`${API_BASE_URL}/teachers/${teacherToEditId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatePayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update teacher');
-      }
+      const response = await axiosInstance.put(`/teachers/${teacherToEditId}`, updatePayload);
 
       closeEditTeacher();
-      fetchTeachers(); // Refresh the list
+      fetchTeachers();
     } catch (err) {
-      setEditError(err.message || 'Failed to update teacher');
+      setEditError(err.response?.data?.message || err.message || 'Failed to update teacher');
       console.error('Error updating teacher:', err);
     }
   };
 
-  const handleToggleStatus = async () => {
+const handleToggleStatus = async () => {
     try {
       setLoading(true);
       const newStatus = selectedTeacherForStatus.isActive === false;
       
-      const response = await fetch(`${API_BASE_URL}/teachers/${selectedTeacherForStatus.id}/status?active=${newStatus}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update teacher status');
-      }
+      const response = await axiosInstance.patch(`/teachers/${selectedTeacherForStatus.id}/status?active=${newStatus}`);
 
       setSuccessMessage(`Teacher ${newStatus ? 'activated' : 'deactivated'} successfully`);
       setIsStatusModalOpen(false);
@@ -501,7 +472,7 @@ const TeacherSearch = () => {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       console.error('Error toggling teacher status:', err);
-      setError('Failed to update teacher status');
+      setError(err.response?.data?.message || err.message || 'Failed to update teacher status');
     } finally {
       setLoading(false);
     }
@@ -534,7 +505,7 @@ const TeacherSearch = () => {
     });
   };
 
-  const handleSaveClassAssignment = async (e) => {
+const handleSaveClassAssignment = async (e) => {
     e.preventDefault();
 
     if (!selectedTeacherForClassAssignment) {
@@ -546,21 +517,16 @@ const TeacherSearch = () => {
       setAssigningClasses(true);
       setAssignClassError('');
       
-      // Use numeric id for API calls, not the string teacher_id
       const teacherId = selectedTeacherForClassAssignment.id;
 
       const payload = {
         assignedClasses: selectedClasses,
       };
 
-      // Use centralized axiosInstance (already has auth token via interceptor)
       await axiosInstance.put(`/teachers/${teacherId}`, payload);
       console.log('Classes assigned successfully');
 
-      setAssignClassError('');
       closeAssignClassModal();
-      
-      // Refresh the teachers list
       await fetchTeachers();
       
     } catch (err) {
@@ -597,7 +563,7 @@ const TeacherSearch = () => {
     });
   };
 
-  const handleSaveSubjectAssignment = async (e) => {
+const handleSaveSubjectAssignment = async (e) => {
     e.preventDefault();
 
     if (!selectedTeacherForSubjectAssignment) {
@@ -609,17 +575,11 @@ const TeacherSearch = () => {
       setAssigningSubjects(true);
       setAssignSubjectError('');
       
-      // Use numeric id for API calls
       const teacherId = selectedTeacherForSubjectAssignment.id;
-
-      // Get current subjects
       const currentSubjects = selectedTeacherForSubjectAssignment.subjects || [];
-
-      // Find subjects to add and remove
       const subjectsToAdd = selectedSubjects.filter((s) => !currentSubjects.includes(s));
       const subjectsToRemove = currentSubjects.filter((s) => !selectedSubjects.includes(s));
 
-      // Add new subjects (using centralized axiosInstance with auth)
       for (const subject of subjectsToAdd) {
         try {
           await axiosInstance.post(`/teachers/${teacherId}/subjects`, { subject: subject.trim() });
@@ -630,7 +590,6 @@ const TeacherSearch = () => {
         }
       }
 
-      // Remove subjects (using centralized axiosInstance with auth)
       for (const subject of subjectsToRemove) {
         try {
           await axiosInstance.delete(`/teachers/${teacherId}/subjects/${encodeURIComponent(subject)}`);
@@ -641,10 +600,7 @@ const TeacherSearch = () => {
         }
       }
 
-      setAssignSubjectError('');
       closeAssignSubjectModal();
-      
-      // Refresh the teachers list to show updated subjects
       await fetchTeachers();
       
     } catch (err) {
@@ -1618,8 +1574,8 @@ const TeacherSearch = () => {
                         className={`btn ${teacher.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
                         onClick={() => { setSelectedTeacherForStatus(teacher); setIsStatusModalOpen(true); }}
                         title={teacher.isActive !== false ? 'Deactivate' : 'Activate'}
-                        style={{ padding: '5px 8px', minWidth: '34px' }}
-                      > 
+                        style={{ padding: '5px 10px', minWidth: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
                         <i className={`fa-solid ${teacher.isActive !== false ? 'fa-user-slash' : 'fa-user-check'}`}></i>
                       </button>
                     </div>

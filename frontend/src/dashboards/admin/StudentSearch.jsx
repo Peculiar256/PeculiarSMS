@@ -970,12 +970,12 @@ const StudentSearch = () => {
                     <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                       <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }} title="View Detail" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-eye"></i></button>
                       <button className="btn btn-primary btn-sm" onClick={() => handleEditStudent(student)} title="Edit Student" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-pen-to-square"></i></button>
-                      <button 
-                        className={`btn ${student.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`} 
+<button
+                        className={`btn ${student.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
                         onClick={() => { setSelectedStudent(student); setIsStatusModalOpen(true); }}
                         title={student.isActive !== false ? 'Deactivate' : 'Activate'}
-                        style={{ padding: '5px 10px', minWidth: '38px' }}
-                      > 
+                        style={{ padding: '5px 10px', minWidth: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
                         <i className={`fa-solid ${student.isActive !== false ? 'fa-user-slash' : 'fa-user-check'}`}></i>
                       </button>
                     </div>
