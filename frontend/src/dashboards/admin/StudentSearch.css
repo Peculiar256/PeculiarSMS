@@ -29,7 +29,7 @@
 }
 
 .btn-add-student {
-  background-color: #0f6fff;
+  background-color: #1E40AF;
   color: white;
   padding: 10px 16px;
   font-size: 13px;
@@ -66,7 +66,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #0f6fff;
+  border-color: #1E40AF;
   box-shadow: 0 0 0 4px rgba(15, 111, 255, 0.12);
 }
 
@@ -357,7 +357,7 @@
 
 .student-form input:focus {
   outline: none;
-  border-color: #0f6fff;
+  border-color: #1E40AF;
   box-shadow: 0 0 0 3px rgba(15, 111, 255, 0.12);
 }
 
@@ -371,7 +371,7 @@
 }
 
 .phone-input-wrapper:focus-within {
-  border-color: #0f6fff;
+  border-color: #1E40AF;
   box-shadow: 0 0 0 3px rgba(15, 111, 255, 0.12);
 }
 
@@ -394,7 +394,7 @@
 
 .student-form select:focus {
   outline: none;
-  border-color: #0f6fff;
+  border-color: #1E40AF;
   box-shadow: 0 0 0 3px rgba(15, 111, 255, 0.12);
 }
 
@@ -438,7 +438,7 @@
 }
 
 .btn-primary {
-  background-color: #0f6fff;
+  background-color: #1E40AF;
   color: white;
 }
 

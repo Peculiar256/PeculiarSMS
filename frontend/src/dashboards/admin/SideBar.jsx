@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 function SideBar() {
     const location = useLocation();
     const { user } = useAuth();
+    const year = new Date().getFullYear();
     
     // Helper to determine active class
     const isActive = (path) => location.pathname === path ? "sidebar-link active" : "sidebar-link";
@@ -42,9 +43,9 @@ function SideBar() {
                     <span>Teachers</span>
                 </NavLink>
 
-                <NavLink to="/admin/users" className={isActive("/admin/users")}>
+                <NavLink to="/admin/staff" className={isActive("/admin/staff")}>
                     <i className="fa-solid fa-user-gear"></i>
-                    <span>Users</span>
+                    <span>Staff</span>
                 </NavLink>
 
                 <NavLink to="/admin/grades" className={isActive("/admin/grades")}>
@@ -96,8 +97,8 @@ function SideBar() {
 
             {/* Sidebar Footer */}
             <div className="sidebar-footer">
-                <p>&copy; 2026 SMS System</p>
-                <small>v1.0.0</small>
+                <p>&copy; Peculiar Technologies Ltd</p>
+                <small>v1.0.0 {year}</small>
             </div>
         </div>
     )

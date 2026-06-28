@@ -169,14 +169,14 @@ function Body (){
             </div>
 
             {/* Recent Activity Log */}
-            <div className="col-12">
+            <div className="col-12 p-2">
               <div className="card shadow-sm border-0">
                 <div className="card-header bg-white border-bottom-0 py-3">
                   <h5 className="mb-0 fw-bold text-dark-emphasis">
                     <i className="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Recent Activity
                   </h5>
                 </div>
-                <div className="card-body px-0">
+                <div className="card-body px-3">
                   <div className="activity-list">
                     {recentActivities.map((activity) => (
                       <div key={activity.id} className="activity-item d-flex align-items-center px-4 py-2">

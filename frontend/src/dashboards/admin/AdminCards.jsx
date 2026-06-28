@@ -82,7 +82,7 @@ function AdminCards (){
                     </div>
                     <p style={{ margin: "8px 0 0 0", fontSize: "14px", color: "rgba(255, 255, 255, 0.95)" }}>
                         <i className="fa-solid fa-chart-line" style={{ marginRight: "8px", color: "#e0f2fe" }}></i>
-                        You have a great day ahead. Monitor your school operations and make data-driven decisions.
+                        Wishing you a great day ahead!. Monitor your school operations and make data-driven decisions.
                     </p>
                 </div>
                 <div className="banner-date">

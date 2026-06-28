@@ -1,0 +1,68 @@
+/* Admin Settings Styles with #1E40AF color theme */
+.card-header h5 i {
+    color: #1E40AF;
+}
+
+.btn-primary {
+    background-color: #1E40AF;
+    border-color: #1E40AF;
+}
+
+.btn-primary:hover {
+    background-color: #1a368f;
+    border-color: #1a368f;
+}
+
+.btn-success {
+    background-color: #1E40AF;
+    border-color: #1E40AF;
+}
+
+.btn-success:hover {
+    background-color: #1a368f;
+    border-color: #1a368f;
+}
+
+.btn-outline {
+    color: #1E40AF;
+    border-color: #1E40AF;
+}
+
+.btn-outline:hover {
+    background-color: #1E40AF;
+    color: white;
+}
+
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #1E40AF;
+    box-shadow: 0 0 0 0.25rem rgba(30, 64, 175, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #1E40AF;
+    border-color: #1E40AF;
+}
+
+.alert-primary {
+    background-color: rgba(30, 64, 175, 0.1);
+    border-color: rgba(30, 64, 175, 0.2);
+    color: #1E40AF;
+}
+
+.avatar-upload img, .avatar-upload div {
+    cursor: pointer;
+}
+
+.avatar-upload label {
+    cursor: pointer;
+}

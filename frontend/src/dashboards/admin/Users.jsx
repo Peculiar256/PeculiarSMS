@@ -234,7 +234,7 @@ function Users() {
 	return (
 		<div className="users-page">
 			<div className="users-header">
-				<h2>User Management</h2>
+				<h2>Staff Management</h2>
 				<div className="users-header-actions">
 					<button type="button" className="add-user-btn" onClick={openAddModal}>Add User</button>
 				</div>
@@ -243,19 +243,19 @@ function Users() {
 			<section className="users-summary-cards" aria-label="Users summary cards">
 				<article className="users-summary-card users-summary-total">
 					<i className="fa-solid fa-users users-summary-icon" aria-hidden="true"></i>
-					<p>Total Users</p>
+					<p>Total Staff</p>
 					<h3>{totalUsers}</h3>
 				</article>
 
 				<article className="users-summary-card users-summary-recent">
 					<i className="fa-solid fa-user-plus users-summary-icon" aria-hidden="true"></i>
-					<p>Recent Added Users</p>
+					<p>Recent Added Staff</p>
 					<h3>{recentAddedUsers}</h3>
 				</article>
 
 				<article className="users-summary-card users-summary-active">
 					<i className="fa-solid fa-user-check users-summary-icon" aria-hidden="true"></i>
-					<p>Active Users</p>
+					<p>Active Staff</p>
 					<h3>{activeUsers}</h3>
 				</article>
 
@@ -270,7 +270,7 @@ function Users() {
 				<div className="users-modal-overlay" onClick={closeAddModal}>
 					<div className="users-modal-content" onClick={(event) => event.stopPropagation()}>
 						<div className="users-modal-header">
-							<h3>Add User</h3>
+							<h3>Add Staff</h3>
 							<button type="button" className="users-modal-close" onClick={closeAddModal}>x</button>
 						</div>
 

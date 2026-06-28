@@ -13,11 +13,13 @@ import Attendance from "./Attendance";
 import Grades from "./Grades";
 import TimetableByclass from "./TimetableByClass";
 import Users from "./Users";
+import Staff from "./Staff";
 import Class from "./Class";
 import Subjects from "./Subjects";
 import Exam from "./Exam";
 import Room from "./Room";
 import Department from "./Department";
+import Settings from "./Settings";
 
 function AdminDashboard (){
     return(
@@ -31,7 +33,8 @@ function AdminDashboard (){
                     <Routes>
                         <Route path="/" element={<OverviewDashboard/>} />
                         <Route path="students" element={<StudentSearch/>} />
-                        <Route path="users" element={<Users/>} />
+                        <Route path="users" element={<Staff/>} />
+                        <Route path="staff" element={<Staff/>} />
                         <Route path="teachers" element={<TeacherSearch/>} />
                         <Route path="grades" element={<Grades/>} />
                         <Route path="attendance" element={<Attendance/>} />
@@ -41,6 +44,7 @@ function AdminDashboard (){
                         <Route path="exams" element={<Exam/>} />
                         <Route path="rooms" element={<Room/>} />
                         <Route path="departments" element={<Department/>} />
+                        <Route path="settings" element={<Settings/>} />
                     </Routes>
                 </div>
             </div>

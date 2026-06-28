@@ -5,6 +5,7 @@ import './Header.css'
 import kyuLogo from '/src/assets/PS.png'
 import { useLogout } from '../../hooks/useLogout';
 import { useAuth } from '../../context/AuthContext';
+import { Link } from "react-router-dom";
 
 function Header() {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ function Header() {
                 {/* Brand / Logo */}
                 <a className="navbar-brand d-flex align-items-center fw-bold text-primary" href="#">
                     <img src={kyuLogo} alt="" width={50} height={50}/>
-                    <span>Hilton High School Mukono</span>
+                    <span>Peculiar Secondary School</span>
                 </a>
 
                 <div className="navbar-collapse" id="navbarSupportedContent">
@@ -65,7 +66,7 @@ function Header() {
                             </a>
                             <ul className="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="navbarDropdown">
                                 <li><a className="dropdown-item d-flex align-items-center gap-2 py-2" href="#"><i className="fa-regular fa-user text-muted"></i> My Profile</a></li>
-                                <li><a className="dropdown-item d-flex align-items-center gap-2 py-2" href="#"><i className="fa-solid fa-gear text-muted"></i> Settings</a></li>
+                                <li><Link className="dropdown-item d-flex align-items-center gap-2 py-2" to="/admin/settings"><i className="fa-solid fa-gear text-muted"></i> Settings</Link></li>
                                 <li><hr className="dropdown-divider" /></li>
                                 <li><a className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}><i className="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
                             </ul>

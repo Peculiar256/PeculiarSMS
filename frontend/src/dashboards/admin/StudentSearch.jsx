@@ -496,7 +496,10 @@ const StudentSearch = () => {
                 </div>
                 <div className="form-field">
                   <label>Phone Number</label>
-                  <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} />
+                  <div className="phone-input-wrapper">
+                    <span className="phone-prefix">+256</span>
+                    <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} placeholder="701234567" maxLength="9" />
+                  </div>
                 </div>
                 <div className="form-field">
                   <label>Current Class</label>
