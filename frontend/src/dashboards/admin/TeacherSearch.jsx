@@ -479,13 +479,39 @@ const handleToggleStatus = async () => {
   };
 
   // Class Assignment Functions
-  const openAssignClassModal = (teacher) => {
-    setSelectedTeacherForClassAssignment(teacher);
-    setSelectedClasses(teacher.assignedClasses || []);
-    setAssignClassError('');
-    setIsAssignClassModalOpen(true);
-    // Fetch classes when modal opens to ensure we have fresh data
-    fetchClasses();
+  const openAssignClassModal = async (teacher) => {
+    try {
+      // Fetch fresh teacher data to ensure we have all assigned classes
+      const response = await axiosInstance.get(`/teachers/${teacher.id}`);
+      const fullTeacher = response.data;
+      
+      // Extract class names from assignedClasses (could be strings or objects)
+      let assignedClasses = [];
+      if (fullTeacher.assignedClasses) {
+        assignedClasses = fullTeacher.assignedClasses.map(cls => {
+          if (typeof cls === 'string') return cls;
+          return cls.name || cls.className || cls.class_name || '';
+        }).filter(Boolean);
+      }
+      
+      setSelectedTeacherForClassAssignment(fullTeacher);
+      setSelectedClasses(assignedClasses);
+      setAssignClassError('');
+      setIsAssignClassModalOpen(true);
+      fetchClasses();
+    } catch (err) {
+      console.error('Error fetching teacher details:', err);
+      // Fallback to using the teacher data we have
+      const assignedClasses = (teacher.assignedClasses || []).map(cls => {
+        if (typeof cls === 'string') return cls;
+        return cls.name || cls.className || cls.class_name || '';
+      }).filter(Boolean);
+      setSelectedTeacherForClassAssignment(teacher);
+      setSelectedClasses(assignedClasses);
+      setAssignClassError('');
+      setIsAssignClassModalOpen(true);
+      fetchClasses();
+    }
   };
 
   const closeAssignClassModal = () => {
@@ -539,11 +565,37 @@ const handleSaveClassAssignment = async (e) => {
   };
 
   // Subject Assignment Functions
-  const openAssignSubjectModal = (teacher) => {
-    setSelectedTeacherForSubjectAssignment(teacher);
-    setSelectedSubjects(teacher.subjects || []);
-    setAssignSubjectError('');
-    setIsAssignSubjectModalOpen(true);
+  const openAssignSubjectModal = async (teacher) => {
+    try {
+      // Fetch fresh teacher data to ensure we have all assigned subjects
+      const response = await axiosInstance.get(`/teachers/${teacher.id}`);
+      const fullTeacher = response.data;
+      
+      // Extract subject names from subjects (could be strings or objects)
+      let assignedSubjects = [];
+      if (fullTeacher.subjects) {
+        assignedSubjects = fullTeacher.subjects.map(subject => {
+          if (typeof subject === 'string') return subject;
+          return subject.name || subject.subjectName || subject.subject_name || '';
+        }).filter(Boolean);
+      }
+      
+      setSelectedTeacherForSubjectAssignment(fullTeacher);
+      setSelectedSubjects(assignedSubjects);
+      setAssignSubjectError('');
+      setIsAssignSubjectModalOpen(true);
+    } catch (err) {
+      console.error('Error fetching teacher details:', err);
+      // Fallback to using the teacher data we have
+      const assignedSubjects = (teacher.subjects || []).map(subject => {
+        if (typeof subject === 'string') return subject;
+        return subject.name || subject.subjectName || subject.subject_name || '';
+      }).filter(Boolean);
+      setSelectedTeacherForSubjectAssignment(teacher);
+      setSelectedSubjects(assignedSubjects);
+      setAssignSubjectError('');
+      setIsAssignSubjectModalOpen(true);
+    }
   };
 
   const closeAssignSubjectModal = () => {
@@ -1835,7 +1887,7 @@ const handleSaveSubjectAssignment = async (e) => {
                 </div>
               )}
 
-              {batchAssignType === 'subjects' && (
+{batchAssignType === 'subjects' && (
                 <div className="teacher-form-field">
                   <label>Select Subjects to Assign</label>
                   <div className="subject-selection-container">

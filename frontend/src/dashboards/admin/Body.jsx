@@ -57,7 +57,7 @@ function Body (){
         }
         
         const key = `S.${formLevel}`;
-        if (counts.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(counts, key)) {
           counts[key]++;
         }
       });
