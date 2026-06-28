@@ -161,7 +161,7 @@ const fetchTeachers = async () => {
       );
     } catch (err) {
       console.error('Error fetching departments:', err);
-      setDepartments(['Science', 'Languages', 'Humanities', 'ICT']);
+      setDepartments([]);
     }
   };
 

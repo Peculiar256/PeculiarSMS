@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import profilePic from '/src/assets/bd.jpeg'
 import './Header.css'
 import kyuLogo from '/src/assets/PS.png'
@@ -8,7 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from "react-router-dom";
 
 function Header() {
-    const navigate = useNavigate();
     const handleLogout = useLogout();
     const { user } = useAuth();
     return (
@@ -58,7 +56,11 @@ function Header() {
                         {/* User Profile */}
                         <li className="nav-item dropdown">
                             <a className="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src={profilePic} alt="User" className="rounded-circle object-fit-cover shadow-sm" width="40" height="40" />
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="User" className="rounded-circle object-fit-cover shadow-sm" width="40" height="40" />
+                                ) : (
+                                    <img src={profilePic} alt="User" className="rounded-circle object-fit-cover shadow-sm" width="40" height="40" />
+                                )}
                                 <div className="d-none d-md-block text-start">
                                     <p className="m-0 fw-semibold fs-6 lh-1 text-dark">{user?.firstName || user?.fullName || 'Admin User'}</p>
                                     <small className="text-muted" style={{ fontSize: '12px' }}>{user?.role || 'Administrator'}</small>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from '../../services/axiosInstance';
+import { useAuth } from '../../context/AuthContext';
 import './Settings.css';
 
 function Settings() {
+  const { user, updateUser } = useAuth();
   const [adminProfile, setAdminProfile] = useState({
     fullName: "Admin User",
     email: "admin@school.ac.ug",
@@ -38,33 +40,29 @@ function Settings() {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+const [selectedStudent, setSelectedStudent] = useState(null);
 
   useEffect(() => {
-    fetchAdminProfile();
-  }, []);
-
-  useEffect(() => {
-    loadStudents();
-  }, []);
+    if (user) {
+      fetchAdminProfile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const fetchAdminProfile = async () => {
     try {
-      const storedUser = localStorage.getItem('user');
-      const storedEmail = localStorage.getItem('email');
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
+      if (user) {
         setAdminProfile({
-          fullName: userData.fullName || userData.name || "Admin User",
-          email: storedEmail || userData.email || "admin@school.ac.ug",
-          phone: userData.phone || "+256 700 123 456",
-          role: userData.role || "Administrator",
-          avatar: userData.avatar || null,
-          lastLogin: userData.lastLogin || new Date().toISOString(),
+          fullName: user.fullName || user.name || "Admin User",
+          email: user.email || "admin@school.ac.ug",
+          phone: user.phone || "+256 700 123 456",
+          role: user.role || "Administrator",
+          avatar: user.avatar || null,
+          lastLogin: user.lastLogin || new Date().toISOString(),
         });
       }
-    } catch (err) {
-      console.error('Failed to fetch profile:', err);
+    } catch {
+      console.error('Failed to fetch profile');
     }
   };
 
@@ -98,19 +96,16 @@ function Settings() {
   const saveProfile = async () => {
     setLoading(true);
     try {
-      const storedUser = localStorage.getItem('user');
-      const parsedUser = storedUser ? JSON.parse(storedUser) : {};
-      
       const updatedUser = {
-        ...parsedUser,
+        ...user,
         fullName: adminProfile.fullName,
         phone: adminProfile.phone,
         avatar: adminProfile.avatar,
       };
-      
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      updateUser(updatedUser);
       setMessage({ type: "success", text: "Profile updated successfully" });
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Failed to save profile" });
     } finally {
       setLoading(false);
@@ -126,7 +121,7 @@ function Settings() {
     try {
       const storedEmail = localStorage.getItem('email');
       if (storedEmail) {
-        const response = await axiosInstance.put(`/auth/change-password?userEmail=${encodeURIComponent(storedEmail)}`, {
+        await axiosInstance.put(`/auth/change-password?userEmail=${encodeURIComponent(storedEmail)}`, {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword,
         });
@@ -135,7 +130,7 @@ function Settings() {
         setMessage({ type: "error", text: "No email found in storage" });
       }
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Failed to change password" });
     } finally {
       setLoading(false);
@@ -152,7 +147,7 @@ function Settings() {
       
       console.log(`Generated ${type} IDs:`, generatedIds);
       setMessage({ type: "success", text: `Generated ${count} ${type} IDs: ${generatedIds.slice(0, 5).join(', ')}${count > 5 ? '...' : ''}` });
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: `Failed to generate ${type} IDs` });
     } finally {
       setLoading(false);
@@ -306,7 +301,7 @@ function Settings() {
   const generateReport = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/reports/stats', {
+      await axiosInstance.get('/reports/stats', {
         params: {
           academicYear: reportOptions.academicYear,
           term: reportOptions.term,
@@ -319,7 +314,7 @@ function Settings() {
       if (reportOptions.attendanceReport) reportTypes.push('Attendance');
       
       setMessage({ type: "success", text: `Reports ready for: ${reportTypes.join(', ')}` });
-    } catch (err) {
+    } catch {
       setMessage({ type: "error", text: "Failed to generate reports" });
     } finally {
       setLoading(false);

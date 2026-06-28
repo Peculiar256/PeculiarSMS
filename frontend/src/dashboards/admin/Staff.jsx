@@ -4,7 +4,6 @@ import './Users.css';
 
 function Staff() {
 	const [staff, setStaff] = useState([]);
-	const [loading, setLoading] = useState(false);
 	const [message, setMessage] = useState({ type: "", text: "" });
 	const [filterField, setFilterField] = useState("all");
 	const [searchTerm, setSearchTerm] = useState("");
@@ -18,14 +17,12 @@ function Staff() {
 	const [editError, setEditError] = useState("");
 	const [departments, setDepartments] = useState([]);
 	const [addFormData, setAddFormData] = useState({
-		staffId: "",
 		firstName: "",
 		lastName: "",
 		email: "",
 		phoneNumber: "",
 		department: "",
 		position: "",
-		status: "ACTIVE",
 		joinDate: "",
 		contractType: "PERMANENT",
 		salary: "",
@@ -55,7 +52,6 @@ function Staff() {
 	}, []);
 
 	const loadStaff = async () => {
-		setLoading(true);
 		try {
 			const response = await axiosInstance.get('/staff');
 			const data = response.data;
@@ -63,17 +59,20 @@ function Staff() {
 			setStaff(staffList);
 		} catch (err) {
 			setMessage({ type: "error", text: "Failed to load staff: " + (err.response?.data?.message || err.message) });
-		} finally {
-			setLoading(false);
 		}
 	};
 
 	const loadDepartments = async () => {
 		try {
-			const response = await axiosInstance.get('/staff/departments');
-			setDepartments(Array.isArray(response.data?.departments) ? response.data.departments : []);
+			const response = await axiosInstance.get('/departments');
+			const data = response.data;
+			const deptList = data.data || [];
+			setDepartments(
+				deptList.map((d) => (typeof d === 'string' ? d : d.name || d)).filter(Boolean)
+			);
 		} catch (err) {
 			console.error('Failed to load departments:', err);
+			setDepartments([]);
 		}
 	};
 
@@ -153,14 +152,12 @@ function Staff() {
 
 	const resetAddForm = () => {
 		setAddFormData({
-			staffId: "",
 			firstName: "",
 			lastName: "",
 			email: "",
 			phoneNumber: "",
 			department: "",
 			position: "",
-			status: "ACTIVE",
 			joinDate: "",
 			contractType: "PERMANENT",
 			salary: "",
@@ -172,7 +169,6 @@ function Staff() {
 	const handleAddStaff = async (event) => {
 		event.preventDefault();
 
-		const staffId = addFormData.staffId.trim().toUpperCase();
 		const firstName = addFormData.firstName.trim();
 		const lastName = addFormData.lastName.trim();
 		const email = addFormData.email.trim();
@@ -180,27 +176,19 @@ function Staff() {
 		const department = addFormData.department.trim();
 		const position = addFormData.position.trim();
 
-		if (!staffId || !firstName || !lastName || !email || !department || !position) {
+		if (!firstName || !lastName || !email || !department || !position) {
 			setAddError("Please fill in all required fields.");
-			return;
-		}
-
-		const staffIdExists = staff.some((s) => (s.staffId || "").toLowerCase() === staffId.toLowerCase());
-		if (staffIdExists) {
-			setAddError("Staff ID already exists. Please use a unique Staff ID.");
 			return;
 		}
 
 		try {
 			const response = await axiosInstance.post('/staff', {
-				staffId,
 				firstName,
 				lastName,
 				email,
 				phoneNumber,
 				department,
 				position,
-				status: addFormData.status,
 				joinDate: addFormData.joinDate,
 				contractType: addFormData.contractType,
 				salary: addFormData.salary ? parseFloat(addFormData.salary) : null,
@@ -208,7 +196,7 @@ function Staff() {
 				experience: addFormData.experience ? parseInt(addFormData.experience) : null,
 			});
 
-			const savedStaff = response.data;
+			const savedStaff = response.data.data;
 			setStaff((prev) => [savedStaff, ...prev]);
 			setRecentAddedStaff((prev) => prev + 1);
 			setMessage({ type: "success", text: "Staff member added successfully" });
@@ -283,7 +271,7 @@ function Staff() {
 				experience: editFormData.experience ? parseInt(editFormData.experience) : null,
 			});
 
-			const updatedStaff = response.data;
+			const updatedStaff = response.data.data;
 			setStaff((prev) =>
 				prev.map((s) =>
 					s.id === editFormData.id ? updatedStaff : s
@@ -299,7 +287,6 @@ function Staff() {
 	const handleToggleStatus = async () => {
 		if (!selectedStaffForStatus) return;
 		
-		setLoading(true);
 		try {
 			const newStatus = selectedStaffForStatus.status !== "ACTIVE" ? "ACTIVE" : "INACTIVE";
 			await axiosInstance.put(`/staff/${selectedStaffForStatus.id}/status`, { status: newStatus });
@@ -314,8 +301,6 @@ function Staff() {
 			setSelectedStaffForStatus(null);
 		} catch (err) {
 			setMessage({ type: "error", text: "Failed to update staff status: " + (err.response?.data?.message || err.message) });
-		} finally {
-			setLoading(false);
 		}
 	};
 
@@ -395,18 +380,6 @@ function Staff() {
 
 							<div className="users-form-grid">
 								<div className="users-form-field">
-									<label htmlFor="staffId">Staff ID</label>
-									<input
-										type="text"
-										id="staffId"
-										name="staffId"
-										value={addFormData.staffId}
-										onChange={handleAddInputChange}
-										placeholder="e.g. STF001"
-									/>
-								</div>
-
-								<div className="users-form-field">
 									<label htmlFor="firstName">First Name</label>
 									<input
 										type="text"
@@ -466,12 +439,6 @@ function Staff() {
 										{departments.map((dept) => (
 											<option key={dept} value={dept}>{dept}</option>
 										))}
-										<option value="Administration">Administration</option>
-										<option value="Finance">Finance</option>
-										<option value="Human Resources">Human Resources</option>
-										<option value="IT">IT</option>
-										<option value="Maintenance">Maintenance</option>
-										<option value="Security">Security</option>
 									</select>
 								</div>
 
@@ -485,21 +452,6 @@ function Staff() {
 										onChange={handleAddInputChange}
 										placeholder="Enter position"
 									/>
-								</div>
-
-								<div className="users-form-field">
-									<label htmlFor="status">Status</label>
-									<select
-										id="status"
-										name="status"
-										value={addFormData.status}
-										onChange={handleAddInputChange}
-									>
-										<option value="ACTIVE">Active</option>
-										<option value="INACTIVE">Inactive</option>
-										<option value="ON_LEAVE">On Leave</option>
-										<option value="SUSPENDED">Suspended</option>
-									</select>
 								</div>
 
 								<div className="users-form-field">
@@ -674,12 +626,6 @@ function Staff() {
 										{departments.map((dept) => (
 											<option key={dept} value={dept}>{dept}</option>
 										))}
-										<option value="Administration">Administration</option>
-										<option value="Finance">Finance</option>
-										<option value="Human Resources">Human Resources</option>
-										<option value="IT">IT</option>
-										<option value="Maintenance">Maintenance</option>
-										<option value="Security">Security</option>
 									</select>
 								</div>
 

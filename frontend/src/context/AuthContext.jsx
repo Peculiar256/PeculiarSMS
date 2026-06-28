@@ -149,6 +149,13 @@ export const AuthProvider = ({ children }) => {
     return null;
   }, []);
 
+  const updateUser = useCallback((userData) => {
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    authService.setTokens(null, null, updatedUser);
+    return updatedUser;
+  }, [user]);
+
   const isAuthenticated = !!user;
   const userRole = user?.role || null;
 
@@ -166,6 +173,7 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     logout,
     refreshUserProfile,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

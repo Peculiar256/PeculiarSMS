@@ -17,7 +17,11 @@ function SideBar() {
             {/* Profile Section */}
             <div className="sidebar-profile">
                 <div className="profile-img-container">
-                    <img src={profilePic} alt="Admin" />
+                    {user?.avatar ? (
+                        <img src={user.avatar} alt="Admin" />
+                    ) : (
+                        <img src={profilePic} alt="Admin" />
+                    )}
                 </div>
                 <h3>{user?.firstName || user?.fullName || 'Admin User'}</h3>
                 <span className="role-badge">{user?.role || 'Administrator'}</span>
