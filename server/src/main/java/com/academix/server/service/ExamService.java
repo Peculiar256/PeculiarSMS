@@ -136,7 +136,7 @@ public class ExamService {
     }
 
     /**
-     * Delete exam
+     * Delete exam (soft delete)
      */
     public void deleteExam(Long id) {
         Exam exam = examRepository.findById(id)
@@ -146,14 +146,26 @@ public class ExamService {
             throw new RuntimeException("Cannot delete a published exam");
         }
 
-        // Check if results exist
-        long resultCount = resultRepository.countByExamId(id);
-        if (resultCount > 0) {
-            throw new RuntimeException("Cannot delete exam with existing results. Found " + resultCount + " results.");
-        }
+        exam.setIsDeleted(true);
+        exam.setIsActive(false);
+        examRepository.save(exam);
+        logger.info("Exam soft-deleted: {}", exam.getCode());
+    }
 
-        examRepository.deleteById(id);
-        logger.info("Exam deleted: {}", exam.getCode());
+    /**
+     * Toggle exam status (Activate/Deactivate)
+     */
+    public Exam toggleExamStatus(Long id, boolean active) {
+        Exam exam = examRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Exam not found with id: " + id));
+        
+        exam.setIsActive(active);
+        if (active) {
+            exam.setIsDeleted(false);
+        }
+        
+        logger.info("Exam status updated - Code: {}, Active: {}", exam.getCode(), active);
+        return examRepository.save(exam);
     }
 
     /**

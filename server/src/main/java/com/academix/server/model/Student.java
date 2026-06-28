@@ -58,10 +58,12 @@ public class Student extends User {
 
     // Subjects the student is enrolled in
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonManagedReference("student-subject")
     private List<StudentSubject> enrolledSubjects = new ArrayList<>();
 
     // Course enrollments (for A-Level)
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonManagedReference("student-course")
     private List<StudentCourse> courseEnrollments = new ArrayList<>();
 
     // Results

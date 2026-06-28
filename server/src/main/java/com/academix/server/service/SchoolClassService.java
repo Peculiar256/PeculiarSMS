@@ -259,18 +259,27 @@ public class SchoolClassService {
     }
 
     /**
-     * Delete class
+     * Delete class (soft delete)
      */
     public void deleteClass(Long id) {
         SchoolClass schoolClass = schoolClassRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Class not found with id: " + id));
 
-        if (schoolClass.getCurrentCount() > 0) {
-            throw new RuntimeException("Cannot delete class with enrolled students");
-        }
+        schoolClass.setIsActive(false);
+        schoolClassRepository.save(schoolClass);
+        logger.info("Class deactivated (soft-deleted): {}", schoolClass.getName());
+    }
 
-        schoolClassRepository.deleteById(id);
-        logger.info("Class deleted: {}", schoolClass.getName());
+    /**
+     * Toggle class status (Activate/Deactivate)
+     */
+    public SchoolClass toggleClassStatus(Long id, boolean active) {
+        SchoolClass schoolClass = schoolClassRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Class not found with id: " + id));
+        
+        schoolClass.setIsActive(active);
+        logger.info("Class status updated - Name: {}, Active: {}", schoolClass.getName(), active);
+        return schoolClassRepository.save(schoolClass);
     }
 
     /**

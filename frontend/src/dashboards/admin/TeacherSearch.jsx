@@ -20,12 +20,14 @@ const TeacherSearch = () => {
   const [viewTeacher, setViewTeacher] = useState(null);
   const [activeViewSection, setActiveViewSection] = useState('personal'); // 'personal', 'professional', 'contact'
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [teacherToEditId, setTeacherToEditId] = useState('');
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [selectedTeacherForStatus, setSelectedTeacherForStatus] = useState(null);
   const [editError, setEditError] = useState('');
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [teacherToEditId, setTeacherToEditId] = useState(null);
   
   // Data from backend
   const [teachers, setTeachers] = useState([]);
@@ -147,6 +149,9 @@ const TeacherSearch = () => {
       setUniqueSpecializations(specializations.sort());
     } catch (err) {
       console.error('Error fetching subjects:', err);
+      // If JSON is invalid, it's likely a recursion depth issue on server
+      setSubjects([]);
+      setUniqueSpecializations([]);
     }
   };
 
@@ -473,26 +478,32 @@ const TeacherSearch = () => {
     }
   };
 
-  const handleDeleteTeacher = async (teacher) => {
-    if (!window.confirm(`Are you sure you want to delete ${teacher.firstName} ${teacher.lastName}?`)) {
-      return;
-    }
-
+  const handleToggleStatus = async () => {
     try {
-      // Use numeric id for API calls, not the string teacher_id
-      const teacherId = teacher.id;
-      const response = await fetch(`${API_BASE_URL}/teachers/${teacherId}`, {
-        method: 'DELETE',
+      setLoading(true);
+      const newStatus = selectedTeacherForStatus.isActive === false;
+      
+      const response = await fetch(`${API_BASE_URL}/teachers/${selectedTeacherForStatus.id}/status?active=${newStatus}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete teacher');
+        throw new Error('Failed to update teacher status');
       }
 
-      fetchTeachers(); // Refresh the list
+      setSuccessMessage(`Teacher ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      setIsStatusModalOpen(false);
+      setSelectedTeacherForStatus(null);
+      fetchTeachers();
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
-      console.error('Error deleting teacher:', err);
-      setError('Failed to delete teacher');
+      console.error('Error toggling teacher status:', err);
+      setError('Failed to update teacher status');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1477,6 +1488,49 @@ const TeacherSearch = () => {
           </div>
         </div>
       )}
+      {isStatusModalOpen && selectedTeacherForStatus && (
+        <div className="teacher-modal-overlay" onClick={() => setIsStatusModalOpen(false)}>
+          <div className="teacher-modal-content" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+            <div className="teacher-modal-header">
+              <h3 style={{ color: selectedTeacherForStatus.isActive !== false ? '#dc2626' : '#166534' }}>
+                {selectedTeacherForStatus.isActive !== false ? 'Deactivate' : 'Activate'} Teacher
+              </h3>
+              <button className="teacher-modal-close" onClick={() => setIsStatusModalOpen(false)}>×</button>
+            </div>
+            <div className="teacher-modal-body py-4" style={{ padding: '20px' }}>
+              <p style={{ fontSize: '15px', color: '#1f2937' }}>Are you sure you want to <strong>{selectedTeacherForStatus.isActive !== false ? 'deactivate' : 'activate'}</strong> <strong>{selectedTeacherForStatus.firstName} {selectedTeacherForStatus.lastName}</strong> ({selectedTeacherForStatus.teacherId})?</p>
+              {selectedTeacherForStatus.isActive !== false ? (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#fff1f2', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+                  <p className="text-muted small" style={{ margin: 0, color: '#991b1b' }}>
+                    <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '8px' }}></i>
+                    Deactivated teachers will not be able to log in, but their payroll and academic records will be preserved.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#f0fdf4', borderRadius: '8px', borderLeft: '4px solid #22c55e' }}>
+                  <p className="text-muted small" style={{ margin: 0, color: '#166534' }}>
+                    <i className="fa-solid fa-circle-check" style={{ marginRight: '8px' }}></i>
+                    This will restore the teacher's access to the system immediately.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="teacher-form-actions" style={{ padding: '0 20px 20px', display: 'flex', gap: '12px' }}>
+              <button type="button" className="teacher-cancel-btn" style={{ flex: 1 }} onClick={() => setIsStatusModalOpen(false)}>Cancel</button>
+              <button 
+                type="button" 
+                className={`btn ${selectedTeacherForStatus.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+                style={{ flex: 1 }} 
+                onClick={handleToggleStatus} 
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : (selectedTeacherForStatus.isActive !== false ? 'Confirm Deactivation' : 'Confirm Activation')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className="table-wrapper">
         {loading ? (
@@ -1498,7 +1552,7 @@ const TeacherSearch = () => {
                 <th>Teacher Name</th>
                 <th>Teacher ID</th>
                 <th>Specialization</th>
-                {/* <th>Status</th> */}
+                <th>Status</th>
                 <th>Email</th>
                 <th>Phone Number</th>
                 <th>Actions</th>
@@ -1521,47 +1575,52 @@ const TeacherSearch = () => {
                   <td>
                     <span className="subject-badge">{teacher.specialization}</span>
                   </td>
-                  {/* <td>
-                    <StatusBadge teacher={teacher} size="small" />
-                  </td> */}
+                  <td>
+                    <span className={`badge ${teacher.isActive !== false ? 'bg-success' : 'bg-secondary'}`}>
+                      {teacher.isActive !== false ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
                   <td className="email">{teacher.email}</td>
                   <td className="phone">{teacher.contactNumber || teacher.phone || '-'}</td>
                   <td>
-                    <div className="action-buttons">
+                    <div className="action-buttons" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', minWidth: '180px' }}>
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-info btn-sm"
                         onClick={() => handleViewTeacher(teacher)}
                         title="View Details"
+                        style={{ padding: '5px 8px' }}
                       > <i className="fa-solid fa-eye"></i>
-                        View
                       </button>
                       <button
                         className="btn btn-primary btn-sm"
                         onClick={() => handleEditTeacher(teacher)}
                         title="Edit Teacher"
+                        style={{ padding: '5px 8px' }}
                       > <i className="fa-solid fa-pen-to-square"></i>
-                        Edit
                       </button>
                       <button
-                        className="btn btn-info"
+                        className="btn btn-secondary btn-sm"
                         onClick={() => openAssignClassModal(teacher)}
                         title="Assign Classes"
+                        style={{ padding: '5px 8px', backgroundColor: '#6c757d', color: 'white' }}
                       >
-                        Assign Classes
+                        <i className="fa-solid fa-school"></i>
                       </button>
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-dark btn-sm"
                         onClick={() => openAssignSubjectModal(teacher)}
                         title="Assign Subjects"
+                        style={{ padding: '5px 8px', backgroundColor: '#343a40', color: 'white' }}
                       >
-                        Assign Subjects
+                        <i className="fa-solid fa-book-open"></i>
                       </button>
                       <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteTeacher(teacher)}
-                        title="Delete Teacher"
-                      > <i className="fa-solid fa-trash"></i>
-                        Delete
+                        className={`btn ${teacher.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
+                        onClick={() => { setSelectedTeacherForStatus(teacher); setIsStatusModalOpen(true); }}
+                        title={teacher.isActive !== false ? 'Deactivate' : 'Activate'}
+                        style={{ padding: '5px 8px', minWidth: '34px' }}
+                      > 
+                        <i className={`fa-solid ${teacher.isActive !== false ? 'fa-user-slash' : 'fa-user-check'}`}></i>
                       </button>
                     </div>
                   </td>

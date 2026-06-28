@@ -109,10 +109,12 @@ public class Course {
 
     // Students enrolled in this course (A-Level)
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<StudentCourse> enrolledStudents = new ArrayList<>();
 
     // Classes offering this course
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<SchoolClass> classes = new ArrayList<>();
 
     // Enums

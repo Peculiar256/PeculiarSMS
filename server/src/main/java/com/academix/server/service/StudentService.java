@@ -488,6 +488,23 @@ public class StudentService {
     }
 
     /**
+     * Toggle student status (Activate/Deactivate)
+     */
+    public Student toggleStudentStatus(Long id, boolean active) {
+        Student student = studentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+        
+        if (active) {
+            student.activate();
+        } else {
+            student.deactivate();
+        }
+        
+        logger.info("Student status updated - ID: {}, Active: {}", id, active);
+        return studentRepository.save(student);
+    }
+
+    /**
      * Get student statistics
      */
     @Transactional(readOnly = true)

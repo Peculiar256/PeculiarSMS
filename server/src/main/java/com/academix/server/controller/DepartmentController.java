@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -218,28 +219,56 @@ public class DepartmentController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDepartment(@PathVariable Long id) {
         try {
-            logger.info("DELETE /api/departments/{}", id);
+            logger.info("DELETE /api/departments/{} (Soft Delete)", id);
             
             departmentService.deleteDepartment(id);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "Department deleted successfully");
+            response.put("message", "Department deactivated successfully");
             
             return ResponseEntity.ok(response);
             
         } catch (IllegalStateException e) {
-            logger.error("Cannot delete department: {}", e.getMessage());
+            logger.error("Cannot deactivate department: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(createErrorResponse(e.getMessage()));
         } catch (RuntimeException e) {
-            logger.error("Error deleting department: {}", e.getMessage());
+            logger.error("Error deactivating department: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(createErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            logger.error("Failed to delete department: {}", e.getMessage(), e);
+            logger.error("Failed to deactivate department: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Failed to delete department: " + e.getMessage()));
+                    .body(createErrorResponse("Failed to deactivate department: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * PATCH /api/departments/{id}/status - Toggle department active status
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> toggleDepartmentStatus(@PathVariable Long id, @RequestParam boolean active) {
+        try {
+            logger.info("PATCH /api/departments/{}/status - active: {}", id, active);
+            
+            Department updated = departmentService.toggleDepartmentStatus(id, active);
+            String message = active ? "Department activated successfully" : "Department deactivated successfully";
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", message);
+            response.put("data", convertToEnhancedData(List.of(updated)).get(0));
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            logger.error("Failed to toggle status for department {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Failed to toggle status for department {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Failed to toggle status: " + e.getMessage()));
         }
     }
     

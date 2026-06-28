@@ -11,9 +11,9 @@ function Department() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [departmentToDelete, setDepartmentToDelete] = useState(null);
+  const [departmentToToggle, setDepartmentToToggle] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -225,24 +225,30 @@ function Department() {
     }
   };
 
-  const handleDeleteDepartment = async () => {
-    if (departmentToDelete) {
+  const handleToggleStatus = async () => {
+    if (departmentToToggle) {
+      setLoading(true);
       try {
-        await axios.delete(`${API_BASE_URL}/departments/${departmentToDelete.id}`);
+        const isCurrentlyActive = departmentToToggle.status && departmentToToggle.status.toLowerCase() === 'active';
+        const newStatus = isCurrentlyActive ? 'Inactive' : 'Active';
+        
+        await axios.patch(`${API_BASE_URL}/departments/${departmentToToggle.id}/status?active=${!isCurrentlyActive}`);
         
         // Refresh departments list from backend
         await fetchDepartments();
         
-        setIsDeleteConfirmModalOpen(false);
-        setDepartmentToDelete(null);
+        setIsStatusModalOpen(false);
+        setDepartmentToToggle(null);
         setError(null);
       } catch (err) {
         if (err.response?.data?.message) {
           alert(`Error: ${err.response.data.message}`);
         } else {
-          alert('Failed to delete department. Please try again.');
+          alert('Failed to update department status. Please try again.');
         }
-        console.error('Error deleting department:', err);
+        console.error('Error toggling department status:', err);
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -255,10 +261,10 @@ function Department() {
     }
   };
 
-  const openDeleteConfirmModal = (dept) => {
+  const openStatusModal = (dept) => {
     if (dept && dept.id) {
-      setDepartmentToDelete(dept);
-      setIsDeleteConfirmModalOpen(true);
+      setDepartmentToToggle(dept);
+      setIsStatusModalOpen(true);
     }
   };
 
@@ -390,32 +396,35 @@ function Department() {
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn view-btn"
-                            onClick={() => {
-                              setSelectedDepartment(dept);
-                              setIsDetailsModalOpen(true);
-                            }}
-                            title="View Details"
-                          >
-                            <i className="fas fa-eye"></i>
-                          </button>
-                          <button
-                            className="action-btn edit-btn"
-                            onClick={() => openEditModal(dept)}
-                            title="Edit"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={() => openDeleteConfirmModal(dept)}
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </div>
+                          <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              className="btn btn-info btn-sm"
+                              onClick={() => {
+                                setSelectedDepartment(dept);
+                                setIsDetailsModalOpen(true);
+                              }}
+                              title="View Details"
+                              style={{ padding: '5px 10px' }}
+                            >
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => openEditModal(dept)}
+                              title="Edit"
+                              style={{ padding: '5px 10px' }}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
+                              className={`btn ${dept.status && dept.status.toLowerCase() === 'active' ? 'btn-danger' : 'btn-success'} btn-sm`}
+                              onClick={() => openStatusModal(dept)}
+                              title={dept.status && dept.status.toLowerCase() === 'active' ? 'Deactivate' : 'Activate'}
+                              style={{ padding: '5px 10px', minWidth: '38px' }}
+                            >
+                              <i className={`fas ${dept.status && dept.status.toLowerCase() === 'active' ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                            </button>
+                          </div>
                       </td>
                     </tr>
                   ))
@@ -827,34 +836,38 @@ function Department() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteConfirmModalOpen && departmentToDelete && (
+      {/* STATUS TOGGLE MODAL */}
+      {isStatusModalOpen && departmentToToggle && (
         <div className="department-modal-overlay">
-          <div className="department-modal" style={{ maxWidth: '400px' }}>
+          <div className="department-modal" style={{ maxWidth: "400px" }}>
             <div className="department-modal-header">
-              <h3>Delete Department</h3>
+              <h3>{departmentToToggle.status && departmentToToggle.status.toLowerCase() === 'active' ? 'Deactivate' : 'Activate'} Department</h3>
               <button className="btn-close" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setDepartmentToDelete(null);
+                setIsStatusModalOpen(false);
+                setDepartmentToToggle(null);
               }}></button>
             </div>
-            <div className="department-modal-body">
-              <div className="alert alert-warning" role="alert">
-                <i className="fas fa-exclamation-triangle me-2"></i>
-                <strong>Warning!</strong> This action cannot be undone.
-              </div>
-              <p>Are you sure you want to delete the department <strong>{departmentToDelete.name}</strong>?</p>
-              <p className="text-muted mb-0">All associated data will be permanently removed.</p>
+            <div className="department-modal-body py-4">
+              <p>Are you sure you want to <strong>{departmentToToggle.status && departmentToToggle.status.toLowerCase() === 'active' ? 'deactivate' : 'activate'}</strong> the department <strong>{departmentToToggle.name}</strong>?</p>
+              {departmentToToggle.status && departmentToToggle.status.toLowerCase() === 'active' ? (
+                <p className="text-muted small">Deactivating a department preserves its history but hides it from current selection.</p>
+              ) : (
+                <p className="text-muted small">This will restore the department to active status.</p>
+              )}
             </div>
             <div className="department-modal-footer">
               <button className="btn btn-secondary" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setDepartmentToDelete(null);
+                setIsStatusModalOpen(false);
+                setDepartmentToToggle(null);
               }}>
                 Cancel
               </button>
-              <button className="btn btn-danger" onClick={handleDeleteDepartment}>
-                <i className="fas fa-trash me-2"></i> Delete Department
+              <button 
+                className={`btn ${departmentToToggle.status && departmentToToggle.status.toLowerCase() === 'active' ? 'btn-danger' : 'btn-success'}`} 
+                onClick={handleToggleStatus}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : (departmentToToggle.status && departmentToToggle.status.toLowerCase() === 'active' ? 'Deactivate' : 'Activate')}
               </button>
             </div>
           </div>

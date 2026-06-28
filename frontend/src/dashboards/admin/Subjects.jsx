@@ -33,8 +33,8 @@ function Subjects() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [subjectToToggle, setSubjectToToggle] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [subjectsPerPage] = useState(5);
   const [loading, setLoading] = useState(false);
@@ -276,26 +276,27 @@ function Subjects() {
     }
   };
 
-  // Handle delete subject
-  const handleDeleteSubject = async () => {
-    if (subjectToDelete) {
+  // Handle toggle status
+  const handleToggleStatus = async () => {
+    if (subjectToToggle) {
       setLoading(true);
       try {
-        await axios.delete(`${API_BASE_URL}/subjects/${subjectToDelete.id}`);
+        const newStatus = subjectToToggle.isActive === false;
+        await axios.patch(`${API_BASE_URL}/subjects/${subjectToToggle.id}/status?active=${newStatus}`);
         
         // Refresh subjects list from backend
         await fetchSubjects();
         
-        setIsDeleteConfirmModalOpen(false);
-        setSubjectToDelete(null);
+        setIsStatusModalOpen(false);
+        setSubjectToToggle(null);
         setError(null);
       } catch (err) {
         if (err.response?.data?.message) {
           alert(`Error: ${err.response.data.message}`);
         } else {
-          alert('Failed to delete subject. Please try again.');
+          alert('Failed to update subject status. Please try again.');
         }
-        console.error('Error deleting subject:', err);
+        console.error('Error toggling subject status:', err);
       } finally {
         setLoading(false);
       }
@@ -324,10 +325,10 @@ function Subjects() {
     setIsEditModalOpen(true);
   };
 
-  // Open delete confirmation modal
-  const openDeleteConfirmModal = (subject) => {
-    setSubjectToDelete(subject);
-    setIsDeleteConfirmModalOpen(true);
+  // Open status modal
+  const openStatusModal = (subject) => {
+    setSubjectToToggle(subject);
+    setIsStatusModalOpen(true);
   };
 
   return (
@@ -481,32 +482,35 @@ function Subjects() {
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-btn view-btn"
-                            onClick={() => {
-                              setSelectedSubject(subject);
-                              setIsDetailsModalOpen(true);
-                            }}
-                            title="View Details"
-                          >
-                            <i className="fas fa-eye"></i>
-                          </button>
-                          <button
-                            className="action-btn edit-btn"
-                            onClick={() => openEditModal(subject)}
-                            title="Edit"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            className="action-btn delete-btn"
-                            onClick={() => openDeleteConfirmModal(subject)}
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </div>
+                          <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              className="btn btn-info btn-sm"
+                              onClick={() => {
+                                setSelectedSubject(subject);
+                                setIsDetailsModalOpen(true);
+                              }}
+                              title="View Details"
+                              style={{ padding: '5px 10px' }}
+                            >
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => openEditModal(subject)}
+                              title="Edit"
+                              style={{ padding: '5px 10px' }}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
+                              className={`btn ${subject.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
+                              onClick={() => openStatusModal(subject)}
+                              title={subject.isActive !== false ? 'Deactivate' : 'Activate'}
+                              style={{ padding: '5px 10px', minWidth: '38px' }}
+                            >
+                              <i className={`fas ${subject.isActive !== false ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                            </button>
+                          </div>
                       </td>
                     </tr>
                   ))
@@ -588,34 +592,38 @@ function Subjects() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteConfirmModalOpen && subjectToDelete && (
+      {/* STATUS TOGGLE MODAL */}
+      {isStatusModalOpen && subjectToToggle && (
         <div className="subjects-modal-overlay">
           <div className="subjects-modal" style={{ maxWidth: "400px" }}>
             <div className="subjects-modal-header">
-              <h3>Delete Subject</h3>
+              <h3>{subjectToToggle.isActive !== false ? 'Deactivate' : 'Activate'} Subject</h3>
               <button className="btn-close" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setSubjectToDelete(null);
+                setIsStatusModalOpen(false);
+                setSubjectToToggle(null);
               }}></button>
             </div>
-            <div className="subjects-modal-body">
-              <div className="alert alert-warning" role="alert">
-                <i className="fas fa-exclamation-triangle me-2"></i>
-                <strong>Warning!</strong> This action cannot be undone.
-              </div>
-              <p>Are you sure you want to delete the subject <strong>{subjectToDelete.name}</strong> ({subjectToDelete.code})?</p>
-              <p className="text-muted mb-0">All associated data will be permanently removed.</p>
+            <div className="subjects-modal-body py-4">
+              <p>Are you sure you want to <strong>{subjectToToggle.isActive !== false ? 'deactivate' : 'activate'}</strong> the subject <strong>{subjectToToggle.name}</strong>?</p>
+              {subjectToToggle.isActive !== false ? (
+                <p className="text-muted small">Deactivating a subject will archive it from current curriculum assignments.</p>
+              ) : (
+                <p className="text-muted small">This will restore the subject to the active curriculum.</p>
+              )}
             </div>
             <div className="subjects-modal-footer">
               <button className="btn btn-secondary" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setSubjectToDelete(null);
+                setIsStatusModalOpen(false);
+                setSubjectToToggle(null);
               }}>
                 Cancel
               </button>
-              <button className="btn btn-danger" onClick={handleDeleteSubject}>
-                <i className="fas fa-trash me-2"></i> Delete Subject
+              <button 
+                className={`btn ${subjectToToggle.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+                onClick={handleToggleStatus}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : (subjectToToggle.isActive !== false ? 'Deactivate' : 'Activate')}
               </button>
             </div>
           </div>

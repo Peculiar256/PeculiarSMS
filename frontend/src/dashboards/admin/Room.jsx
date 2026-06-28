@@ -11,9 +11,9 @@ function Room() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [roomToDelete, setRoomToDelete] = useState(null);
+  const [roomToToggle, setRoomToToggle] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -183,22 +183,28 @@ function Room() {
     }
   };
 
-  const handleDeleteRoom = async () => {
-    if (roomToDelete) {
+  const handleToggleStatus = async () => {
+    if (roomToToggle) {
+      setLoading(true);
       try {
-        await axios.delete(`${API_BASE_URL}/rooms/${roomToDelete.id}`);
+        const newStatus = roomToToggle.isActive === false;
+        await axios.patch(`${API_BASE_URL}/rooms/${roomToToggle.id}/status?active=${newStatus}`);
         
-        setRooms(rooms.filter(room => room.id !== roomToDelete.id));
-        setIsDeleteConfirmModalOpen(false);
-        setRoomToDelete(null);
+        setRooms(rooms.map(room => 
+          room.id === roomToToggle.id ? { ...room, isActive: newStatus } : room
+        ));
+        setIsStatusModalOpen(false);
+        setRoomToToggle(null);
         setError(null);
       } catch (err) {
         if (err.response?.data?.message) {
           alert(`Error: ${err.response.data.message}`);
         } else {
-          alert('Failed to delete room. Please try again.');
+          alert('Failed to update room status. Please try again.');
         }
-        console.error('Error deleting room:', err);
+        console.error('Error toggling room status:', err);
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -211,10 +217,10 @@ function Room() {
     }
   };
 
-  const openDeleteConfirmModal = (room) => {
+  const openStatusModal = (room) => {
     if (room && room.id) {
-      setRoomToDelete(room);
-      setIsDeleteConfirmModalOpen(true);
+      setRoomToToggle(room);
+      setIsStatusModalOpen(true);
     }
   };
 
@@ -314,6 +320,7 @@ function Room() {
                   <th>Type</th>
                   <th>Capacity</th>
                   <th>Building</th>
+                  <th>Status</th>
                   <th>Availability</th>
                   <th>Actions</th>
                 </tr>
@@ -330,37 +337,43 @@ function Room() {
                       <td>{room.capacity || '-'}</td>
                       <td>{room.building || '-'}</td>
                       <td>
-                        <span className={`badge ${room.isAvailable ? 'bg-success' : 'bg-danger'}`}>
+                        <span className={`badge ${room.isActive !== false ? 'bg-success' : 'bg-secondary'}`}>
+                          {room.isActive !== false ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${room.isAvailable ? 'bg-info' : 'bg-warning'}`}>
                           {room.isAvailable ? 'Available' : 'Occupied'}
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
+                        <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                           <button
-                            className="action-btn view-btn"
+                            className="btn btn-info btn-sm"
                             onClick={() => {
                               setSelectedRoom(room);
                               setIsDetailsModalOpen(true);
                             }}
                             title="View Details"
+                            style={{ padding: '5px 10px' }}
                           >
                             <i className="fas fa-eye"></i>
-                        
                           </button>
                           <button
-                            className="action-btn edit-btn"
+                            className="btn btn-primary btn-sm"
                             onClick={() => openEditModal(room)}
                             title="Edit"
+                            style={{ padding: '5px 10px' }}
                           >
                             <i className="fas fa-edit"></i>
-                        
                           </button>
                           <button
-                            className="action-btn delete-btn"
-                            onClick={() => openDeleteConfirmModal(room)}
-                            title="Delete"
+                            className={`btn ${room.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
+                            onClick={() => openStatusModal(room)}
+                            title={room.isActive !== false ? 'Deactivate' : 'Activate'}
+                            style={{ padding: '5px 10px', minWidth: '38px' }}
                           >
-                            <i className="fas fa-trash"></i>
+                            <i className={`fas ${room.isActive !== false ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                           </button>
                         </div>
                       </td>
@@ -383,7 +396,7 @@ function Room() {
       {isDetailsModalOpen && selectedRoom && (
         <div className="room-modal-overlay">
           <div className="room-modal">
-            <div className="room-modal-header">
+            <div className="room-modal-header bg-primary">
               <h3>{selectedRoom.roomNumber} - Room Details</h3>
               <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}></button>
             </div>
@@ -718,34 +731,48 @@ function Room() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteConfirmModalOpen && roomToDelete && (
-        <div className="room-modal-overlay">
-          <div className="room-modal" style={{ maxWidth: '400px' }}>
+      {isStatusModalOpen && roomToToggle && (
+        <div className="room-modal-overlay" onClick={() => { setIsStatusModalOpen(false); setRoomToToggle(null); }}>
+          <div className="room-modal" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
             <div className="room-modal-header">
-              <h3>Delete Room</h3>
+              <h3 style={{ color: roomToToggle.isActive !== false ? '#dc2626' : '#166534' }}>{roomToToggle.isActive !== false ? 'Deactivate' : 'Activate'} Room</h3>
               <button className="btn-close" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setRoomToDelete(null);
+                setIsStatusModalOpen(false);
+                setRoomToToggle(null);
               }}></button>
             </div>
-            <div className="room-modal-body">
-              <div className="alert alert-warning" role="alert">
-                <i className="fas fa-exclamation-triangle me-2"></i>
-                <strong>Warning!</strong> This action cannot be undone.
-              </div>
-              <p>Are you sure you want to delete room <strong>{roomToDelete.roomNumber}</strong>?</p>
-              <p className="text-muted mb-0">All associated data will be permanently removed.</p>
+            <div className="room-modal-body py-4">
+              <p style={{ fontSize: '15px', color: '#1f2937' }}>Are you sure you want to <strong>{roomToToggle.isActive !== false ? 'deactivate' : 'activate'}</strong> the room <strong>{roomToToggle.roomNumber}</strong>?</p>
+              {roomToToggle.isActive !== false ? (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#fff1f2', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+                  <p className="text-muted small" style={{ margin: 0, color: '#991b1b' }}>
+                    <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '8px' }}></i>
+                    Deactivating a room preserves its history but hides it from new class assignments.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#f0fdf4', borderRadius: '8px', borderLeft: '4px solid #22c55e' }}>
+                  <p className="text-muted small" style={{ margin: 0, color: '#166534' }}>
+                    <i className="fa-solid fa-circle-check" style={{ marginRight: '8px' }}></i>
+                    This will restore the room to active status immediately.
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="room-modal-footer">
-              <button className="btn btn-secondary" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setRoomToDelete(null);
+            <div className="room-modal-footer" style={{ gap: '12px' }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => {
+                setIsStatusModalOpen(false);
+                setRoomToToggle(null);
               }}>
                 Cancel
               </button>
-              <button className="btn btn-danger" onClick={handleDeleteRoom}>
-                <i className="fas fa-trash me-2"></i> Delete Room
+              <button 
+                className={`btn ${roomToToggle.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+                style={{ flex: 1 }}
+                onClick={handleToggleStatus}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : (roomToToggle.isActive !== false ? 'Confirm Deactivation' : 'Confirm Activation')}
               </button>
             </div>
           </div>

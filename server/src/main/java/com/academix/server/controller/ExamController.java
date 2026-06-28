@@ -83,7 +83,25 @@ public class ExamController {
     public ResponseEntity<?> deleteExam(@PathVariable Long id) {
         try {
             examService.deleteExam(id);
-            return ResponseEntity.ok(Map.of("message", "Exam deleted successfully"));
+            return ResponseEntity.ok(Map.of("message", "Exam deactivated successfully (soft-delete)"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * PATCH /api/exams/{id}/status - Toggle exam active status
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HEAD_TEACHER')")
+    public ResponseEntity<?> toggleExamStatus(@PathVariable Long id, @RequestParam boolean active) {
+        try {
+            Exam updated = examService.toggleExamStatus(id, active);
+            String message = active ? "Exam activated successfully" : "Exam deactivated successfully";
+            return ResponseEntity.ok(Map.of(
+                "message", message,
+                "exam", updated
+            ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

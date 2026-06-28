@@ -185,7 +185,25 @@ public class SchoolClassController {
     public ResponseEntity<?> deleteClass(@PathVariable Long id) {
         try {
             schoolClassService.deleteClass(id);
-            return ResponseEntity.ok(Map.of("message", "Class deleted successfully"));
+            return ResponseEntity.ok(Map.of("message", "Class deactivated successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * PATCH /api/classes/{id}/status - Toggle class active status
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HEAD_TEACHER')")
+    public ResponseEntity<?> toggleClassStatus(@PathVariable Long id, @RequestParam boolean active) {
+        try {
+            SchoolClass updated = schoolClassService.toggleClassStatus(id, active);
+            String message = active ? "Class activated successfully" : "Class deactivated successfully";
+            return ResponseEntity.ok(Map.of(
+                "message", message,
+                "class", updated
+            ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

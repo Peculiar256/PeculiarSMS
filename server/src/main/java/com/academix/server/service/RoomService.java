@@ -116,10 +116,27 @@ public class RoomService {
 
     public void deleteRoom(Long id) {
         try {
-            roomRepository.deleteById(id);
+            Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
+            room.setIsAvailable(false);
+            roomRepository.save(room);
+            log.info("Room deactivated (soft-deleted) with id: {}", id);
         } catch (Exception e) {
-            log.error("Error deleting room with id {}: ", id, e);
-            throw new RuntimeException("Failed to delete room", e);
+            log.error("Error deactivating room with id {}: ", id, e);
+            throw new RuntimeException("Failed to deactivate room", e);
+        }
+    }
+
+    public Room toggleRoomStatus(Long id, boolean available) {
+        try {
+            Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
+            room.setIsAvailable(available);
+            log.info("Room status updated - ID: {}, Available: {}", id, available);
+            return roomRepository.save(room);
+        } catch (Exception e) {
+            log.error("Error toggling room status for id {}: ", id, e);
+            throw new RuntimeException("Failed to toggle room status", e);
         }
     }
 

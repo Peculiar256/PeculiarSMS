@@ -2,8 +2,12 @@ package com.academix.server.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.Data;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Join table for Teacher-Subject many-to-many relationship
@@ -14,6 +18,7 @@ import lombok.Data;
 @Table(name = "teacher_subject_assignments", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"teacher_id", "subject_id"})
 })
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TeacherSubject {
 
     @Id
@@ -22,10 +27,12 @@ public class TeacherSubject {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Teacher teacher;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Subject subject;
 
     // Is this the teacher's primary/main subject?

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -298,6 +299,24 @@ public class StudentController {
             return ResponseEntity.ok(createSuccessResponse("Student deactivated successfully!", student));
         } catch (RuntimeException e) {
             logger.error("Failed to deactivate student {}: {}", id, e.getMessage());
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * PATCH /api/students/{id}/status - Toggle student active status
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> toggleStudentStatus(@PathVariable Long id, @RequestParam boolean active) {
+        try {
+            Student updatedStudent = studentService.toggleStudentStatus(id, active);
+            String message = active ? "Student activated successfully" : "Student deactivated successfully";
+            return ResponseEntity.ok(createSuccessResponse(message, updatedStudent));
+        } catch (RuntimeException e) {
+            logger.error("Failed to toggle status for student {}: {}", id, e.getMessage());
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.notFound().build();
             }

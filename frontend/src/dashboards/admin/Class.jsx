@@ -26,8 +26,8 @@ function Class() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
-  const [classToDelete, setClassToDelete] = useState(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [classToToggle, setClassToToggle] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [classesPerPage] = useState(5);
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -216,31 +216,34 @@ function Class() {
     }
   };
 
-  // Handle delete class
-  const handleDeleteClass = async () => {
-    if (classToDelete) {
+  // Handle toggle status
+  const handleToggleStatus = async () => {
+    if (classToToggle) {
       try {
-        await axios.delete(`${API_BASE_URL}/classes/${classToDelete.id}`);
+        const newStatus = classToToggle.isActive === false;
+        await axios.patch(`${API_BASE_URL}/classes/${classToToggle.id}/status?active=${newStatus}`);
         
-        setClasses(classes.filter((cls) => cls.id !== classToDelete.id));
-        setIsDeleteConfirmModalOpen(false);
-        setClassToDelete(null);
+        setClasses(classes.map((cls) => 
+          cls.id === classToToggle.id ? { ...cls, isActive: newStatus } : cls
+        ));
+        setIsStatusModalOpen(false);
+        setClassToToggle(null);
         setError(null);
       } catch (err) {
         if (err.response?.data?.message) {
           alert(`Error: ${err.response.data.message}`);
         } else {
-          alert('Failed to delete class. Please try again.');
+          alert('Failed to update class status. Please try again.');
         }
-        console.error('Error deleting class:', err);
+        console.error('Error toggling class status:', err);
       }
     }
   };
 
-  // Open delete confirmation modal
-  const openDeleteConfirmModal = (cls) => {
-    setClassToDelete(cls);
-    setIsDeleteConfirmModalOpen(true);
+  // Open status modal
+  const openStatusModal = (cls) => {
+    setClassToToggle(cls);
+    setIsStatusModalOpen(true);
   };
 
   // Open edit modal
@@ -385,7 +388,7 @@ function Class() {
                     <th>Room Number</th>
                     <th>Teacher</th>
                     <th>Students</th>
-                    <th>Attendance</th>
+                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -398,33 +401,38 @@ function Class() {
                         <td>{cls.teacher}</td>
                         <td>{cls.students}</td>
                         <td>
-                          <span className="badge bg-success">{cls.attendance}%</span>
+                          <span className={`badge ${cls.isActive !== false ? 'bg-success' : 'bg-secondary'}`}>
+                            {cls.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
                         </td>
                         <td>
-                          <div className="action-buttons">
+                          <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                             <button
-                              className="action-btn view-btn"
+                              className="btn btn-info btn-sm"
                               onClick={() => {
                                 setSelectedClass(cls);
                                 setIsDetailsModalOpen(true);
                               }}
                               title="View Details"
+                              style={{ padding: '5px 10px' }}
                             >
                               <i className="fas fa-eye"></i>
                             </button>
                             <button
-                              className="action-btn edit-btn"
+                              className="btn btn-primary btn-sm"
                               onClick={() => openEditModal(cls)}
                               title="Edit"
+                              style={{ padding: '5px 10px' }}
                             >
                               <i className="fas fa-edit"></i>
                             </button>
                             <button
-                              className="action-btn delete-btn"
-                              onClick={() => openDeleteConfirmModal(cls)}
-                              title="Delete"
+                              className={`btn ${cls.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
+                              onClick={() => openStatusModal(cls)}
+                              title={cls.isActive !== false ? 'Deactivate' : 'Activate'}
+                              style={{ padding: '5px 10px', minWidth: '38px' }}
                             >
-                              <i className="fas fa-trash"></i>
+                              <i className={`fas ${cls.isActive !== false ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                             </button>
                           </div>
                         </td>
@@ -528,34 +536,37 @@ function Class() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteConfirmModalOpen && classToDelete && (
+      {/* STATUS TOGGLE MODAL */}
+      {isStatusModalOpen && classToToggle && (
         <div className="class-modal-overlay">
           <div className="class-modal" style={{ maxWidth: "400px" }}>
             <div className="class-modal-header">
-              <h3>Delete Class</h3>
+              <h3>{classToToggle.isActive !== false ? 'Deactivate' : 'Activate'} Class</h3>
               <button className="btn-close" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setClassToDelete(null);
+                setIsStatusModalOpen(false);
+                setClassToToggle(null);
               }}></button>
             </div>
             <div className="class-modal-body">
-              <div className="alert alert-warning" role="alert">
-                <i className="fas fa-exclamation-triangle me-2"></i>
-                <strong>Warning!</strong> This action cannot be undone.
-              </div>
-              <p>Are you sure you want to delete the class <strong>{classToDelete.name}</strong> (Room {classToDelete.roomNumber})?</p>
-              <p className="text-muted mb-0">All associated data will be permanently removed.</p>
+              <p>Are you sure you want to <strong>{classToToggle.isActive !== false ? 'deactivate' : 'activate'}</strong> the class <strong>{classToToggle.name}</strong>?</p>
+              {classToToggle.isActive !== false ? (
+                <p className="text-muted small">Deactivating a class will archive its records for the current term.</p>
+              ) : (
+                <p className="text-muted small">This will restore the class to the active curriculum.</p>
+              )}
             </div>
             <div className="class-modal-footer">
               <button className="btn btn-secondary" onClick={() => {
-                setIsDeleteConfirmModalOpen(false);
-                setClassToDelete(null);
+                setIsStatusModalOpen(false);
+                setClassToToggle(null);
               }}>
                 Cancel
               </button>
-              <button className="btn btn-danger" onClick={handleDeleteClass}>
-                <i className="fas fa-trash me-2"></i> Delete Class
+              <button 
+                className={`btn ${classToToggle.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+                onClick={handleToggleStatus}
+              >
+                {classToToggle.isActive !== false ? 'Deactivate' : 'Activate'}
               </button>
             </div>
           </div>

@@ -109,10 +109,12 @@ public class Subject {
 
     // Students enrolled in this subject
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<StudentSubject> enrolledStudents = new ArrayList<>();
 
     // Teachers assigned to this subject
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<TeacherSubject> assignedTeachers = new ArrayList<>();
 
     // Enums for Ugandan curriculum

@@ -140,7 +140,19 @@ public class SubjectService {
             .orElseThrow(() -> new RuntimeException("Subject not found with id: " + id));
         subject.setIsActive(false);
         subjectRepository.save(subject);
-        logger.info("Subject deactivated: {}", subject.getCode());
+        logger.info("Subject deactivated (soft-deleted): {}", subject.getCode());
+    }
+
+    /**
+     * Toggle subject status (Activate/Deactivate)
+     */
+    public Subject toggleSubjectStatus(Long id, boolean active) {
+        Subject subject = subjectRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Subject not found with id: " + id));
+        
+        subject.setIsActive(active);
+        logger.info("Subject status updated - Code: {}, Active: {}", subject.getCode(), active);
+        return subjectRepository.save(subject);
     }
 
     /**

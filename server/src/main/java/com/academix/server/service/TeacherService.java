@@ -299,6 +299,24 @@ public class TeacherService {
     }
 
     /**
+     * Toggle teacher status (Activate/Deactivate)
+     */
+    public Teacher toggleTeacherStatus(Long id, boolean active) {
+        Teacher teacher = teacherRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + id));
+        
+        if (active) {
+            teacher.activate();
+            teacher.setEmploymentStatus(Teacher.EmploymentStatus.ACTIVE);
+        } else {
+            teacher.deactivate();
+        }
+        
+        logger.info("Teacher status updated - ID: {}, Active: {}", id, active);
+        return teacherRepository.save(teacher);
+    }
+
+    /**
      * Hard delete teacher
      */
     public void hardDeleteTeacher(Long id) {

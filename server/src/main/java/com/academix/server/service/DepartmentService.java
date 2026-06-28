@@ -130,20 +130,29 @@ public class DepartmentService {
     }
     
     /**
-     * Delete department
+     * Delete department (soft delete)
      */
     public void deleteDepartment(Long id) {
-        logger.info("Deleting department with ID: {}", id);
+        logger.info("Deactivating department with ID: {}", id);
         
         Department department = getDepartmentById(id);
         
-        // Check if department has associated entities
-        if (!department.getTeachers().isEmpty()) {
-            throw new IllegalStateException("Cannot delete department with associated teachers, subjects, or staff. Please reassign them first.");
-        }
+        department.setStatus(DepartmentStatus.INACTIVE);
+        departmentRepository.save(department);
+        logger.info("Department deactivated successfully");
+    }
+
+    /**
+     * Toggle department status (Activate/Deactivate)
+     */
+    public Department toggleDepartmentStatus(Long id, boolean active) {
+        logger.info("Toggling department status - ID: {}, Active: {}", id, active);
         
-        departmentRepository.delete(department);
-        logger.info("Department deleted successfully");
+        Department department = getDepartmentById(id);
+        department.setStatus(active ? DepartmentStatus.ACTIVE : DepartmentStatus.INACTIVE);
+        department.setUpdatedAt(LocalDateTime.now());
+        
+        return departmentRepository.save(department);
     }
     
     /**

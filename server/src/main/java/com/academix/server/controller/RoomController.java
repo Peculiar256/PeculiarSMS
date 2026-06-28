@@ -114,7 +114,25 @@ public class RoomController {
     public ResponseEntity<?> deleteRoom(@PathVariable Long id) {
         try {
             roomService.deleteRoom(id);
-            return ResponseEntity.ok(Map.of("message", "Room deleted successfully"));
+            return ResponseEntity.ok(Map.of("message", "Room deactivated successfully (soft-delete)"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * PATCH /api/rooms/{id}/status - Toggle room availability status
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HEAD_TEACHER') or hasRole('DIRECTOR_OF_STUDIES')")
+    public ResponseEntity<?> toggleRoomStatus(@PathVariable Long id, @RequestParam boolean active) {
+        try {
+            Room updated = roomService.toggleRoomStatus(id, active);
+            String message = active ? "Room marked as available" : "Room marked as unavailable";
+            return ResponseEntity.ok(Map.of(
+                "message", message,
+                "room", updated
+            ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

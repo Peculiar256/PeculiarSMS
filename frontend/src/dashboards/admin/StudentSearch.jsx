@@ -19,7 +19,7 @@ const StudentSearch = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
   const [formError, setFormError] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -274,20 +274,22 @@ const StudentSearch = () => {
     }
   };
 
-  const handleDeleteStudent = async () => {
+  const handleToggleStatus = async () => {
     setLoading(true);
     try {
-      await axiosInstance.delete(`/students/${selectedStudent.id}`);
+      const newStatus = selectedStudent.isActive === false;
+      const endpoint = newStatus ? `/students/${selectedStudent.id}/activate` : `/students/${selectedStudent.id}/deactivate`;
       
-      // Close modal immediately
-      setIsDeleteModalOpen(false);
+      await axiosInstance.put(endpoint);
+      
+      setSuccessMessage(`Student ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      setIsStatusModalOpen(false);
       setSelectedStudent(null);
-      
-      // Fetch in background (don't block UI)
       fetchStudents();
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
-      console.error('Error deleting student:', err);
-      setFormError(err.response?.data?.message || 'Failed to delete student');
+      console.error('Error toggling student status:', err);
+      setError(err.response?.data?.message || 'Failed to update student status');
     } finally {
       setLoading(false);
     }
@@ -338,10 +340,10 @@ const StudentSearch = () => {
   };
 
   const getStatusBadge = (isActive) => {
-    const isActiveStatus = isActive !== false;
+    const active = isActive !== false;
     return (
-      <span className={`badge ${isActiveStatus ? 'bg-success' : 'bg-danger'}`}>
-        {isActiveStatus ? 'Active' : 'Inactive'}
+      <span className={`badge ${active ? 'bg-success' : 'bg-secondary'}`}>
+        {active ? 'Active' : 'Inactive'}
       </span>
     );
   };
@@ -892,19 +894,43 @@ const StudentSearch = () => {
         </div>
       )}
 
-      {/* DELETE CONFIRMATION MODAL */}
-      {isDeleteModalOpen && selectedStudent && (
-        <div className="modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
-          <div className="modal-content delete-confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header delete-header">
-              <h3>Delete Student</h3>
-              <button className="modal-close" onClick={() => setIsDeleteModalOpen(false)}>×</button>
+      {isStatusModalOpen && selectedStudent && (
+        <div className="modal-overlay" onClick={() => setIsStatusModalOpen(false)}>
+          <div className="modal-content status-confirm-modal" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ color: selectedStudent.isActive !== false ? '#dc2626' : '#166534' }}>
+                {selectedStudent.isActive !== false ? 'Deactivate' : 'Activate'} Student
+              </h3>
+              <button className="modal-close" onClick={() => setIsStatusModalOpen(false)}>×</button>
             </div>
-            <p>Are you sure you want to delete <strong>{selectedStudent.firstName} {selectedStudent.lastName}</strong>?</p>
-            <p className="warning-text">This action cannot be undone.</p>
-            <div className="form-actions delete-actions">
-              <button className="btn btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDeleteStudent} disabled={loading}>Delete</button>
+            <div className="modal-body py-4" style={{ padding: '20px' }}>
+              <p style={{ fontSize: '15px', color: '#1f2937' }}>Are you sure you want to <strong>{selectedStudent.isActive !== false ? 'deactivate' : 'activate'}</strong> <strong>{selectedStudent.firstName} {selectedStudent.lastName}</strong> ({selectedStudent.studentId})?</p>
+              {selectedStudent.isActive !== false ? (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#fff1f2', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+                  <p className="text-muted small" style={{ margin: 0, color: '#991b1b' }}>
+                    <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '8px' }}></i>
+                    Deactivated students will not be able to log in, but their academic records and data will be preserved.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ marginTop: '15px', padding: '12px', background: '#f0fdf4', borderRadius: '8px', borderLeft: '4px solid #22c55e' }}>
+                  <p className="text-muted small" style={{ margin: 0, color: '#166534' }}>
+                    <i className="fa-solid fa-circle-check" style={{ marginRight: '8px' }}></i>
+                    This will restore the student's access to the system immediately.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="form-actions" style={{ padding: '0 20px 20px', gap: '12px' }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsStatusModalOpen(false)}>Cancel</button>
+              <button 
+                className={`btn ${selectedStudent.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+                style={{ flex: 1 }}
+                onClick={handleToggleStatus} 
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : (selectedStudent.isActive !== false ? 'Confirm Deactivation' : 'Confirm Activation')}
+              </button>
             </div>
           </div>
         </div>
@@ -920,8 +946,8 @@ const StudentSearch = () => {
           <table className="students-table">
             <thead>
               <tr>
-                <th>Name</th>
                 <th>Student ID</th>
+                <th>Name</th> 
                 <th>Class</th>
                 <th>Contact</th>
                 <th>Status</th>
@@ -931,21 +957,27 @@ const StudentSearch = () => {
             <tbody>
               {filteredStudents.map(student => (
                 <tr key={student.id}>
-                  <td>{student.firstName} {student.lastName}</td>
                   <td>{student.studentId}</td>
+                  <td>{student.firstName} {student.lastName}</td>
                   <td>
-                    {/* Display current_class (what's stored in DB) */}
-                    <span className="badge bg-info text-dark rounded-pill text-white">
+                    <span className="badge bg-info text-white rounded-pill">
                       {student.currentClass || student.schoolClass?.name || 'Unassigned'}
                     </span>
                   </td>
                   <td>{student.phoneNumber || '-'}</td>
                   <td>{getStatusBadge(student.isActive)}</td>
                   <td>
-                    <div className="action-buttons">
-                      <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }}> <i className="fa-solid fa-eye"></i> View</button>
-                      <button className="btn btn-primary btn-sm" onClick={() => handleEditStudent(student)}> <i className="fa-solid fa-pen-to-square"></i> Edit</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => { setSelectedStudent(student); setIsDeleteModalOpen(true); }}> <i className="fa-solid fa-trash"></i> Delete</button>
+                    <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }} title="View Detail" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-eye"></i></button>
+                      <button className="btn btn-primary btn-sm" onClick={() => handleEditStudent(student)} title="Edit Student" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-pen-to-square"></i></button>
+                      <button 
+                        className={`btn ${student.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`} 
+                        onClick={() => { setSelectedStudent(student); setIsStatusModalOpen(true); }}
+                        title={student.isActive !== false ? 'Deactivate' : 'Activate'}
+                        style={{ padding: '5px 10px', minWidth: '38px' }}
+                      > 
+                        <i className={`fa-solid ${student.isActive !== false ? 'fa-user-slash' : 'fa-user-check'}`}></i>
+                      </button>
                     </div>
                   </td>
                 </tr>

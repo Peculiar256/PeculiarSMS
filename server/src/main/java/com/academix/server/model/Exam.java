@@ -105,6 +105,13 @@ public class Exam {
     @Column(nullable = true)
     private Long publishedBy;
 
+    // Soft delete & Status management
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
     // Description/Instructions
     @Column(length = 1000)
     private String description;

@@ -27,6 +27,8 @@ function Exam() {
   const [messageType, setMessageType] = useState(""); // "success" or "error"
   const [viewMode, setViewMode] = useState("analytics"); // NEW: Toggle between analytics and table
 
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [selectedExam, setSelectedExam] = useState(null);
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -219,41 +221,46 @@ function Exam() {
     }
   };
 
-  const handleDeleteExam = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this exam?")) {
-      return;
-    }
-
+  const handleToggleStatus = async () => {
     try {
+      setSubmitting(true);
       const token = localStorage.getItem('accessToken');
+      const newActive = selectedExam.isActive === false;
 
-      console.log('🗑️ Deleting exam ID:', id);
-
-      const response = await fetch(`${API_BASE_URL}/exams/${id}`, {
-        method: "DELETE",
+      const response = await fetch(`${API_BASE_URL}/exams/${selectedExam.id}/status?active=${newActive}`, {
+        method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
-        },
+        }
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || "Failed to delete exam");
+        throw new Error("Failed to update exam status");
       }
 
-      setExams(exams.filter((exam) => exam.id !== id));
-      setMessage("✅ Exam deleted successfully!");
+      const updated = await response.json();
+      setExams(exams.map(e => e.id === selectedExam.id ? { ...e, isActive: newActive } : e));
+      setMessage(`✅ Exam ${newActive ? 'activated' : 'deactivated'} successfully!`);
       setMessageType("success");
-      
-      console.log("✅ Exam deleted");
-      
+      setIsStatusModalOpen(false);
+      setSelectedExam(null);
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      setMessage(`❌ Failed to delete exam: ${err.message}`);
+      setMessage(`❌ Failed to update status: ${err.message}`);
       setMessageType("error");
-      console.error("Error deleting exam:", err);
+      console.error("Error toggling status:", err);
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const handleDeleteExam = async (id) => {
+    const exam = exams.find(e => e.id === id);
+    if (!exam) return;
+    
+    setSelectedExam(exam);
+    setIsStatusModalOpen(true);
   };
 
   const chartOptions = {
@@ -445,14 +452,43 @@ function Exam() {
                     <td>{exam.startDate ? new Date(exam.startDate).toLocaleDateString() : '-'}</td>
                     <td>{exam.endDate ? new Date(exam.endDate).toLocaleDateString() : '-'}</td>
                     <td>
-                      <span className={`status-badge status-${(exam.status || 'DRAFT').toLowerCase()}`}>
-                        {exam.status || 'DRAFT'}
-                      </span>
+                      <div className="status-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span className={`status-badge status-${(exam.status || 'DRAFT').toLowerCase()}`}>
+                          {exam.status || 'DRAFT'}
+                        </span>
+                        <span className={`badge ${exam.isActive !== false ? 'bg-success' : 'bg-secondary'}`} style={{ fontSize: '10px' }}>
+                          {exam.isActive !== false ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                     </td>
                     <td>
-                      <div className="action-buttons">
-                        <button className="btn btn-sm btn-danger" onClick={() => handleDeleteExam(exam.id)} title="Delete Exam">
-                          <i className="fas fa-trash"></i> Delete
+                      <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          className="btn btn-info btn-sm"
+                          onClick={() => {
+                            setSelectedClass(exam);
+                            setIsDetailsModalOpen(true);
+                          }}
+                          title="View Details"
+                          style={{ padding: '5px 10px' }}
+                        >
+                          <i className="fas fa-eye"></i>
+                        </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => openEditModal(exam)}
+                          title="Edit"
+                          style={{ padding: '5px 10px' }}
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className={`btn ${exam.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
+                          onClick={() => openStatusModal(exam)}
+                          title={exam.isActive !== false ? 'Deactivate' : 'Activate'}
+                          style={{ padding: '5px 10px', minWidth: '38px' }}
+                        >
+                          <i className={`fas ${exam.isActive !== false ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                         </button>
                       </div>
                     </td>
@@ -610,6 +646,35 @@ function Exam() {
                 disabled={submitting}
               >
                 {submitting ? 'Creating...' : 'Add Exam'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* STATUS TOGGLE MODAL */}
+      {isStatusModalOpen && selectedExam && (
+        <div className="exam-modal-overlay" onClick={() => setIsStatusModalOpen(false)}>
+          <div className="exam-modal" style={{ maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="exam-modal-header">
+              <h3>{selectedExam.isActive !== false ? 'Deactivate' : 'Activate'} Exam</h3>
+              <button className="btn-close" onClick={() => setIsStatusModalOpen(false)}>×</button>
+            </div>
+            <div className="exam-modal-body py-4" style={{ padding: '20px' }}>
+              <p>Are you sure you want to <strong>{selectedExam.isActive !== false ? 'deactivate' : 'activate'}</strong> the exam <strong>{selectedExam.name}</strong>?</p>
+              {selectedExam.isActive !== false ? (
+                <p className="text-muted small">Deactivating an exam hides it from general view but preserves all marks and results data.</p>
+              ) : (
+                <p className="text-muted small">This will make the exam active again for mark entry and reports.</p>
+              )}
+            </div>
+            <div className="exam-modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsStatusModalOpen(false)}>Cancel</button>
+              <button 
+                className={`btn ${selectedExam.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+                onClick={handleToggleStatus}
+                disabled={submitting}
+              >
+                {submitting ? 'Processing...' : (selectedExam.isActive !== false ? 'Deactivate' : 'Activate')}
               </button>
             </div>
           </div>

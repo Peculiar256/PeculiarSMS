@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -130,6 +131,24 @@ public class TeacherController {
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             logger.error("Failed to delete teacher {}: {}", id, e.getMessage());
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * PATCH /api/teachers/{id}/status - Toggle teacher active status
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> toggleTeacherStatus(@PathVariable Long id, @RequestParam boolean active) {
+        try {
+            Teacher updatedTeacher = teacherService.toggleTeacherStatus(id, active);
+            String message = active ? "Teacher activated successfully" : "Teacher deactivated successfully";
+            return ResponseEntity.ok(createSuccessResponse(message, updatedTeacher));
+        } catch (RuntimeException e) {
+            logger.error("Failed to toggle status for teacher {}: {}", id, e.getMessage());
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.notFound().build();
             }
