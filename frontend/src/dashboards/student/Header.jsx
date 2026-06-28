@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import profilePic from '/src/assets/Me.jpeg'
+import profilePic from '/src/assets/bd.jpeg'
 import './Header.css'
 import { useLogout } from '../../hooks/useLogout';
 

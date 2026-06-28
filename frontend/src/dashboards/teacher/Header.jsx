@@ -1,5 +1,5 @@
 import React from "react";
-import profilePic from '/src/assets/se.jpeg'
+import profilePic from '/src/assets/bd.jpeg'
 import '../admin/Header.css'
 import { useNavigate } from "react-router-dom";
 import { useLogout } from '../../hooks/useLogout';
