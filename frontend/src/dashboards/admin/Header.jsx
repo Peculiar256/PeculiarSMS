@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import profilePic from '/src/assets/bd.jpeg'
 import './Header.css'
+import kyuLogo from '/src/assets/PS.png'
 import { useLogout } from '../../hooks/useLogout';
 import { useAuth } from '../../context/AuthContext';
 
@@ -14,8 +15,8 @@ function Header() {
             <div className="container-fluid">
                 {/* Brand / Logo */}
                 <a className="navbar-brand d-flex align-items-center fw-bold text-primary" href="#">
-                    <i className="fa-solid fa-graduation-cap me-2 fs-3"></i>
-                    <span>SMS Admin</span>
+                    <img src={kyuLogo} alt="" width={50} height={50}/>
+                    <span>Hilton High School Mukono</span>
                 </a>
 
                 <div className="navbar-collapse" id="navbarSupportedContent">

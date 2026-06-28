@@ -24,6 +24,7 @@ const StudentSearch = () => {
   const [formError, setFormError] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
+  const [activeViewSection, setActiveViewSection] = useState('personal'); // 'personal', 'academic', 'contact'
   const [isPrintLoading, setIsPrintLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -337,8 +338,12 @@ const StudentSearch = () => {
   };
 
   const getStatusBadge = (isActive) => {
-    const status = isActive !== false ? 'active' : 'inactive';
-    return <span className={`status-badge status-${status}`}>{status}</span>;
+    const isActiveStatus = isActive !== false;
+    return (
+      <span className={`badge ${isActiveStatus ? 'bg-success' : 'bg-danger'}`}>
+        {isActiveStatus ? 'Active' : 'Inactive'}
+      </span>
+    );
   };
 
   /**
@@ -703,117 +708,136 @@ const StudentSearch = () => {
 
             {/* Details Sections */}
             <div style={{ padding: '25px 20px' }}>
-              {/* Personal Information */}
-              <div style={{ marginBottom: '25px' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <i className="fa-solid fa-circle-user" style={{ color: '#1E40AF' }}></i>
-                  Personal Information
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Gender</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-venus-mars" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.gender || 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-cake-candles" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.dateOfBirth ? new Date(selectedStudent.dateOfBirth).toLocaleDateString() : 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Nationality</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-globe" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.nationality || 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Other Names</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-user" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.otherNames || 'Not Provided'}
-                    </p>
-                  </div>
+              {/* 1. Personal Information Section */}
+              <div style={{ marginBottom: '10px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div 
+                  onClick={() => setActiveViewSection(activeViewSection === 'personal' ? '' : 'personal')}
+                  style={{ 
+                    padding: '12px 15px', 
+                    background: activeViewSection === 'personal' ? '#f0f4ff' : '#fff', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: activeViewSection === 'personal' ? '1px solid #e0e0e0' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>
+                    <i className="fa-solid fa-circle-user"></i>
+                    Personal Information
+                  </h4>
+                  <i className={`fa-solid fa-chevron-${activeViewSection === 'personal' ? 'up' : 'down'}`} style={{ color: '#999', fontSize: '12px' }}></i>
                 </div>
-              </div>
-
-              {/* Academic Information */}
-              <div style={{ marginBottom: '25px' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <i className="fa-solid fa-graduation-cap" style={{ color: '#1E40AF' }}></i>
-                  Academic Information
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Class</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-book" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.currentClass || selectedStudent.schoolClass?.name || 'Unassigned'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Stream</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-sitemap" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.stream || 'Not Assigned'}
-                    </p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1', padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Residence Status</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-home" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {selectedStudent.residenceStatus === 'DAY' ? 'Day Student' : 'Boarding Student'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact & ID Information */}
-              <div style={{ marginBottom: '25px' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <i className="fa-solid fa-phone" style={{ color: '#1E40AF' }}></i>
-                  Contact & Identification
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Email Address</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-envelope" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      <a href={`mailto:${selectedStudent.email}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
-                        {selectedStudent.email || 'Not Provided'}
-                      </a>
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Phone Number</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-phone" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      <a href={`tel:${selectedStudent.phoneNumber}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
-                        {selectedStudent.phoneNumber || 'Not Provided'}
-                      </a>
-                    </p>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                      <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>NIN</p>
-                      <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                        <i className="fa-solid fa-id-card" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                        {selectedStudent.nin || 'Not Provided'}
-                      </p>
+                
+                {activeViewSection === 'personal' && (
+                  <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', background: '#fff' }}>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Gender</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.gender || 'Not Specified'}</p>
                     </div>
-                    <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                      <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>LINN</p>
-                      <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                        <i className="fa-solid fa-barcode" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                        {selectedStudent.linn || 'Not Provided'}
-                      </p>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.dateOfBirth ? new Date(selectedStudent.dateOfBirth).toLocaleDateString() : 'Not Specified'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Nationality</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.nationality || 'Not Specified'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Other Names</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.otherNames || 'Not Provided'}</p>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* 2. Academic Information Section */}
+              <div style={{ marginBottom: '10px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div 
+                  onClick={() => setActiveViewSection(activeViewSection === 'academic' ? '' : 'academic')}
+                  style={{ 
+                    padding: '12px 15px', 
+                    background: activeViewSection === 'academic' ? '#f0f4ff' : '#fff', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: activeViewSection === 'academic' ? '1px solid #e0e0e0' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>
+                    <i className="fa-solid fa-graduation-cap"></i>
+                    Academic Information
+                  </h4>
+                  <i className={`fa-solid fa-chevron-${activeViewSection === 'academic' ? 'up' : 'down'}`} style={{ color: '#999', fontSize: '12px' }}></i>
                 </div>
+                
+                {activeViewSection === 'academic' && (
+                  <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', background: '#fff' }}>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Class</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.currentClass || selectedStudent.schoolClass?.name || 'Unassigned'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Stream</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.stream || 'Not Assigned'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1', padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Residence Status</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.residenceStatus === 'DAY' ? 'Day Student' : 'Boarding Student'}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Contact & ID Information Section */}
+              <div style={{ marginBottom: '10px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div 
+                  onClick={() => setActiveViewSection(activeViewSection === 'contact' ? '' : 'contact')}
+                  style={{ 
+                    padding: '12px 15px', 
+                    background: activeViewSection === 'contact' ? '#f0f4ff' : '#fff', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: activeViewSection === 'contact' ? '1px solid #e0e0e0' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>
+                    <i className="fa-solid fa-phone"></i>
+                    Contact & Identification
+                  </h4>
+                  <i className={`fa-solid fa-chevron-${activeViewSection === 'contact' ? 'up' : 'down'}`} style={{ color: '#999', fontSize: '12px' }}></i>
+                </div>
+                
+                {activeViewSection === 'contact' && (
+                  <div style={{ padding: '15px', background: '#fff' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                      <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Email Address</p>
+                        <p style={{ margin: '0', fontSize: '13px', fontWeight: '500', color: '#1E40AF' }}>{selectedStudent.email || 'Not Provided'}</p>
+                      </div>
+                      <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Phone Number</p>
+                        <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.phoneNumber || 'Not Provided'}</p>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                          <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>NIN</p>
+                          <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.nin || 'Not Provided'}</p>
+                        </div>
+                        <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                          <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>LINN</p>
+                          <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{selectedStudent.linn || 'Not Provided'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Status & Actions */}
@@ -911,7 +935,7 @@ const StudentSearch = () => {
                   <td>{student.studentId}</td>
                   <td>
                     {/* Display current_class (what's stored in DB) */}
-                    <span className="class-badge">
+                    <span className="badge bg-info text-dark rounded-pill text-white">
                       {student.currentClass || student.schoolClass?.name || 'Unassigned'}
                     </span>
                   </td>

@@ -18,6 +18,7 @@ const TeacherSearch = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newTeachersCount, setNewTeachersCount] = useState(0);
   const [viewTeacher, setViewTeacher] = useState(null);
+  const [activeViewSection, setActiveViewSection] = useState('personal'); // 'personal', 'professional', 'contact'
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [teacherToEditId, setTeacherToEditId] = useState('');
   const [editError, setEditError] = useState('');
@@ -1189,105 +1190,131 @@ const TeacherSearch = () => {
                 </span>
               </div>
             </div>
-
-            {/* Details Sections */}
-            <div style={{ padding: '25px 20px' }}>
-              {/* Personal Information */}
-              <div style={{ marginBottom: '25px' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <i className="fa-solid fa-circle-user" style={{ color: '#1E40AF' }}></i>
-                  Personal Information
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Gender</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-venus-mars" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.gender || 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Nationality</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-globe" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.nationality || 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-cake-candles" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.dateOfBirth ? new Date(viewTeacher.dateOfBirth).toLocaleDateString() : 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Hire Date</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-calendar-check" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.hireDate ? new Date(viewTeacher.hireDate).toLocaleDateString() : 'Not Specified'}
-                    </p>
-                  </div>
+            {/* Details Sections - Accordion Style */}
+            <div style={{ padding: '15px 20px' }}>
+              
+              {/* 1. Personal Information Section */}
+              <div style={{ marginBottom: '10px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div 
+                  onClick={() => setActiveViewSection(activeViewSection === 'personal' ? '' : 'personal')}
+                  style={{ 
+                    padding: '12px 15px', 
+                    background: activeViewSection === 'personal' ? '#f0f4ff' : '#fff', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: activeViewSection === 'personal' ? '1px solid #e0e0e0' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>
+                    <i className="fa-solid fa-circle-user"></i>
+                    Personal Information
+                  </h4>
+                  <i className={`fa-solid fa-chevron-${activeViewSection === 'personal' ? 'up' : 'down'}`} style={{ color: '#999', fontSize: '12px' }}></i>
                 </div>
+                
+                {activeViewSection === 'personal' && (
+                  <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', background: '#fff' }}>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Gender</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.gender || 'Not Specified'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Nationality</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.nationality || 'Not Specified'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.dateOfBirth ? new Date(viewTeacher.dateOfBirth).toLocaleDateString() : 'Not Specified'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Hire Date</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.hireDate ? new Date(viewTeacher.hireDate).toLocaleDateString() : 'Not Specified'}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Professional Information */}
-              <div style={{ marginBottom: '25px' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <i className="fa-solid fa-graduation-cap" style={{ color: '#1E40AF' }}></i>
-                  Professional Information
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Qualification</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-certificate" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.qualification || 'Not Specified'}
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Specialization</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-book" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.specialization || 'Not Assigned'}
-                    </p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1', padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Department</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-building" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      {viewTeacher.department || 'Unassigned'}
-                    </p>
-                  </div>
+              {/* 2. Professional Information Section */}
+              <div style={{ marginBottom: '10px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div 
+                  onClick={() => setActiveViewSection(activeViewSection === 'professional' ? '' : 'professional')}
+                  style={{ 
+                    padding: '12px 15px', 
+                    background: activeViewSection === 'professional' ? '#f0f4ff' : '#fff', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: activeViewSection === 'professional' ? '1px solid #e0e0e0' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>
+                    <i className="fa-solid fa-graduation-cap"></i>
+                    Professional Information
+                  </h4>
+                  <i className={`fa-solid fa-chevron-${activeViewSection === 'professional' ? 'up' : 'down'}`} style={{ color: '#999', fontSize: '12px' }}></i>
                 </div>
+                
+                {activeViewSection === 'professional' && (
+                  <div style={{ padding: '15px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', background: '#fff' }}>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Qualification</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.qualification || 'Not Specified'}</p>
+                    </div>
+                    <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Specialization</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.specialization || 'Not Assigned'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1', padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Department</p>
+                      <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.department || 'Unassigned'}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Contact Information */}
-              <div style={{ marginBottom: '25px' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', marginTop: '0', marginBottom: '15px', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <i className="fa-solid fa-phone" style={{ color: '#1E40AF' }}></i>
-                  Contact Information
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Email Address</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-envelope" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      <a href={`mailto:${viewTeacher.email}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
-                        {viewTeacher.email || 'Not Provided'}
-                      </a>
-                    </p>
-                  </div>
-                  <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '3px solid #1E40AF' }}>
-                    <p style={{ margin: '0 0 5px', fontSize: '11px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Phone Number</p>
-                    <p style={{ margin: '0', fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      <i className="fa-solid fa-phone" style={{ marginRight: '8px', color: '#1E40AF' }}></i>
-                      <a href={`tel:${viewTeacher.contactNumber || viewTeacher.phone}`} style={{ color: '#1E40AF', textDecoration: 'none' }}>
-                        {viewTeacher.contactNumber || viewTeacher.phone || 'Not Provided'}
-                      </a>
-                    </p>
-                  </div>
+              {/* 3. Contact Information Section */}
+              <div style={{ marginBottom: '10px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div 
+                  onClick={() => setActiveViewSection(activeViewSection === 'contact' ? '' : 'contact')}
+                  style={{ 
+                    padding: '12px 15px', 
+                    background: activeViewSection === 'contact' ? '#f0f4ff' : '#fff', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: activeViewSection === 'contact' ? '1px solid #e0e0e0' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#1E40AF', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>
+                    <i className="fa-solid fa-phone"></i>
+                    Contact Information
+                  </h4>
+                  <i className={`fa-solid fa-chevron-${activeViewSection === 'contact' ? 'up' : 'down'}`} style={{ color: '#999', fontSize: '12px' }}></i>
                 </div>
+                
+                {activeViewSection === 'contact' && (
+                  <div style={{ padding: '15px', background: '#fff' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                      <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Email Address</p>
+                        <p style={{ margin: '0', fontSize: '13px', fontWeight: '500', color: '#1E40AF' }}>{viewTeacher.email || 'Not Provided'}</p>
+                      </div>
+                      <div style={{ padding: '10px', background: '#f8f9fa', borderRadius: '6px', borderLeft: '3px solid #1E40AF' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#999', fontWeight: '600', textTransform: 'uppercase' }}>Phone Number</p>
+                        <p style={{ margin: '0', fontSize: '13px', fontWeight: '500' }}>{viewTeacher.contactNumber || viewTeacher.phone || 'Not Provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+            </div>
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
@@ -1335,7 +1362,6 @@ const TeacherSearch = () => {
                   <i className="fa-solid fa-pen-to-square" style={{ marginRight: '8px' }}></i>
                   Edit Teacher
                 </button>
-              </div>
             </div>
           </div>
         </div>

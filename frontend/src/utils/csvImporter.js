@@ -43,7 +43,7 @@ export const parseCSV = (file) => {
             row[header] = values[idx]?.trim() || '';
           });
 
-          // Map CSV column names to API field names
+        // Map CSV column names to API field names
           const teacher = {
             firstName: row.firstname,
             lastName: row.lastname,
@@ -61,7 +61,10 @@ export const parseCSV = (file) => {
           data.push({ row: i + 1, data: teacher });
         }
 
-        resolve(data);
+        resolve({
+          rows: data.length,
+          data: data.map(item => item.data)
+        });
       } catch (error) {
         reject(`Error parsing CSV: ${error.message}`);
       }
