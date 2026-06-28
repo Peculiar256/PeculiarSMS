@@ -9,16 +9,26 @@ export const parseCSV = (file) => {
     reader.onload = (event) => {
       try {
         const csv = event.target.result;
-        const lines = csv.split('\n');
+        // Handle both CRLF (\r\n) and LF (\n) line endings safely
+        const lines = csv.split(/\r?\n/);
         
         if (lines.length < 2) {
           reject('CSV file is empty');
           return;
         }
 
-        // Parse header
+        // Parse header and normalize to lowercase for easy lookup
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const requiredFields = ['firstname', 'lastname', 'email', 'contactnumber', 'gender', 'qualification', 'specialization', 'department'];
+        const requiredFields = [
+          'firstname', 
+          'lastname', 
+          'email', 
+          'contactnumber', 
+          'gender', 
+          'qualification', 
+          'specialization', 
+          'department'
+        ];
         
         const missingFields = requiredFields.filter(field => !headers.includes(field));
         if (missingFields.length > 0) {
@@ -30,7 +40,7 @@ export const parseCSV = (file) => {
         const data = [];
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
-          if (!line) continue; // Skip empty lines
+          if (!line) continue; // Skip trailing empty lines safely
 
           const values = parseCSVLine(line);
           if (values.length < headers.length) {
@@ -43,7 +53,7 @@ export const parseCSV = (file) => {
             row[header] = values[idx]?.trim() || '';
           });
 
-        // Map CSV column names to API field names
+          // Map clean normalized keys directly to API field configurations
           const teacher = {
             firstName: row.firstname,
             lastName: row.lastname,
@@ -58,12 +68,12 @@ export const parseCSV = (file) => {
             hireDate: row.hiredate || new Date().toISOString().split('T')[0],
           };
 
-          data.push({ row: i + 1, data: teacher });
+          data.push(teacher);
         }
 
         resolve({
           rows: data.length,
-          data: data.map(item => item.data)
+          data: data
         });
       } catch (error) {
         reject(`Error parsing CSV: ${error.message}`);
@@ -75,7 +85,7 @@ export const parseCSV = (file) => {
   });
 };
 
-// Helper to parse CSV line handling quoted values
+// Helper to parse CSV line handling quoted values smoothly
 const parseCSVLine = (line) => {
   const result = [];
   let current = '';
@@ -88,7 +98,7 @@ const parseCSVLine = (line) => {
     if (char === '"') {
       if (insideQuotes && nextChar === '"') {
         current += '"';
-        i++; // Skip next quote
+        i++; // Skip next escaped double quote
       } else {
         insideQuotes = !insideQuotes;
       }
@@ -104,7 +114,7 @@ const parseCSVLine = (line) => {
   return result;
 };
 
-// Validate teacher data
+// Validate teacher data row constraints
 export const validateTeacherRow = (teacher, rowNumber) => {
   const errors = [];
 
@@ -130,26 +140,26 @@ export const validateTeacherRow = (teacher, rowNumber) => {
   };
 };
 
-// Email validation
+// Email validation regular expression handler
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Generate sample CSV template
+// Fixed to explicitly export matching headers to comply with lowercase rules
 export const generateCSVTemplate = () => {
   const headers = [
-    'firstName',
-    'lastName',
+    'firstname',
+    'lastname',
     'email',
-    'contactNumber',
-    'dateOfBirth',
+    'contactnumber',
+    'dateofbirth',
     'gender',
     'nationality',
     'qualification',
     'specialization',
     'department',
-    'hireDate',
+    'hiredate',
   ];
 
   const sampleData = [
@@ -157,11 +167,10 @@ export const generateCSVTemplate = () => {
     'Jane,Smith,jane.smith@school.com,+256700123457,1992-03-20,FEMALE,Ugandan,Bachelors,Physics,Science,2024-02-15',
   ];
 
-  const csv = [headers.join(','), ...sampleData].join('\n');
-  return csv;
+  return [headers.join(','), ...sampleData].join('\n');
 };
 
-// Download template
+// Download template clean trigger
 export const downloadCSVTemplate = () => {
   const csv = generateCSVTemplate();
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

@@ -12,7 +12,6 @@ import TeacherSearch from "./TeacherSearch";
 import Attendance from "./Attendance";
 import Grades from "./Grades";
 import TimetableByclass from "./TimetableByClass";
-import Users from "./Users";
 import Staff from "./Staff";
 import Class from "./Class";
 import Subjects from "./Subjects";
