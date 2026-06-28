@@ -134,9 +134,18 @@ function Body (){
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: '65%',
     plugins: {
+      title: {
+        display: true,
+        text: 'Attendance',
+        padding: { bottom: 10 },
+      },
       legend: {
         position: "bottom",
+        labels: {
+          padding: 20,
+        },
       },
     },
   };
@@ -167,6 +176,11 @@ function Body (){
       }
     },
     plugins: {
+      title: {
+        display: true,
+        text: 'Students per Class',
+        padding: { bottom: 10 },
+      },
       legend: {
         display: false
       },
