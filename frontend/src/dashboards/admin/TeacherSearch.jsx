@@ -1059,7 +1059,7 @@ const TeacherSearch = () => {
                   <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange}>
                     <option value="">Select gender</option>
                     <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>            
+                    <option value="FEMALE">Female</option>         
                   </select>
                 </div>
 
