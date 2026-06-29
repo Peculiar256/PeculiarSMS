@@ -755,7 +755,7 @@ function TimetableByClass() {
         </div>
       )}
 
-      {/* Details Modal */}}
+      {/* Details Modal */}
       {showDetailsModal && viewingEntry && (
         <div className="class-modal-overlay">
           <div className="class-modal">

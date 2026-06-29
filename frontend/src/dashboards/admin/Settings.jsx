@@ -21,14 +21,6 @@ function Settings() {
     confirmPassword: "",
   });
 
-  const [idGeneration, setIdGeneration] = useState({
-    studentIdPrefix: "STU",
-    teacherIdPrefix: "TCH",
-    staffIdPrefix: "STF",
-    startNumber: "1000",
-    count: "10",
-  });
-
   const [reportOptions, setReportOptions] = useState({
     studentReport: true,
     teacherReport: true,
@@ -39,9 +31,14 @@ function Settings() {
 
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [students, setStudents] = useState([]);
-const [selectedStudent, setSelectedStudent] = useState(null);
+  const [teachers, setTeachers] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewType, setPreviewType] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -84,10 +81,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
 
   const handlePasswordChange = (field, value) => {
     setPasswordData({ ...passwordData, [field]: value });
-  };
-
-  const handleIdChange = (field, value) => {
-    setIdGeneration({ ...idGeneration, [field]: value });
   };
 
   const handleReportChange = (field, value) => {
@@ -138,34 +131,14 @@ const [selectedStudent, setSelectedStudent] = useState(null);
     }
   };
 
-  const generateIds = async (type) => {
-    setLoading(true);
-    try {
-      const prefix = idGeneration[`${type}IdPrefix`];
-      const startNum = parseInt(idGeneration.startNumber) || 1000;
-      const count = parseInt(idGeneration.count) || 10;
-      const generatedIds = Array.from({ length: count }, (_, i) => `${prefix}${(startNum + i).toString().padStart(4, '0')}`);
-      
-      console.log(`Generated ${type} IDs:`, generatedIds);
-      setMessage({ type: "success", text: `Generated ${count} ${type} IDs: ${generatedIds.slice(0, 5).join(', ')}${count > 5 ? '...' : ''}` });
-    } catch {
-      setMessage({ type: "error", text: `Failed to generate ${type} IDs` });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadStudents = async () => {
     setLoadingStudents(true);
     try {
       const response = await axiosInstance.get('/students');
       const data = response.data;
-      console.log('Students response:', data);
       const studentList = Array.isArray(data?.students) ? data.students : (Array.isArray(data) ? data : []);
-      console.log('Processed students:', studentList);
       setStudents(studentList);
     } catch (err) {
-      console.error('Failed to load students:', err);
       setStudents([]);
       setMessage({ type: "error", text: "Failed to load students: " + (err.response?.data?.message || err.message) });
     } finally {
@@ -173,16 +146,32 @@ const [selectedStudent, setSelectedStudent] = useState(null);
     }
   };
 
+  const loadTeachers = async () => {
+    setLoadingTeachers(true);
+    try {
+      const response = await axiosInstance.get('/teachers');
+      const data = response.data;
+      const teacherList = data?.teachers || data || [];
+      setTeachers(teacherList);
+    } catch (err) {
+      setTeachers([]);
+      setMessage({ type: "error", text: "Failed to load teachers: " + (err.response?.data?.message || err.message) });
+    } finally {
+      setLoadingTeachers(false);
+    }
+  };
+
   const fetchStudentDetails = async (studentId) => {
     try {
       const response = await axiosInstance.get(`/students/${studentId}`);
       setSelectedStudent(response.data);
-    } catch (err) {
-      console.error('Failed to fetch student details:', err);
+    } catch {
+      setMessage({ type: "error", text: "Failed to fetch student details" });
     }
   };
 
   const generateStudentReport = async (studentId) => {
+    if (!studentId) return;
     setLoading(true);
     try {
       const resultsResponse = await axiosInstance.get(`/students/${studentId}/results`);
@@ -193,7 +182,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
 
       const doc = new jsPDF();
       
-      // Extract and format grades
       const grades = resultData?.grades || resultData?.results || [];
       const formattedGrades = grades.map(g => ({
         subjectCode: g.subjectCode,
@@ -209,7 +197,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
         className: g.className || selectedStudent?.className || selectedStudent?.currentClass || ''
       }));
       
-      // Calculate statistics
       const totalMarks = formattedGrades.reduce((sum, g) => sum + g.marks, 0);
       const avgScore = formattedGrades.length > 0 ? (totalMarks / formattedGrades.length).toFixed(1) : 0;
       const bestSubjects = [...formattedGrades].sort((a, b) => b.marks - a.marks).slice(0, 3);
@@ -220,14 +207,12 @@ const [selectedStudent, setSelectedStudent] = useState(null);
       else if (avgScore >= 60) overallGrade = "Good";
       else if (avgScore >= 50) overallGrade = "Satisfactory";
       
-      // Build PDF content
       doc.setFontSize(22);
       doc.text('ACADEMIC PERFORMANCE REPORT', 105, 20, { align: 'center' });
       doc.setFontSize(10);
       doc.text('Peculiar School - Uganda', 105, 30, { align: 'center' });
       doc.text('Academic Excellence Center', 105, 36, { align: 'center' });
       
-      // Student Info Table
       autoTable(doc, {
         startY: 45,
         body: [
@@ -243,7 +228,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
         styles: { fontSize: 10 }
       });
       
-      // Detailed Marks Table
       autoTable(doc, {
         startY: doc.lastAutoTable.finalY + 10,
         head: [['Subject', 'Marks', '%', 'Grade', 'Remarks']],
@@ -257,7 +241,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
         theme: 'grid'
       });
       
-      // Performance Summary
       autoTable(doc, {
         startY: doc.lastAutoTable.finalY + 10,
         body: [
@@ -270,7 +253,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
         styles: { fontSize: 10 }
       });
       
-      // Best Performing
       if (bestSubjects.length > 0) {
         autoTable(doc, {
           startY: doc.lastAutoTable.finalY + 10,
@@ -283,7 +265,6 @@ const [selectedStudent, setSelectedStudent] = useState(null);
         });
       }
       
-      // Footer
       const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 200;
       doc.setFontSize(8);
       doc.text('© ' + new Date().getFullYear() + ' Peculiar School. All rights reserved.', 105, finalY + 20, { align: 'center' });
@@ -291,9 +272,89 @@ const [selectedStudent, setSelectedStudent] = useState(null);
       
       doc.save(`report-card-${selectedStudent?.studentId || selectedStudent?.id || 'unknown'}.pdf`);
       setMessage({ type: "success", text: "Report card generated and downloaded" });
-    } catch (err) {
-      console.error('Report generation error:', err);
+    } catch {
       setMessage({ type: "error", text: "Failed to generate report card. Please check student data." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateIdCard = async (type, userId) => {
+    if (!userId) {
+      setMessage({ type: "error", text: "Please select a user first" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userData = type === 'student' 
+        ? (await axiosInstance.get(`/students/${userId}`)).data
+        : (await axiosInstance.get(`/teachers/${userId}`)).data;
+      
+      const jsPDF = (await import('jspdf')).jsPDF;
+      
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [85.6, 53.98]
+      });
+
+      const idNumber = type === 'student' ? userData.studentId || userData.linn || userData.id : userData.teacherId || userData.id;
+      const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+      const photoUrl = userData.avatar || userData.photoUrl || userData.profilePicture;
+
+      doc.setFillColor(30, 64, 191);
+      doc.rect(0, 0, 85.6, 15, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.text('PECULIAR SCHOOL', 42.8, 9, { align: 'center' });
+      doc.setFontSize(8);
+      doc.text('Uganda', 42.8, 13, { align: 'center' });
+
+      if (photoUrl) {
+        try {
+          const img = new Image();
+          img.src = photoUrl;
+          await new Promise(resolve => { img.onload = resolve; });
+          doc.addImage(img, 'JPEG', 5, 20, 25, 25);
+        } catch {
+          doc.setFillColor(230, 230, 230);
+          doc.rect(5, 20, 25, 25, 'F');
+        }
+      } else {
+        doc.setFillColor(230, 230, 230);
+        doc.rect(5, 20, 25, 25, 'F');
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.text('PHOTO', 17.5, 34, { align: 'center' });
+      }
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.text('ID: ' + idNumber, 35, 25);
+      doc.text(fullName, 35, 32);
+      doc.setFontSize(8);
+      doc.text(type === 'student' ? 'Student' : 'Teacher', 35, 38);
+      
+      if (type === 'student') {
+        doc.text('Class: ' + (userData.className || userData.currentClass || 'N/A'), 35, 44);
+        doc.text('Stream: ' + (userData.stream || 'N/A'), 35, 50);
+      } else {
+        doc.text('Dept: ' + (userData.department?.name || 'N/A'), 35, 44);
+        doc.text('Phone: ' + (userData.phone || 'N/A'), 35, 50);
+      }
+
+      doc.setFillColor(30, 64, 191);
+      doc.rect(0, 48, 85.6, 5, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(6);
+      doc.text(`Valid: ${new Date().getFullYear()}`, 42.8, 51, { align: 'center' });
+
+      doc.save(`id-card-${idNumber}.pdf`);
+      setMessage({ type: "success", text: "ID Card generated successfully" });
+    } catch {
+      setMessage({ type: "error", text: "Failed to generate ID card" });
     } finally {
       setLoading(false);
     }
@@ -479,67 +540,279 @@ const [selectedStudent, setSelectedStudent] = useState(null);
         </div>
       </div>
 
-      {/* ID Generation Settings */}
+      {/* ID Card Generation */}
       <div className="card shadow-sm border-0 mb-4">
         <div className="card-header bg-white py-3">
           <h5 className="mb-0 fw-bold text-dark-emphasis">
-            <i className="fa-solid fa-id-badge me-2"></i>ID Generation
+            <i className="fa-solid fa-id-card me-2"></i>ID Card Generation
           </h5>
         </div>
         <div className="card-body px-4">
+          <p className="text-muted mb-3">Generate professional ID cards for students and teachers with photo, details, and school branding.</p>
+          
           <div className="row g-3">
-            <div className="col-md-3">
-              <label className="form-label fw-semibold">Student ID Prefix</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                value={idGeneration.studentIdPrefix}
-                onChange={(e) => handleIdChange('studentIdPrefix', e.target.value)}
-              />
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Student</label>
+              <div className="d-flex gap-2">
+                <select 
+                  className="form-select flex-grow-1" 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const student = Array.isArray(students) ? students.find(s => String(s.id) === String(val)) : null;
+                      if (student) setSelectedStudent(student);
+                    } else {
+                      setSelectedStudent(null);
+                    }
+                  }}
+                  disabled={loadingStudents}
+                >
+                  <option value="">Select Student...</option>
+                  {Array.isArray(students) && students.length > 0 ? (
+                    students.map((student) => (
+                      <option key={student.id} value={student.id}>
+                        {student.studentId || student.linn || student.id} - {student.firstName} {student.lastName}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No students loaded</option>
+                  )}
+                </select>
+                <button 
+                  className="btn btn-outline-secondary btn-sm" 
+                  onClick={loadStudents}
+                  disabled={loadingStudents}
+                  title="Refresh student list"
+                >
+                  <i className={`fa-solid ${loadingStudents ? 'fa-spinner fa-spin' : 'fa-refresh'}`}></i>
+                </button>
+              </div>
+              {selectedStudent && (
+                <button 
+                  className="btn btn-sm btn-outline-primary mt-2" 
+                  onClick={() => { setPreviewType('student'); setShowPreview(true); }}
+                >
+                  <i className="fa-solid fa-eye me-1"></i>Preview ID Card
+                </button>
+              )}
             </div>
-            <div className="col-md-3">
-              <label className="form-label fw-semibold">Teacher ID Prefix</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                value={idGeneration.teacherIdPrefix}
-                onChange={(e) => handleIdChange('teacherIdPrefix', e.target.value)}
-              />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label fw-semibold">Staff ID Prefix</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                value={idGeneration.staffIdPrefix}
-                onChange={(e) => handleIdChange('staffIdPrefix', e.target.value)}
-              />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label fw-semibold">Start Number</label>
-              <input 
-                type="number" 
-                className="form-control" 
-                value={idGeneration.startNumber}
-                onChange={(e) => handleIdChange('startNumber', e.target.value)}
-              />
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Teacher</label>
+              <div className="d-flex gap-2">
+                <select 
+                  className="form-select flex-grow-1" 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const teacher = Array.isArray(teachers) ? teachers.find(t => String(t.id) === String(val)) : null;
+                      if (teacher) setSelectedTeacher(teacher);
+                    } else {
+                      setSelectedTeacher(null);
+                    }
+                  }}
+                  disabled={loadingTeachers}
+                >
+                  <option value="">Select Teacher...</option>
+                  {Array.isArray(teachers) && teachers.length > 0 ? (
+                    teachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.teacherId || teacher.id} - {teacher.firstName} {teacher.lastName} ({teacher.department?.name || 'N/A'})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No teachers loaded</option>
+                  )}
+                </select>
+                <button 
+                  className="btn btn-outline-secondary btn-sm" 
+                  onClick={loadTeachers}
+                  disabled={loadingTeachers}
+                  title="Refresh teacher list"
+                >
+                  <i className={`fa-solid ${loadingTeachers ? 'fa-spinner fa-spin' : 'fa-refresh'}`}></i>
+                </button>
+              </div>
+              {selectedTeacher && (
+                <button 
+                  className="btn btn-sm btn-outline-info mt-2" 
+                  onClick={() => { setPreviewType('teacher'); setShowPreview(true); }}
+                >
+                  <i className="fa-solid fa-eye me-1"></i>Preview ID Card
+                </button>
+              )}
             </div>
           </div>
+          
           <div className="mt-3 d-flex gap-2">
-            <button className="btn btn-success" onClick={() => generateIds('student')} disabled={loading}>
-              <i className="fa-solid fa-user-plus me-2"></i>Generate Student IDs
+            <button 
+              className="btn btn-primary" 
+              onClick={() => generateIdCard('student', selectedStudent?.id)} 
+              disabled={loading || !selectedStudent}
+            >
+              <i className={`fa-solid ${loading ? 'fa-spinner fa-spin' : 'fa-download'} me-2`}></i>Download Student ID Card
             </button>
-            <button className="btn btn-info" onClick={() => generateIds('teacher')} disabled={loading}>
-              <i className="fa-solid fa-chalkboard-user me-2"></i>Generate Teacher IDs
+            <button 
+              className="btn btn-info" 
+              onClick={() => generateIdCard('teacher', selectedTeacher?.id)} 
+              disabled={loading || !selectedTeacher}
+            >
+              <i className={`fa-solid ${loading ? 'fa-spinner fa-spin' : 'fa-download'} me-2`}></i>Download Teacher ID Card
             </button>
-            <button className="btn btn-secondary" onClick={() => generateIds('staff')} disabled={loading}>
-              <i className="fa-solid fa-users me-2"></i>Generate Staff IDs
+          </div>
+          
+          <hr className="my-4" />
+          
+          <h6 className="fw-bold mb-3">Bulk ID Card Generation</h6>
+          <div className="d-flex gap-2">
+            <button 
+              className="btn btn-success" 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await loadStudents();
+                  for (const student of students) {
+                    await generateIdCard('student', student.id);
+                    await new Promise(r => setTimeout(r, 300));
+                  }
+                  setMessage({ type: "success", text: `Generated ${students.length} student ID cards` });
+                } catch {
+                  setMessage({ type: "error", text: "Bulk generation failed" });
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading || students.length === 0}
+            >
+              <i className={`fa-solid ${loading ? 'fa-spinner fa-spin' : 'fa-users'} me-2`}></i>Generate All Student ID Cards
+            </button>
+            <button 
+              className="btn btn-warning" 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await loadTeachers();
+                  for (const teacher of teachers) {
+                    await generateIdCard('teacher', teacher.id);
+                    await new Promise(r => setTimeout(r, 300));
+                  }
+                  setMessage({ type: "success", text: `Generated ${teachers.length} teacher ID cards` });
+                } catch {
+                  setMessage({ type: "error", text: "Bulk generation failed" });
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading || teachers.length === 0}
+            >
+              <i className={`fa-solid ${loading ? 'fa-spinner fa-spin' : 'fa-chalkboard-user'} me-2`}></i>Generate All Teacher ID Cards
             </button>
           </div>
         </div>
       </div>
 
-      {/* Student Report Generation */}
+      {/* ID Card Preview Modal */}
+      {showPreview && (previewType === 'student' ? selectedStudent : selectedTeacher) && (
+        <div className="class-modal-overlay">
+          <div className="class-modal" style={{ maxWidth: '400px' }}>
+            <div className="class-modal-header">
+              <h3>ID Card Preview</h3>
+              <button className="btn-close" onClick={() => setShowPreview(false)}></button>
+            </div>
+            <div className="class-modal-body">
+              <div className="id-card-preview" style={{ 
+                width: '330px', 
+                minHeight: '200px', 
+                border: '2px solid #1E40AF', 
+                borderRadius: '8px',
+                padding: '10px',
+                margin: '0 auto',
+                background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)',
+                position: 'relative',
+                fontFamily: 'Arial, sans-serif'
+              }}>
+                <div style={{ 
+                  background: '#1E40AF', 
+                  color: 'white', 
+                  padding: '5px', 
+                  textAlign: 'center', 
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  borderRadius: '4px',
+                  marginBottom: '8px'
+                }}>
+                  PECULIAR SCHOOL - UGANDA
+                </div>
+                
+                <div className="d-flex">
+                  <div style={{ width: '80px', height: '100px', background: '#e9ecef', borderRadius: '4px', marginRight: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {(previewType === 'student' ? selectedStudent.avatar : selectedTeacher?.avatar) ? (
+                      <img 
+                        src={previewType === 'student' ? selectedStudent.avatar : selectedTeacher?.avatar} 
+                        alt="Photo" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <i className="fa-solid fa-user fa-2x text-muted"></i>
+                    )}
+                  </div>
+                  
+                  <div style={{ flex: 1, fontSize: '10px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: '5px' }}>
+                      {previewType === 'student' ? selectedStudent.firstName + ' ' + selectedStudent.lastName : selectedTeacher?.firstName + ' ' + selectedTeacher?.lastName}
+                    </div>
+                    <div><strong>ID:</strong> {previewType === 'student' ? (selectedStudent.studentId || selectedStudent.linn || selectedStudent.id) : (selectedTeacher?.teacherId || selectedTeacher?.id)}</div>
+                    <div><strong>Type:</strong> {previewType === 'student' ? 'Student' : 'Teacher'}</div>
+                    {previewType === 'student' ? (
+                      <>
+                        <div><strong>Class:</strong> {selectedStudent.className || selectedStudent.currentClass || 'N/A'}</div>
+                        <div><strong>Stream:</strong> {selectedStudent.stream || 'N/A'}</div>
+                      </>
+                    ) : (
+                      <>
+                        <div><strong>Dept:</strong> {selectedTeacher?.department?.name || 'N/A'}</div>
+                        <div><strong>Phone:</strong> {selectedTeacher?.phone || 'N/A'}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: '10px', 
+                  left: '10px', 
+                  right: '10px',
+                  borderTop: '1px dashed #1E40AF',
+                  paddingTop: '5px',
+                  fontSize: '8px',
+                  textAlign: 'center',
+                  color: '#666'
+                }}>
+                  Valid: {new Date().getFullYear()} | Principal Signature
+                </div>
+              </div>
+            </div>
+            <div className="class-modal-footer">
+              <button className="btn btn-secondary me-2" onClick={() => setShowPreview(false)}>Close</button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  if (previewType === 'student') {
+                    generateIdCard('student', selectedStudent?.id);
+                  } else {
+                    generateIdCard('teacher', selectedTeacher?.id);
+                  }
+                  setShowPreview(false);
+                }}
+                disabled={loading}
+              >
+                <i className="fa-solid fa-download me-1"></i>Download ID Card
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Report Card */}
       <div className="card shadow-sm border-0 mb-4">
         <div className="card-header bg-white py-3">
           <h5 className="mb-0 fw-bold text-dark-emphasis">
