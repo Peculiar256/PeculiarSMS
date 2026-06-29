@@ -319,12 +319,12 @@
   background-color: #dee2e6;
 }
 
-.room-modal-footer .btn-primary {
+.room-modal-footer .btn-success {
   background-color: #2563eb;
   color: white;
 }
 
-.room-modal-footer .btn-primary:hover {
+.room-modal-footer .btn-success:hover {
   background-color: #1d4ed8;
 }
 

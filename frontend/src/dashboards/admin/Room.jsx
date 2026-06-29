@@ -231,7 +231,7 @@ function Room() {
           <h1 className="mb-2">Room Management</h1>
           <p className="text-muted mb-0">Manage classrooms, laboratories, halls, and facilities.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
+        <button className="btn btn-success" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
           <i className="fa-solid fa-plus me-2"></i> Add New Room
         </button>
       </div>
@@ -360,7 +360,7 @@ function Room() {
                             <i className="fas fa-eye"></i>
                           </button>
                           <button
-                            className="btn btn-primary btn-sm"
+                            className="btn btn-success btn-sm"
                             onClick={() => openEditModal(room)}
                             title="Edit"
                             style={{ padding: '5px 10px' }}
@@ -396,7 +396,7 @@ function Room() {
       {isDetailsModalOpen && selectedRoom && (
         <div className="room-modal-overlay">
           <div className="room-modal">
-            <div className="room-modal-header bg-primary">
+            <div className="room-modal-header bg-success">
               <h3>{selectedRoom.roomNumber} - Room Details</h3>
               <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}></button>
             </div>
@@ -580,7 +580,7 @@ function Room() {
               <button className="btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleAddRoom}>
+              <button className="btn btn-success" onClick={handleAddRoom}>
                 <i className="fas fa-plus me-2"></i> Create Room
               </button>
             </div>
@@ -723,7 +723,7 @@ function Room() {
               <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleEditRoom}>
+              <button className="btn btn-success" onClick={handleEditRoom}>
                 <i className="fas fa-save me-2"></i> Save Changes
               </button>
             </div>

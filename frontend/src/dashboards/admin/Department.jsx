@@ -282,7 +282,7 @@ function Department() {
           <h1 className="mb-2">Department Management</h1>
           <p className="text-muted mb-0">Manage academic departments and their information.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
+        <button className="btn btn-success" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
           <i className="fa-solid fa-plus me-2"></i> Add New Department
         </button>
       </div>
@@ -409,7 +409,7 @@ function Department() {
                               <i className="fas fa-eye"></i>
                             </button>
                             <button
-                              className="btn btn-primary btn-sm"
+                              className="btn btn-success btn-sm"
                               onClick={() => openEditModal(dept)}
                               title="Edit"
                               style={{ padding: '5px 10px' }}
@@ -659,7 +659,7 @@ function Department() {
               <button className="btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleAddDepartment}>
+              <button className="btn btn-success" onClick={handleAddDepartment}>
                 <i className="fas fa-plus me-2"></i> Create Department
               </button>
             </div>
@@ -828,7 +828,7 @@ function Department() {
               <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleEditDepartment}>
+              <button className="btn btn-success" onClick={handleEditDepartment}>
                 <i className="fas fa-save me-2"></i> Save Changes
               </button>
             </div>

@@ -14,8 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 import com.academix.server.dto.AuthDto.ApiResponse;
 import com.academix.server.dto.AuthDto.AuthResponse;
+import com.academix.server.dto.AuthDto.ChangeEmailRequest;
 import com.academix.server.dto.AuthDto.ChangePasswordRequest;
 import com.academix.server.dto.AuthDto.ForgotPasswordRequest;
 import com.academix.server.dto.AuthDto.LoginRequest;
@@ -24,6 +27,7 @@ import com.academix.server.dto.AuthDto.RegisterRequest;
 import com.academix.server.dto.AuthDto.ResendTokenRequest;
 import com.academix.server.dto.AuthDto.ResetPasswordRequest;
 import com.academix.server.dto.AuthDto.VerifyEmailRequest;
+import com.academix.server.model.User;
 import com.academix.server.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -154,6 +158,24 @@ public class AuthController {
     }
 
     /**
+     * Change Email (Admin only)
+     * Allows admin to change their email without verification
+     */
+    @PutMapping("/change-email")
+    public ResponseEntity<AuthResponse> changeEmail(
+            @RequestParam String userEmail, 
+            @Valid @RequestBody ChangeEmailRequest request) {
+        try {
+            AuthResponse response = authService.changeEmail(userEmail, request);
+            logger.info("Email change successful for user: {}", userEmail);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Email change failed for user: {}", userEmail, e);
+            return ResponseEntity.badRequest().body(new AuthResponse(e.getMessage()));
+        }
+    }
+
+    /**
      * Refresh Token
      * Refreshes access token using refresh token
      */
@@ -169,23 +191,33 @@ public class AuthController {
         }
     }
 
-    /**
+/**
      * Get Current User Info
      * Returns current user information
-     * TODO: Implement with JWT authentication
      */
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse> getCurrentUser(@RequestParam String userEmail) {
+    public ResponseEntity<ApiResponse> getCurrentUser(@RequestParam(required = false) String userEmail) {
         try {
-            // This is a placeholder - implement with JWT token extraction
-            ApiResponse response = new ApiResponse("Feature not implemented yet", false);
-            return ResponseEntity.ok(response);
+            String emailParam = userEmail != null ? userEmail : "";
+            User user = authService.findUserByEmailOrId(emailParam);
+            if (user == null) {
+                return ResponseEntity.badRequest().body(new ApiResponse("User not found", false));
+            }
+            Map<String, Object> userData = Map.of(
+                "id", user.getId(),
+                "email", user.getEmail(),
+                "fullName", user.getFullName(),
+                "role", authService.getUserRole(user),
+                "emailVerified", user.getEmailVerified(),
+                "isActive", user.getIsActive()
+            );
+            return ResponseEntity.ok(new ApiResponse("User info retrieved", true, userData));
         } catch (Exception e) {
             logger.error("Get current user failed", e);
             return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage(), false));
         }
     }
-    
+
     /**
      * Get all registered users - FOR TESTING ONLY
      * Remove this endpoint in production

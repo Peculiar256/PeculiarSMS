@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.academix.server.dto.AuthDto.AuthResponse;
+import com.academix.server.dto.AuthDto.ChangeEmailRequest;
 import com.academix.server.dto.AuthDto.ChangePasswordRequest;
 import com.academix.server.dto.AuthDto.ForgotPasswordRequest;
 import com.academix.server.dto.AuthDto.LoginRequest;
@@ -627,9 +628,50 @@ public class AuthService {
     }
 
     /**
+     * Change user email (admin only, no verification required)
+     */
+    public AuthResponse changeEmail(String userEmail, ChangeEmailRequest request) {
+        try {
+            // Find user by email
+            User user = findUserByEmail(userEmail);
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+
+            // Verify current password
+            if (!userService.verifyPassword(request.getCurrentPassword(), user.getPassword())) {
+                securityService.recordSecurityEvent(userEmail, "EMAIL_CHANGE_WRONG_PASSWORD", null);
+                throw new RuntimeException("Current password is incorrect");
+            }
+
+            // Check if new email already exists
+            if (findUserByEmail(request.getNewEmail()) != null) {
+                throw new RuntimeException("Email already exists");
+            }
+
+            // Update email
+            user.setEmail(request.getNewEmail());
+            user.setEmailVerified(true); // Mark as verified since this is admin-initiated
+
+            // Save updated user
+            saveUserToDatabase(user);
+
+            securityService.recordSecurityEvent(userEmail, "EMAIL_CHANGED", "New email: " + request.getNewEmail());
+            logger.info("Email changed successfully for user: {} to {}", userEmail, request.getNewEmail());
+
+            return new AuthResponse("Email changed successfully.");
+
+        } catch (Exception e) {
+            securityService.recordSecurityEvent(userEmail, "EMAIL_CHANGE_FAILED", e.getMessage());
+            logger.error("Email change failed for user: {}", userEmail, e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    /**
      * Get user role (implement based on your user model)
      */
-    private String getUserRole(User user) {
+    public String getUserRole(User user) {
         // For Student type, return "STUDENT"
         // You can enhance this based on your role structure
         if (user instanceof Student) {
@@ -725,7 +767,7 @@ public class AuthService {
      * Find user by email or ID (student/teacher/staff ID)
      * Supports flexible login using email or student/teacher/staff ID
      */
-    private User findUserByEmailOrId(String emailOrId) {
+    public User findUserByEmailOrId(String emailOrId) {
         // First check if it's an email
         User user = findUserByEmail(emailOrId);
         if (user != null) {

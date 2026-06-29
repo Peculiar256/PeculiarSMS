@@ -20,6 +20,7 @@ const sampleTimetable = [
 function Class() {
   const [classes, setClasses] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRoom, setFilterRoom] = useState("all");
   const [selectedClass, setSelectedClass] = useState(null);
@@ -41,13 +42,16 @@ function Class() {
     academicYear: '2025-2026',
     stream: '',
     roomId: '',
+    classTeacherId: '',
+    assistantTeacherId: '',
     notes: '',
   });
 
-  // Fetch classes and rooms on component mount
+  // Fetch classes, rooms, and teachers on component mount
   useEffect(() => {
     fetchClasses();
     fetchRooms();
+    fetchTeachers();
   }, []);
 
   const fetchClasses = async () => {
@@ -74,6 +78,17 @@ function Class() {
     } catch (err) {
       console.error('Error fetching rooms:', err);
       setRooms([]);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/teachers`);
+      const teachersData = Array.isArray(response.data) ? response.data : [];
+      setTeachers(teachersData);
+    } catch (err) {
+      console.error('Error fetching teachers:', err);
+      setTeachers([]);
     }
   };
 
@@ -138,6 +153,8 @@ function Class() {
         maxCapacity: selectedRoom?.capacity || 50,
         notes: formData.notes,
         isActive: true,
+        classTeacherId: formData.classTeacherId || null,
+        assistantTeacherId: formData.assistantTeacherId || null,
       };
 
       const response = await axios.post(`${API_BASE_URL}/classes`, classData);
@@ -151,6 +168,8 @@ function Class() {
         academicYear: '2025-2026',
         stream: '',
         roomId: '',
+        classTeacherId: '',
+        assistantTeacherId: '',
         notes: '',
       });
       setError(null);
@@ -184,6 +203,8 @@ function Class() {
         building: selectedRoom?.building || '',
         maxCapacity: selectedRoom?.capacity || 50,
         notes: formData.notes,
+        classTeacherId: formData.classTeacherId || null,
+        assistantTeacherId: formData.assistantTeacherId || null,
       };
 
       const response = await axios.put(`${API_BASE_URL}/classes/${selectedClass.id}`, classData);
@@ -203,6 +224,8 @@ function Class() {
         academicYear: '2025-2026',
         stream: '',
         roomId: '',
+        classTeacherId: '',
+        assistantTeacherId: '',
         notes: '',
       });
       setError(null);
@@ -258,9 +281,18 @@ function Class() {
       academicYear: cls.academicYear || cls.year,
       stream: cls.stream || '',
       roomId: room?.id?.toString() || '',
+      classTeacherId: cls.classTeacher?.id || cls.classTeacherId || '',
+      assistantTeacherId: cls.assistantClassTeacher?.id || cls.assistantTeacherId || '',
       notes: cls.notes || '',
     });
     setIsEditModalOpen(true);
+  };
+
+  // Helper to get teacher display name
+  const getTeacherName = (teacherId) => {
+    if (!teacherId) return null;
+    const teacher = teachers.find(t => t.id == teacherId);
+    return teacher ? `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() : null;
   };
 
   return (
@@ -270,7 +302,7 @@ function Class() {
           <h1 className="mb-2">Class Management</h1>
           <p className="text-muted mb-0">Manage classes, students, schedules, and performance data.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
+        <button className="btn btn-success" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
           <i className="fa-solid fa-plus me-2"></i> Add New Class
         </button>
       </div>
@@ -397,8 +429,8 @@ function Class() {
                     paginatedClasses.map((cls) => (
                       <tr key={cls.id}>
                         <td className="fw-bold">{cls.name}</td>
-                        <td>{cls.roomNumber}</td>
-                        <td>{cls.teacher}</td>
+                        <td>{cls.roomNumber || cls.classroom}</td>
+                        <td>{getTeacherName(cls.classTeacher?.id || cls.classTeacherId) || cls.teacher || '-'}</td>
                         <td>{cls.students}</td>
                         <td>
                           <span className={`badge ${cls.isActive !== false ? 'bg-success' : 'bg-secondary'}`}>
@@ -410,16 +442,16 @@ function Class() {
                             <button
                               className="btn btn-info btn-sm"
                               onClick={() => {
-                                setSelectedClass(cls);
-                                setIsDetailsModalOpen(true);
-                              }}
+                                  setSelectedClass(cls);
+                                  setIsDetailsModalOpen(true);
+                                }}
                               title="View Details"
                               style={{ padding: '5px 10px' }}
                             >
                               <i className="fas fa-eye"></i>
                             </button>
                             <button
-                              className="btn btn-primary btn-sm"
+                              className="btn btn-success btn-sm"
                               onClick={() => openEditModal(cls)}
                               title="Edit"
                               style={{ padding: '5px 10px' }}
@@ -516,13 +548,15 @@ function Class() {
                 <div className="col-md-6">
                   <h6 className="fw-bold mb-3">Class Information</h6>
                   <p><strong>Class Name:</strong> {selectedClass.name}</p>
-                  <p><strong>Room Number:</strong> {selectedClass.roomNumber}</p>
-                  <p><strong>Teacher:</strong> {selectedClass.teacher}</p>
-                  <p><strong>Academic Year:</strong> {selectedClass.year}</p>
+                  <p><strong>Room Number:</strong> {selectedClass.roomNumber || selectedClass.classroom}</p>
+                  <p><strong>Class Teacher:</strong> {getTeacherName(selectedClass.classTeacher?.id || selectedClass.classTeacherId) || selectedClass.teacher || '-'}</p>
+                  <p><strong>Assistant Teacher:</strong> {getTeacherName(selectedClass.assistantClassTeacher?.id || selectedClass.assistantTeacherId) || '-'}</p>
+                  <p><strong>Academic Year:</strong> {selectedClass.academicYear || selectedClass.year}</p>
+                  <p><strong>Level:</strong> {selectedClass.levelType || 'O_LEVEL'}</p>
                 </div>
                 <div className="col-md-6">
                   <h6 className="fw-bold mb-3">Class Metrics</h6>
-                  <p><strong>Total Students:</strong> {selectedClass.students}</p>
+                  <p><strong>Total Students:</strong> {selectedClass.students || selectedClass.currentCount}</p>
                   <p><strong>Attendance Rate:</strong> <span className="badge bg-success">{selectedClass.attendance}%</span></p>
                 </div>
               </div>
@@ -654,49 +688,81 @@ function Class() {
                     value={formData.stream}
                     onChange={(e) => setFormData({ ...formData, stream: e.target.value })}
                   />
-                  {/* <small className="text-muted">Added to class name: S1 + A = S1A</small> */}
                 </div>
 
+<div className="col-md-6">
+                   <label className="form-label fw-bold">Classroom/Room *</label>
+                   <select
+                     className="form-select"
+                     value={formData.roomId}
+                     onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
+                   >
+                     <option value="">-- Select Room --</option>
+                     {rooms.map((room) => (
+                       <option key={room.id} value={room.id}>
+                         {room.roomNumber} - {room.roomName || 'Room'} ({room.building || 'N/A'})
+                       </option>
+                     ))}
+                   </select>
+                 </div>
+
+                {/*
                 <div className="col-md-6">
-                  <label className="form-label fw-bold">Classroom/Room *</label>
+                  <label className="form-label">Class Teacher <small className="text-muted">(Optional)</small></label>
                   <select
                     className="form-select"
-                    value={formData.roomId}
-                    onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
+                    value={formData.classTeacherId}
+                    onChange={(e) => setFormData({ ...formData, classTeacherId: e.target.value })}
                   >
-                    <option value="">-- Select Room --</option>
-                    {rooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.roomNumber} - {room.roomName || 'Room'} ({room.building || 'N/A'})
+                    <option value="">-- Select Class Teacher --</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.firstName} {teacher.lastName}{teacher.primarySubject ? ` (${teacher.primarySubject})` : ''}
                       </option>
                     ))}
                   </select>
-                  {/* <small className="text-muted">Building and capacity auto-populated from room</small> */}
                 </div>
 
-                <div className="col-12">
-                  <label className="form-label">Notes</label>
-                  <textarea
-                    className="form-control"
-                    placeholder="Additional notes about this class"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows="3"
-                  />
+                <div className="col-md-6">
+                  <label className="form-label">Assistant Teacher <small className="text-muted">(Optional)</small></label>
+                  <select
+                    className="form-select"
+                    value={formData.assistantTeacherId}
+                    onChange={(e) => setFormData({ ...formData, assistantTeacherId: e.target.value })}
+                  >
+                    <option value="">-- Select Assistant Teacher --</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.firstName} {teacher.lastName}{teacher.primarySubject ? ` (${teacher.primarySubject})` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </form>
-            </div>
-            <div className="class-modal-footer">
-              <button className="btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleAddClass} disabled={loading}>
-                <i className="fas fa-plus me-2"></i> Create Class
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                */}
+
+                 <div className="col-12">
+                   <label className="form-label">Notes</label>
+                   <textarea
+                     className="form-control"
+                     placeholder="Additional notes about this class"
+                     value={formData.notes}
+                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                     rows="3"
+                   />
+                 </div>
+               </form>
+             </div>
+             <div className="class-modal-footer">
+               <button className="btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>
+                 Cancel
+               </button>
+               <button className="btn btn-success" onClick={handleAddClass} disabled={loading}>
+                 <i className="fas fa-plus me-2"></i> Create Class
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
 
       {/* Edit Class Modal */}
       {isEditModalOpen && selectedClass && (
@@ -768,33 +834,39 @@ function Class() {
                   <h6 className="fw-bold mb-3 text-muted">Additional Information</h6>
                 </div>
 
+                {/*
                 <div className="col-md-6">
-                  <label className="form-label">Stream <small className="text-muted">(Optional)</small></label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.stream}
-                    onChange={(e) => setFormData({ ...formData, stream: e.target.value })}
-                  />
-                  <small className="text-muted">Added to class name: S1 + A = S1A</small>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-bold">Classroom/Room *</label>
+                  <label className="form-label">Class Teacher <small className="text-muted">(Optional)</small></label>
                   <select
                     className="form-select"
-                    value={formData.roomId}
-                    onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
+                    value={formData.classTeacherId}
+                    onChange={(e) => setFormData({ ...formData, classTeacherId: e.target.value })}
                   >
-                    <option value="">-- Select Room --</option>
-                    {rooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.roomNumber} - {room.roomName || 'Room'} ({room.building || 'N/A'})
+                    <option value="">-- Select Class Teacher --</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.firstName} {teacher.lastName}{teacher.primarySubject ? ` (${teacher.primarySubject})` : ''}
                       </option>
                     ))}
                   </select>
-                  <small className="text-muted">Building and capacity auto-populated from room</small>
                 </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Assistant Teacher <small className="text-muted">(Optional)</small></label>
+                  <select
+                    className="form-select"
+                    value={formData.assistantTeacherId}
+                    onChange={(e) => setFormData({ ...formData, assistantTeacherId: e.target.value })}
+                  >
+                    <option value="">-- Select Assistant Teacher --</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.firstName} {teacher.lastName}{teacher.primarySubject ? ` (${teacher.primarySubject})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                */}
 
                 <div className="col-12">
                   <label className="form-label">Notes</label>
@@ -811,7 +883,7 @@ function Class() {
               <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleEditClass} disabled={loading}>
+              <button className="btn btn-success" onClick={handleEditClass} disabled={loading}>
                 <i className="fas fa-save me-2"></i> Save Changes
               </button>
             </div>

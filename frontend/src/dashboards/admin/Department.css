@@ -315,12 +315,12 @@
   background-color: #dee2e6;
 }
 
-.department-modal-footer .btn-primary {
+.department-modal-footer .btn-success {
   background-color: #2563eb;
   color: white;
 }
 
-.department-modal-footer .btn-primary:hover {
+.department-modal-footer .btn-success:hover {
   background-color: #1d4ed8;
 }
 

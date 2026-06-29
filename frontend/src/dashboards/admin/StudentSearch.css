@@ -437,12 +437,12 @@
   transition: all 0.25s ease;
 }
 
-.btn-primary {
+.btn-success {
   background-color: #1E40AF;
   color: white;
 }
 
-.btn-primary:hover {
+.btn-success:hover {
   background-color: #0d5ddb;
 }
 
@@ -521,12 +521,12 @@
   background-color: #e0e6ed;
 }
 
-.btn-primary {
+.btn-success {
   background-color: #3498db;
   color: #ffffff;
 }
 
-.btn-primary:hover {
+.btn-success:hover {
   background-color: #2980b9;
 }
 

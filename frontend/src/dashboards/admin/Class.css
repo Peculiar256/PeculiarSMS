@@ -398,12 +398,12 @@
   background-color: #dee2e6;
 }
 
-.class-modal-footer .btn-primary {
+.class-modal-footer .btn-success {
   background-color: #2563eb;
   color: white;
 }
 
-.class-modal-footer .btn-primary:hover {
+.class-modal-footer .btn-success:hover {
   background-color: #1d4ed8;
 }
 

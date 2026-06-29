@@ -542,7 +542,7 @@ const StudentSearch = () => {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => { setIsAddModalOpen(false); resetForm(); }} disabled={loading}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Student'}</button>
+                <button type="submit" className="btn btn-success" disabled={loading}>{loading ? 'Saving...' : 'Save Student'}</button>
               </div>
             </form>
           </div>
@@ -640,7 +640,7 @@ const StudentSearch = () => {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)} disabled={loading}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
+                <button type="submit" className="btn btn-success" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
               </div>
             </form>
           </div>
@@ -972,7 +972,7 @@ const StudentSearch = () => {
                   <td>
                     <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                       <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }} title="View Detail" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-eye"></i></button>
-                      <button className="btn btn-primary btn-sm" onClick={() => handleEditStudent(student)} title="Edit Student" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-pen-to-square"></i></button>
+                      <button className="btn btn-success btn-sm" onClick={() => handleEditStudent(student)} title="Edit Student" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-pen-to-square"></i></button>
 <button
                         className={`btn ${student.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
                         onClick={() => { setSelectedStudent(student); setIsStatusModalOpen(true); }}

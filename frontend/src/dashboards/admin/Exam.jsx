@@ -28,6 +28,8 @@ function Exam() {
   const [viewMode, setViewMode] = useState("analytics"); // NEW: Toggle between analytics and table
 
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [formData, setFormData] = useState({
     code: "",
@@ -239,7 +241,6 @@ function Exam() {
         throw new Error("Failed to update exam status");
       }
 
-      const updated = await response.json();
       setExams(exams.map(e => e.id === selectedExam.id ? { ...e, isActive: newActive } : e));
       setMessage(`✅ Exam ${newActive ? 'activated' : 'deactivated'} successfully!`);
       setMessageType("success");
@@ -255,12 +256,78 @@ function Exam() {
     }
   };
 
-  const handleDeleteExam = async (id) => {
-    const exam = exams.find(e => e.id === id);
-    if (!exam) return;
-    
+  const openStatusModal = (exam) => {
     setSelectedExam(exam);
     setIsStatusModalOpen(true);
+  };
+
+  const handleEditExam = async () => {
+    if (!formData.code || !formData.name || !formData.startDate || !formData.endDate) {
+      setMessage("Please fill in all required fields (Exam Code, Name, Start Date, End Date)");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem('accessToken');
+
+      const payload = {
+        code: formData.code,
+        name: formData.name,
+        type: formData.type,
+        academicYear: formData.academicYear,
+        term: parseInt(formData.term),
+        targetClasses: formData.targetClasses,
+        level: formData.level,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/exams/${selectedExam.id}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to update exam");
+      }
+
+      const updatedExam = await response.json();
+      setExams(exams.map(e => e.id === selectedExam.id ? updatedExam : e));
+      setMessage(`✅ Exam "${formData.name}" updated successfully!`);
+      setMessageType("success");
+      setIsEditModalOpen(false);
+      setSelectedExam(null);
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err) {
+      setMessage(`❌ Failed to update exam: ${err.message}`);
+      setMessageType("error");
+      console.error("Error updating exam:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (exam) => {
+    setSelectedExam(exam);
+    setFormData({
+      code: exam.code || "",
+      name: exam.name || "",
+      type: exam.type || "BOT",
+      academicYear: exam.academicYear || new Date().getFullYear().toString(),
+      term: exam.term ? exam.term.toString() : "1",
+      targetClasses: exam.targetClasses || [],
+      level: exam.level || "O_LEVEL",
+      startDate: exam.startDate ? exam.startDate.split('T')[0] : "",
+      endDate: exam.endDate ? exam.endDate.split('T')[0] : "",
+    });
+    setIsEditModalOpen(true);
   };
 
   const chartOptions = {
@@ -401,7 +468,7 @@ function Exam() {
           <section className="exam-filters-section">
         <div className="exam-header-actions">
           <h2>Exams List</h2>
-          <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
+          <button className="btn btn-success" onClick={() => setIsAddModalOpen(true)}>
             <i className="fas fa-plus me-2"></i> Add New Exam
           </button>
         </div>
@@ -436,7 +503,7 @@ function Exam() {
                 <th>Term</th>
                 <th>Start Date</th>
                 <th>End Date</th>
-                <th>Status</th>
+                <th>Active Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -451,22 +518,17 @@ function Exam() {
                     <td>{exam.term ? `Term ${exam.term}` : '-'}</td>
                     <td>{exam.startDate ? new Date(exam.startDate).toLocaleDateString() : '-'}</td>
                     <td>{exam.endDate ? new Date(exam.endDate).toLocaleDateString() : '-'}</td>
-                    <td>
-                      <div className="status-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span className={`status-badge status-${(exam.status || 'DRAFT').toLowerCase()}`}>
-                          {exam.status || 'DRAFT'}
-                        </span>
-                        <span className={`badge ${exam.isActive !== false ? 'bg-success' : 'bg-secondary'}`} style={{ fontSize: '10px' }}>
-                          {exam.isActive !== false ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
+<td>
+                      <span className={`badge ${exam.isActive !== false ? 'bg-success' : 'bg-secondary'}`}>
+                        {exam.isActive !== false ? 'Active' : 'Inactive'}
+                      </span>
                     </td>
                     <td>
                       <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                         <button
                           className="btn btn-info btn-sm"
                           onClick={() => {
-                            setSelectedClass(exam);
+                            setSelectedExam(exam);
                             setIsDetailsModalOpen(true);
                           }}
                           title="View Details"
@@ -475,7 +537,7 @@ function Exam() {
                           <i className="fas fa-eye"></i>
                         </button>
                         <button
-                          className="btn btn-primary btn-sm"
+                          className="btn btn-success btn-sm"
                           onClick={() => openEditModal(exam)}
                           title="Edit"
                           style={{ padding: '5px 10px' }}
@@ -641,7 +703,7 @@ function Exam() {
                 Cancel
               </button>
               <button 
-                className="btn btn-primary" 
+                className="btn btn-success" 
                 onClick={handleAddExam}
                 disabled={submitting}
               >
@@ -675,6 +737,187 @@ function Exam() {
                 disabled={submitting}
               >
                 {submitting ? 'Processing...' : (selectedExam.isActive !== false ? 'Deactivate' : 'Activate')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exam Details Modal */}
+      {isDetailsModalOpen && selectedExam && (
+        <div className="exam-modal-overlay" onClick={() => setIsDetailsModalOpen(false)}>
+          <div className="exam-modal" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="exam-modal-header">
+              <h3>{selectedExam.name} - Exam Details</h3>
+              <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}>×</button>
+            </div>
+            <div className="exam-modal-body">
+              <div className="row mb-4">
+                <div className="col-md-6">
+                  <h6 className="fw-bold mb-3">Exam Information</h6>
+                  <p><strong>Exam Code:</strong> {selectedExam.code || '-'}</p>
+                  <p><strong>Exam Name:</strong> {selectedExam.name || '-'}</p>
+                  <p><strong>Type:</strong> {selectedExam.type || '-'}</p>
+                  <p><strong>Level:</strong> {selectedExam.level || '-'}</p>
+                </div>
+                <div className="col-md-6">
+                  <h6 className="fw-bold mb-3">Schedule & Status</h6>
+                  <p><strong>Academic Year:</strong> {selectedExam.academicYear || '-'}</p>
+                  <p><strong>Term:</strong> {selectedExam.term ? `Term ${selectedExam.term}` : '-'}</p>
+                  <p><strong>Start Date:</strong> {selectedExam.startDate ? new Date(selectedExam.startDate).toLocaleDateString() : '-'}</p>
+                  <p><strong>End Date:</strong> {selectedExam.endDate ? new Date(selectedExam.endDate).toLocaleDateString() : '-'}</p>
+                </div>
+              </div>
+              <div className="row">
+                <div className="col-12">
+                  <h6 className="fw-bold mb-3">Target Classes</h6>
+                  <p>{selectedExam.targetClasses && selectedExam.targetClasses.length > 0 ? selectedExam.targetClasses.join(', ') : 'No classes assigned'}</p>
+                </div>
+              </div>
+            </div>
+            <div className="exam-modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Exam Modal */}
+      {isEditModalOpen && selectedExam && (
+        <div className="exam-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="exam-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="exam-modal-header">
+              <h3>Edit Exam</h3>
+              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}>×</button>
+            </div>
+            <div className="exam-modal-body">
+              <div className="form-group">
+                <label>Exam Code * (e.g., BOT1-2024-S1)</label>
+                <input
+                  type="text"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  placeholder="e.g., BOT1-2024"
+                />
+              </div>
+              <div className="form-group">
+                <label>Exam Name *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Beginning of Term Exam 2024"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Exam Type *</label>
+                  <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
+                    <option value="BOT">BOT (Beginning of Term)</option>
+                    <option value="MOT">MOT (Middle of Term)</option>
+                    <option value="EOT">EOT (End of Term)</option>
+                    <option value="UCE">UCE (National O-Level)</option>
+                    <option value="UACE">UACE (National A-Level)</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Level *</label>
+                  <select value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })}>
+                    <option value="O_LEVEL">O-Level</option>
+                    <option value="A_LEVEL">A-Level</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Academic Year *</label>
+                  <input
+                    type="text"
+                    value={formData.academicYear}
+                    onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                    placeholder="e.g., 2024"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Term *</label>
+                  <select value={formData.term} onChange={(e) => setFormData({ ...formData, term: e.target.value })}>
+                    <option value="1">Term 1</option>
+                    <option value="2">Term 2</option>
+                    <option value="3">Term 3</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Target Classes * (Select one or more)</label>
+                <div className="classes-checklist">
+                  {classes.length > 0 ? (
+                    classes.map((cls) => (
+                      <div key={cls.id || cls.name} className="checkbox-item">
+                        <input
+                          type="checkbox"
+                          id={`edit-class-${cls.id || cls.name}`}
+                          checked={formData.targetClasses.includes(cls.name || cls.code)}
+                          onChange={(e) => {
+                            const classValue = cls.name || cls.code;
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                targetClasses: [...formData.targetClasses, classValue]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                targetClasses: formData.targetClasses.filter(c => c !== classValue)
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`edit-class-${cls.id || cls.name}`}>
+                          {cls.name || cls.code}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted">No classes available. Please create classes first.</p>
+                  )}
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Start Date *</label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>End Date *</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="exam-modal-footer">
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setMessage('');
+                }}
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-success" 
+                onClick={handleEditExam}
+                disabled={submitting}
+              >
+                {submitting ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

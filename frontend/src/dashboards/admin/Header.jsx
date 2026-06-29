@@ -13,7 +13,7 @@ function Header() {
         <header className="navbar navbar-expand bg-white sticky-top shadow-sm p-3">
             <div className="container-fluid">
                 {/* Brand / Logo */}
-                <a className="navbar-brand d-flex align-items-center fw-bold text-primary" href="#">
+                <a className="navbar-brand d-flex align-items-center fw-bold text-success" href="#">
                     <img src={kyuLogo} alt="" width={50} height={50}/>
                     <span>Peculiar Secondary School</span>
                 </a>

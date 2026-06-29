@@ -28,6 +28,11 @@ function Settings() {
     academicYear: "2024",
     term: "1",
   });
+  
+  const [emailData, setEmailData] = useState({
+    currentPassword: "",
+    newEmail: "",
+  });
 
   const [loading, setLoading] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -85,6 +90,37 @@ function Settings() {
 
   const handleReportChange = (field, value) => {
     setReportOptions({ ...reportOptions, [field]: value });
+  };
+
+  const handleEmailChange = (field, value) => {
+    setEmailData({ ...emailData, [field]: value });
+  };
+
+  const changeEmail = async () => {
+    if (!emailData.currentPassword || !emailData.newEmail) {
+      setMessage({ type: "error", text: "Please fill in all fields" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const storedEmail = localStorage.getItem('email');
+      if (storedEmail) {
+        await axiosInstance.put(`/auth/change-email?userEmail=${encodeURIComponent(storedEmail)}`, {
+          currentPassword: emailData.currentPassword,
+          newEmail: emailData.newEmail,
+        });
+        setMessage({ type: "success", text: "Email changed successfully" });
+        // Update admin profile
+        setAdminProfile({ ...adminProfile, email: emailData.newEmail });
+        setEmailData({ currentPassword: "", newEmail: "" });
+      } else {
+        setMessage({ type: "error", text: "No email found in storage" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Failed to change email" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveProfile = async () => {
@@ -455,7 +491,7 @@ function Settings() {
                   />
                 </div>
                 <div className="col-12">
-                  <button className="btn btn-primary" onClick={saveProfile} disabled={loading}>
+                  <button className="btn btn-success" onClick={saveProfile} disabled={loading}>
                     <i className="fa-solid fa-save me-2"></i>{loading ? 'Saving...' : 'Save Profile'}
                   </button>
                 </div>
@@ -485,7 +521,7 @@ function Settings() {
                   placeholder="Current Password"
                 />
                 <button 
-                  className="btn btn-primary" 
+                  className="btn btn-success" 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -504,7 +540,7 @@ function Settings() {
                   placeholder="New Password"
                 />
                 <button 
-                  className="btn btn-primary" 
+                  className="btn btn-success" 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -523,7 +559,7 @@ function Settings() {
                   placeholder="Confirm New Password"
                 />
                 <button 
-                  className="btn btn-primary" 
+                  className="btn btn-success" 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -531,14 +567,46 @@ function Settings() {
                 </button>
               </div>
             </div>
-            <div className="col-12">
-              <button className="btn btn-warning" onClick={changePassword} disabled={loading}>
-                <i className="fa-solid fa-key me-2"></i>{loading ? 'Changing...' : 'Change Password'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+<div className="col-12">
+               <button className="btn btn-warning" onClick={changePassword} disabled={loading}>
+                 <i className="fa-solid fa-key me-2"></i>{loading ? 'Changing...' : 'Change Password'}
+               </button>
+             </div>
+           </div>
+           
+           <hr className="my-4" />
+           
+           <h6 className="fw-bold mb-3">Change Email (Admin Only)</h6>
+           <p className="text-muted small mb-3">Update your email address without verification. Current password required for security.</p>
+           <div className="row g-3">
+             <div className="col-md-6">
+               <input 
+                 type="password" 
+                 className="form-control" 
+                 placeholder="Current Password"
+                 value={emailData.currentPassword}
+                 onChange={(e) => handleEmailChange('currentPassword', e.target.value)}
+                 disabled={loading}
+               />
+             </div>
+             <div className="col-md-6">
+               <input 
+                 type="email" 
+                 className="form-control" 
+                 placeholder="New Email Address"
+                 value={emailData.newEmail}
+                 onChange={(e) => handleEmailChange('newEmail', e.target.value)}
+                 disabled={loading}
+               />
+             </div>
+             <div className="col-12">
+               <button className="btn btn-info" onClick={changeEmail} disabled={loading}>
+                 <i className="fa-solid fa-envelope me-2"></i>{loading ? 'Updating...' : 'Update Email'}
+               </button>
+             </div>
+           </div>
+         </div>
+       </div>
 
       {/* ID Card Generation */}
       <div className="card shadow-sm border-0 mb-4">
@@ -589,7 +657,7 @@ function Settings() {
               </div>
               {selectedStudent && (
                 <button 
-                  className="btn btn-sm btn-outline-primary mt-2" 
+                  className="btn btn-sm btn-outline-success mt-2" 
                   onClick={() => { setPreviewType('student'); setShowPreview(true); }}
                 >
                   <i className="fa-solid fa-eye me-1"></i>Preview ID Card
@@ -645,7 +713,7 @@ function Settings() {
           
           <div className="mt-3 d-flex gap-2">
             <button 
-              className="btn btn-primary" 
+              className="btn btn-success" 
               onClick={() => generateIdCard('student', selectedStudent?.id)} 
               disabled={loading || !selectedStudent}
             >
@@ -713,7 +781,7 @@ function Settings() {
       {/* ID Card Preview Modal */}
       {showPreview && (previewType === 'student' ? selectedStudent : selectedTeacher) && (
         <div className="class-modal-overlay">
-          <div className="class-modal" style={{ maxWidth: '400px' }}>
+          <div className="class-modal" style={{ maxWidth: '500px' }}>
             <div className="class-modal-header">
               <h3>ID Card Preview</h3>
               <button className="btn-close" onClick={() => setShowPreview(false)}></button>
@@ -794,7 +862,7 @@ function Settings() {
             <div className="class-modal-footer">
               <button className="btn btn-secondary me-2" onClick={() => setShowPreview(false)}>Close</button>
               <button 
-                className="btn btn-primary" 
+                className="btn btn-success" 
                 onClick={() => {
                   if (previewType === 'student') {
                     generateIdCard('student', selectedStudent?.id);
@@ -890,9 +958,30 @@ function Settings() {
               </select>
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 d-flex gap-2">
             <button className="btn btn-danger" onClick={() => generateStudentReport(selectedStudent?.id)} disabled={loading || !selectedStudent}>
               <i className="fa-solid fa-download me-2"></i>{loading ? 'Generating...' : 'Generate Report Card'}
+            </button>
+            <button 
+              className="btn btn-success" 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await loadStudents();
+                  for (const student of students) {
+                    await generateStudentReport(student.id);
+                    await new Promise(r => setTimeout(r, 500));
+                  }
+                  setMessage({ type: "success", text: `Generated ${students.length} report cards` });
+                } catch {
+                  setMessage({ type: "error", text: "Bulk generation failed" });
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading || students.length === 0}
+            >
+              <i className={`fa-solid ${loading ? 'fa-spinner fa-spin' : 'fa-users'} me-2`}></i>Generate All Student Report Cards
             </button>
           </div>
         </div>

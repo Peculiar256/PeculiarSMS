@@ -81,6 +81,16 @@ public class AuthDto {
     }
 
     @Data
+    public static class ChangeEmailRequest {
+        @NotBlank(message = "Current password is required")
+        private String currentPassword;
+
+        @NotBlank(message = "New email is required")
+        @Email(message = "Invalid email format")
+        private String newEmail;
+    }
+
+    @Data
     public static class VerifyEmailRequest {
         @NotBlank(message = "Verification token is required")
         private String token;

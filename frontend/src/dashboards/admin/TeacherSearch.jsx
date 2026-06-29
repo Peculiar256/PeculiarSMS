@@ -369,7 +369,7 @@ const handleViewTeacher = async (teacher) => {
         nationality: completeTeacher.nationality || teacher.nationality,
         gender: completeTeacher.gender || teacher.gender,
         dateOfBirth: completeTeacher.dateOfBirth || teacher.dateOfBirth,
-        specialization: completeTeacher.specialization || completeTeacher.primarySubject || teacher.specialization,
+        specialization: completeTeacher.specialization || completeTeacher.successSubject || teacher.specialization,
         phone: completeTeacher.phoneNumber || teacher.phone,
       };
       console.log('Mapped teacher data:', mappedTeacher);
@@ -404,7 +404,7 @@ const handleViewTeacher = async (teacher) => {
       gender: teacher.gender || '',
       nationality: teacher.nationality || '',
       qualification: teacher.qualification || '',
-      specialization: teacher.specialization || teacher.primarySubject || '',
+      specialization: teacher.specialization || teacher.successSubject || '',
       department: deptValue,
       hireDate: teacher.hireDate || teacher.dateJoined || '',
     });
@@ -1600,7 +1600,7 @@ const handleSaveSubjectAssignment = async (e) => {
                       > <i className="fa-solid fa-eye"></i>
                       </button>
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-success btn-sm"
                         onClick={() => handleEditTeacher(teacher)}
                         title="Edit Teacher"
                         style={{ padding: '5px 8px' }}

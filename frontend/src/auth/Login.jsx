@@ -47,8 +47,8 @@ function LoginForm(){
                 result = await login(null, password, studentTeacherId);
             }
             
-            if (result.success) {
-                // Redirect to appropriate dashboard based on role
+if (result.success) {
+               // Redirect to appropriate dashboard based on role
                 const dashboardRoutes = {
                     STUDENT: '/student',
                     TEACHER: '/teacher',

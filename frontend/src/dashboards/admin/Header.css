@@ -1,6 +1,7 @@
 /* Header.css */
 .navbar {
-    z-index: 1;  /* Changed z-index from 1030 to 1 to ensure it stays below the sidebar and other components */
+    z-index: 1;
+    /* Changed z-index from 1030 to 1 to ensure it stays below the sidebar and other components */
     transition: all 0.3s ease;
     background-color: #ffffff !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -8,7 +9,8 @@
 
 .navbar-brand {
     font-family: 'Poppins', sans-serif;
-    color: #2c4ebb !important; /* Primary Brand Color */
+    color: #2c4ebb !important;
+    /* success Brand Color */
     font-weight: 700;
     font-size: 1.5rem;
 }
@@ -51,7 +53,8 @@
     font-weight: 500;
 }
 
-.nav-link:hover, .nav-link:focus {
+.nav-link:hover,
+.nav-link:focus {
     color: #2c4ebb !important;
 }
 
@@ -90,8 +93,15 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Mobile Responsiveness tweaks */
@@ -102,7 +112,7 @@
         border-radius: 0 0 10px 10px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
-    
+
     .nav-item.dropdown {
         border-top: 1px solid #f1f5f9;
         margin-top: 10px;

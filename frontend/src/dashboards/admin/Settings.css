@@ -3,12 +3,12 @@
     color: #1E40AF;
 }
 
-.btn-primary {
+.btn-success {
     background-color: #1E40AF;
     border-color: #1E40AF;
 }
 
-.btn-primary:hover {
+.btn-success:hover {
     background-color: #1a368f;
     border-color: #1a368f;
 }
@@ -43,7 +43,8 @@
     color: white;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: #1E40AF;
     box-shadow: 0 0 0 0.25rem rgba(30, 64, 175, 0.25);
 }
@@ -53,13 +54,14 @@
     border-color: #1E40AF;
 }
 
-.alert-primary {
+.alert-success {
     background-color: rgba(30, 64, 175, 0.1);
     border-color: rgba(30, 64, 175, 0.2);
     color: #1E40AF;
 }
 
-.avatar-upload img, .avatar-upload div {
+.avatar-upload img,
+.avatar-upload div {
     cursor: pointer;
 }
 

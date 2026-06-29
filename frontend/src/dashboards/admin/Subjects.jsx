@@ -338,7 +338,7 @@ function Subjects() {
           <h1 className="mb-2">Subjects Management</h1>
           <p className="text-muted mb-0">Manage subjects, assign categories, and view course information.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
+        <button className="btn btn-success" onClick={() => setIsAddModalOpen(true)} disabled={loading}>
           <i className="fa-solid fa-plus me-2"></i> Add New Subject
         </button>
       </div>
@@ -495,7 +495,7 @@ function Subjects() {
                               <i className="fas fa-eye"></i>
                             </button>
                             <button
-                              className="btn btn-primary btn-sm"
+                              className="btn btn-success btn-sm"
                               onClick={() => openEditModal(subject)}
                               title="Edit"
                               style={{ padding: '5px 10px' }}
@@ -823,7 +823,7 @@ function Subjects() {
               <button className="btn btn-secondary" onClick={() => setIsAddModalOpen(false)} disabled={loading}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleAddSubject} disabled={loading}>
+              <button className="btn btn-success" onClick={handleAddSubject} disabled={loading}>
                 <i className="fas fa-plus me-2"></i> {loading ? 'Creating...' : 'Create Subject'}
               </button>
             </div>
@@ -1021,7 +1021,7 @@ function Subjects() {
               <button className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)} disabled={loading}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleEditSubject} disabled={loading}>
+              <button className="btn btn-success" onClick={handleEditSubject} disabled={loading}>
                 <i className="fas fa-save me-2"></i> {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>

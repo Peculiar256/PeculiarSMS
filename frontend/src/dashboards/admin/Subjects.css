@@ -289,6 +289,7 @@
     transform: translateY(-50px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -459,12 +460,12 @@
   gap: 8px;
 }
 
-.btn-primary {
+.btn-success {
   background-color: #2563eb;
   color: white;
 }
 
-.btn-primary:hover {
+.btn-success:hover {
   background-color: #1d4ed8;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }

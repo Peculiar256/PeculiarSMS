@@ -302,7 +302,7 @@ function TimetableByClass() {
             <option value="2">Term 2</option>
             <option value="3">Term 3</option>
           </select>
-          <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+          <button className="btn btn-success" onClick={() => setShowAddModal(true)}>
             <i className="fa-solid fa-plus me-2"></i>Add Entry
           </button>
         </div>
@@ -376,10 +376,10 @@ function TimetableByClass() {
                 <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>
               ))}
             </select>
-            <button className="btn btn-primary btn-sm" onClick={handleExportCSV}>
+            <button className="btn btn-success btn-sm" onClick={handleExportCSV}>
               <i className="fa-solid fa-file-csv me-1"></i>CSV
             </button>
-            <button className="btn btn-primary btn-sm" onClick={handleExportExcel}>
+            <button className="btn btn-success btn-sm" onClick={handleExportExcel}>
               <i className="fa-solid fa-file-excel me-1"></i>Excel
             </button>
           </div>
@@ -387,7 +387,7 @@ function TimetableByClass() {
 
         {loading && (
           <div className="text-center py-4">
-            <div className="spinner-border text-primary" role="status"></div>
+            <div className="spinner-border text-success" role="status"></div>
           </div>
         )}
 
@@ -427,7 +427,7 @@ function TimetableByClass() {
                         <td>{entry.teacherName || '-'}</td>
                         <td>{entry.room || '-'}</td>
                         <td>
-                          <span className={`badge ${entry.periodType === 'LESSON' ? 'bg-primary' : entry.periodType === 'BREAK' ? 'bg-warning' : entry.periodType === 'LUNCH' ? 'bg-success' : 'bg-secondary'}`}>
+                          <span className={`badge ${entry.periodType === 'LESSON' ? 'bg-success' : entry.periodType === 'BREAK' ? 'bg-warning' : entry.periodType === 'LUNCH' ? 'bg-success' : 'bg-secondary'}`}>
                             {entry.periodType}
                           </span>
                         </td>
@@ -440,7 +440,7 @@ function TimetableByClass() {
                                <i className="fa-solid fa-eye"></i>
                              </button>
                              <button
-                               className="btn btn-sm btn-primary"
+                               className="btn btn-sm btn-success"
                                onClick={() => openEditModal(entry)}
                              >
                                <i className="fa-solid fa-edit"></i>
@@ -614,7 +614,7 @@ function TimetableByClass() {
             </div>
             <div className="class-modal-footer">
               <button className="btn btn-secondary me-2" onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleAddEntry} disabled={saving}>
+              <button className="btn btn-success" onClick={handleAddEntry} disabled={saving}>
                 {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Adding...</> : 'Add Entry'}
               </button>
             </div>
@@ -747,7 +747,7 @@ function TimetableByClass() {
             </div>
             <div className="class-modal-footer">
               <button className="btn btn-secondary me-2" onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleEditEntry} disabled={saving}>
+              <button className="btn btn-success" onClick={handleEditEntry} disabled={saving}>
                 {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
               </button>
             </div>
@@ -796,7 +796,7 @@ function TimetableByClass() {
                 <div className="col-md-6">
                   <label className="form-label fw-bold">Period Type</label>
                   <p className="form-control-plaintext">
-                    <span className={`badge ${viewingEntry.periodType === 'LESSON' ? 'bg-primary' : viewingEntry.periodType === 'BREAK' ? 'bg-warning' : viewingEntry.periodType === 'LUNCH' ? 'bg-success' : 'bg-secondary'}`}>
+                    <span className={`badge ${viewingEntry.periodType === 'LESSON' ? 'bg-success' : viewingEntry.periodType === 'BREAK' ? 'bg-warning' : viewingEntry.periodType === 'LUNCH' ? 'bg-success' : 'bg-secondary'}`}>
                       {viewingEntry.periodType?.replace('_', ' ')}
                     </span>
                   </p>
