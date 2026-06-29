@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Settings.css';
 
 function Settings() {
+  const [showPassword, setShowPassword] = useState(false);
   const { user, updateUser } = useAuth();
   const [adminProfile, setAdminProfile] = useState({
     fullName: "Admin User",
@@ -414,30 +415,60 @@ const [selectedStudent, setSelectedStudent] = useState(null);
           <div className="row g-3">
             <div className="col-md-4">
               <label className="form-label fw-semibold">Current Password</label>
-              <input 
-                type="password" 
-                className="form-control" 
-                value={passwordData.currentPassword}
-                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-              />
+              <div className="input-group">
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  className="form-control" 
+                  value={passwordData.currentPassword}
+                  onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                  placeholder="Current Password"
+                />
+                <button 
+                  className="btn btn-primary" 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
+              </div>
             </div>
             <div className="col-md-4">
               <label className="form-label fw-semibold">New Password</label>
-              <input 
-                type="password" 
-                className="form-control" 
-                value={passwordData.newPassword}
-                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-              />
+              <div className="input-group">
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  className="form-control" 
+                  value={passwordData.newPassword}
+                  onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                  placeholder="New Password"
+                />
+                <button 
+                  className="btn btn-primary" 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
+              </div>
             </div>
             <div className="col-md-4">
               <label className="form-label fw-semibold">Confirm Password</label>
-              <input 
-                type="password" 
-                className="form-control" 
-                value={passwordData.confirmPassword}
-                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-              />
+              <div className="input-group">
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  className="form-control" 
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                  placeholder="Confirm New Password"
+                />
+                <button 
+                  className="btn btn-primary" 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
+              </div>
             </div>
             <div className="col-12">
               <button className="btn btn-warning" onClick={changePassword} disabled={loading}>
