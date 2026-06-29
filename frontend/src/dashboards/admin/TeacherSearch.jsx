@@ -1615,10 +1615,10 @@ const handleSaveSubjectAssignment = async (e) => {
                         <i className="fa-solid fa-school"></i>
                       </button>
                       <button
-                        className="btn btn-dark btn-sm"
+                        className="btn btn-success btn-sm"
                         onClick={() => openAssignSubjectModal(teacher)}
                         title="Assign Subjects"
-                        style={{ padding: '5px 8px', backgroundColor: '#343a40', color: 'white' }}
+                        style={{ padding: '5px 8px', backgroundColor: '#22c55e', color: 'white !important' }}
                       >
                         <i className="fa-solid fa-book-open"></i>
                       </button>

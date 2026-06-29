@@ -15,7 +15,9 @@ function TimetableByClass() {
   const [selectedDay, setSelectedDay] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
+  const [viewingEntry, setViewingEntry] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -33,6 +35,8 @@ function TimetableByClass() {
     periodType: 'LESSON',
     notes: '',
   });
+
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchClasses();
@@ -80,7 +84,7 @@ function TimetableByClass() {
   const fetchTimetableForClass = async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get(`/timetable/class/${selectedClass}/year/${academicYear}/term/${term}`);
+      const response = await axiosInstance.get(`/timetable/class/${encodeURIComponent(selectedClass)}/year/${encodeURIComponent(academicYear)}/term/${term}`);
       setTimetables(Array.isArray(response.data) ? response.data : []);
     } catch {
       setTimetables([]);
@@ -133,11 +137,14 @@ function TimetableByClass() {
   };
 
   const handleAddEntry = async () => {
+    setSaving(true);
     try {
       const entry = {
         ...formData,
         periodNumber: parseInt(formData.periodNumber),
         teacherId: formData.teacherId ? parseInt(formData.teacherId) : null,
+        term,
+        academicYear,
       };
 
       await axiosInstance.post('/timetable', entry);
@@ -150,15 +157,20 @@ function TimetableByClass() {
       } else {
         alert('Failed to add timetable entry');
       }
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEditEntry = async () => {
+    setSaving(true);
     try {
       const entry = {
         ...formData,
         periodNumber: parseInt(formData.periodNumber),
         teacherId: formData.teacherId ? parseInt(formData.teacherId) : null,
+        term,
+        academicYear,
       };
 
       await axiosInstance.put(`/timetable/${editingEntry.id}`, entry);
@@ -172,6 +184,8 @@ function TimetableByClass() {
       } else {
         alert('Failed to update timetable entry');
       }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -180,7 +194,7 @@ function TimetableByClass() {
     try {
       await axiosInstance.delete(`/timetable/${id}`);
       fetchTimetableForClass();
-    } catch (err) {
+    } catch {
       alert('Failed to delete timetable entry');
     }
   };
@@ -217,6 +231,11 @@ function TimetableByClass() {
       notes: entry.notes || '',
     });
     setShowEditModal(true);
+  };
+
+  const openDetailsModal = (entry) => {
+    setViewingEntry(entry);
+    setShowDetailsModal(true);
   };
 
   const handleExportCSV = () => {
@@ -357,10 +376,10 @@ function TimetableByClass() {
                 <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>
               ))}
             </select>
-            <button className="btn btn-outline-secondary btn-sm" onClick={handleExportCSV}>
+            <button className="btn btn-primary btn-sm" onClick={handleExportCSV}>
               <i className="fa-solid fa-file-csv me-1"></i>CSV
             </button>
-            <button className="btn btn-outline-secondary btn-sm" onClick={handleExportExcel}>
+            <button className="btn btn-primary btn-sm" onClick={handleExportExcel}>
               <i className="fa-solid fa-file-excel me-1"></i>Excel
             </button>
           </div>
@@ -412,22 +431,28 @@ function TimetableByClass() {
                             {entry.periodType}
                           </span>
                         </td>
-                        <td>
-                          <div className="d-flex gap-1">
-                            <button
-                              className="btn btn-sm btn-outline-primary"
-                              onClick={() => openEditModal(entry)}
-                            >
-                              <i className="fa-solid fa-edit"></i>
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => handleDeleteEntry(entry.id)}
-                            >
-                              <i className="fa-solid fa-trash"></i>
-                            </button>
-                          </div>
-                        </td>
+<td>
+                           <div className="d-flex gap-1">
+                             <button
+                               className="btn btn-sm btn-info"
+                               onClick={() => openDetailsModal(entry)}
+                             >
+                               <i className="fa-solid fa-eye"></i>
+                             </button>
+                             <button
+                               className="btn btn-sm btn-primary"
+                               onClick={() => openEditModal(entry)}
+                             >
+                               <i className="fa-solid fa-edit"></i>
+                             </button>
+                             <button
+                               className="btn btn-sm btn-danger"
+                               onClick={() => handleDeleteEntry(entry.id)}
+                             >
+                               <i className="fa-solid fa-trash"></i>
+                             </button>
+                           </div>
+                         </td>
                       </tr>
                     ))
                 ) : (
@@ -584,12 +609,14 @@ function TimetableByClass() {
                     onChange={handleInputChange}
                     rows="2"
                   ></textarea>
-                </div>
+</div>
               </div>
             </div>
             <div className="class-modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleAddEntry}>Add Entry</button>
+              <button className="btn btn-secondary me-2" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleAddEntry} disabled={saving}>
+                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Adding...</> : 'Add Entry'}
+              </button>
             </div>
           </div>
         </div>
@@ -719,8 +746,77 @@ function TimetableByClass() {
               </div>
             </div>
             <div className="class-modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleEditEntry}>Save Changes</button>
+              <button className="btn btn-secondary me-2" onClick={() => setShowEditModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleEditEntry} disabled={saving}>
+                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Details Modal */}}
+      {showDetailsModal && viewingEntry && (
+        <div className="class-modal-overlay">
+          <div className="class-modal">
+            <div className="class-modal-header">
+              <h3>Timetable Entry Details</h3>
+              <button className="btn-close" onClick={() => setShowDetailsModal(false)}></button>
+            </div>
+            <div className="class-modal-body">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Class</label>
+                  <p className="form-control-plaintext">{viewingEntry.className}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Day</label>
+                  <p className="form-control-plaintext">{viewingEntry.dayOfWeek?.charAt(0) + viewingEntry.dayOfWeek?.slice(1).toLowerCase()}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Period</label>
+                  <p className="form-control-plaintext">{viewingEntry.periodNumber} - {viewingEntry.periodName}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Time</label>
+                  <p className="form-control-plaintext">{viewingEntry.startTime} - {viewingEntry.endTime}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Subject</label>
+                  <p className="form-control-plaintext">{viewingEntry.subjectName || viewingEntry.subjectCode}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Teacher</label>
+                  <p className="form-control-plaintext">{viewingEntry.teacherName || '-'}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Room</label>
+                  <p className="form-control-plaintext">{viewingEntry.room || '-'}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Period Type</label>
+                  <p className="form-control-plaintext">
+                    <span className={`badge ${viewingEntry.periodType === 'LESSON' ? 'bg-primary' : viewingEntry.periodType === 'BREAK' ? 'bg-warning' : viewingEntry.periodType === 'LUNCH' ? 'bg-success' : 'bg-secondary'}`}>
+                      {viewingEntry.periodType?.replace('_', ' ')}
+                    </span>
+                  </p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Academic Year</label>
+                  <p className="form-control-plaintext">{viewingEntry.academicYear}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-bold">Term</label>
+                  <p className="form-control-plaintext">{viewingEntry.term}</p>
+                </div>
+                <div className="col-12">
+                  <label className="form-label fw-bold">Notes</label>
+                  <p className="form-control-plaintext">{viewingEntry.notes || '-'}</p>
+                </div>
+              </div>
+            </div>
+            <div className="class-modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>Close</button>
             </div>
           </div>
         </div>
