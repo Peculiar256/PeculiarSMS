@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from 'react'
 import kyuLogo from '../../src/assets/PS.png';
 import { useAuth } from '../context/AuthContext';
+import schoolService from '../services/schoolService';
 import './Login.css'
 
 
@@ -13,9 +14,26 @@ function LoginForm(){
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [schoolName, setSchoolName] = useState('');
+    const [schoolLogo, setSchoolLogo] = useState(null);
     
     const { login, isAuthenticated, userRole } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const loadSchool = async () => {
+            try {
+                const result = await schoolService.getSchool();
+                if (result.success && result.hasSchool && result.data) {
+                    setSchoolName(result.data.schoolName || '');
+                    setSchoolLogo(result.data.logo || null);
+                }
+            } catch (err) {
+                console.error('Failed to load school info for login:', err);
+            }
+        };
+        loadSchool();
+    }, []);
 
     // Redirect if already logged in
     useEffect(() => {
@@ -30,6 +48,9 @@ function LoginForm(){
             navigate(redirectPath, { replace: true });
         }
     }, [isAuthenticated, userRole, navigate]);
+
+    const displayName = schoolName || 'Peculiar Secondary School';
+    const logoSrc = schoolLogo || kyuLogo;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -72,9 +93,9 @@ if (result.success) {
         <div className='loginForm'>
             <form onSubmit={handleSubmit} className='form-content'>
                 <div className="Kyu">
-                    <img src={kyuLogo} alt="" className="KyuLogo" />
+                    <img src={logoSrc} alt="" style={{margin:"20px"}} className="KyuLogo" />
                 </div>
-                <h1>Login Form</h1>
+                {/* <h4 style={{ color: '#2563eb', fontWeight: 'bold', margin:"5px" }}>{displayName}</h4> */}
                 
                 {/* Login Mode Toggle */}
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', justifyContent: 'center' }}>

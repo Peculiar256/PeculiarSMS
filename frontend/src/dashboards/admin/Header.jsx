@@ -1,21 +1,43 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import profilePic from '/src/assets/bd.jpeg'
-import './Header.css'
 import kyuLogo from '/src/assets/PS.png'
+import './Header.css'
 import { useLogout } from '../../hooks/useLogout';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from "react-router-dom";
+import schoolService from '../../services/schoolService';
 
 function Header() {
     const handleLogout = useLogout();
     const { user } = useAuth();
+    const [schoolName, setSchoolName] = useState('');
+    const [schoolLogo, setSchoolLogo] = useState(null);
+
+    useEffect(() => {
+        const loadSchool = async () => {
+            try {
+                const result = await schoolService.getSchool();
+                if (result.success && result.hasSchool && result.data) {
+                    setSchoolName(result.data.schoolName || '');
+                    setSchoolLogo(result.data.logo || null);
+                }
+            } catch (err) {
+                console.error('Failed to load school info for header:', err);
+            }
+        };
+        loadSchool();
+    }, []);
+
+    const displayName = schoolName || 'Peculiar Secondary School';
+    const logoSrc = schoolLogo || kyuLogo;
+
     return (
         <header className="navbar navbar-expand bg-white sticky-top shadow-sm p-3">
             <div className="container-fluid">
                 {/* Brand / Logo */}
-                <a className="navbar-brand d-flex align-items-center fw-bold text-success" href="#">
-                    <img src={kyuLogo} alt="" width={50} height={50}/>
-                    <span>Peculiar Secondary School</span>
+                <a className="navbar-brand d-flex align-items-center fw-bold text-success gap-2" href="#">
+                    <img src={logoSrc} alt="" width={50} height={50} style={{ objectFit: 'contain' }} />
+                    <span>{displayName}</span>
                 </a>
 
                 <div className="navbar-collapse" id="navbarSupportedContent">
