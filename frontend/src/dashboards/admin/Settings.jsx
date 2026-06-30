@@ -719,6 +719,7 @@ function Settings() {
     }
   };
 
+
   const generateIdCard = async (type, userId) => {
     if (!userId) {
       setMessage({ type: "error", text: "Please select a user first" });
