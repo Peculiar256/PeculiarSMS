@@ -450,8 +450,10 @@ function Staff() {
 			)}
 
 			<div style={{margin:"20px"}}>
-				<h2 style={{fontWeight:"bold"}}>Staff Management</h2>
-				<p style={{color:"#6b7280", fontStyle:"italic"}}>Manage and organize your institution's staff records.</p>
+				<h2 style={{fontWeight:"bold", display: 'flex', alignItems: 'center', gap: '8px'}}>
+					<i className="fa-solid fa-users" style={{ color: '#1E40AF' }}></i> Staff Management
+				</h2>
+				<p style={{color:"#111214ff", fontStyle:"italic"}}>Manage and organize your institution's staff records.</p>
 				{/* <hr style={{color:"#6b7280"}}/> */}
 			</div>
 
@@ -697,7 +699,9 @@ function Staff() {
 				<div className="users-modal-overlay" onClick={closeViewModal}>
 					<div className="users-modal-content" onClick={(event) => event.stopPropagation()}>
 						<div className="users-modal-header">
-							<h3>Staff Profile</h3>
+							<h3 style={{fontWeight:"bold", display: 'flex', alignItems: 'center', gap: '8px'}}>
+								<i className="fa-solid fa-user" style={{ color: '#1E40AF' }}></i> Staff Profile
+							</h3>
 							<button type="button" className="users-modal-close" onClick={closeViewModal}>x</button>
 						</div>
 

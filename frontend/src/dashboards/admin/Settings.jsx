@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from '../../services/axiosInstance';
+import schoolService from '../../services/schoolService';
 import { useAuth } from '../../context/AuthContext';
 import './Settings.css';
 
@@ -14,7 +15,27 @@ function Settings() {
     avatar: null,
     lastLogin: new Date().toISOString(),
   });
-  
+
+  const [schoolProfile, setSchoolProfile] = useState({
+    schoolName: "",
+    address: "",
+    city: "",
+    district: "",
+    country: "Uganda",
+    phoneNumber: "",
+    email: "",
+    website: "",
+    motto: "",
+    vision: "",
+    mission: "",
+    schoolType: "Secondary",
+    registrationNumber: "",
+    schoolLevel: "O & A Level",
+    logo: null,
+    principalName: "",
+    establishedYear: "",
+  });
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -28,7 +49,7 @@ function Settings() {
     academicYear: "2024",
     term: "1",
   });
-  
+
   const [emailData, setEmailData] = useState({
     currentPassword: "",
     newEmail: "",
@@ -44,11 +65,14 @@ function Settings() {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewType, setPreviewType] = useState(null);
+  const [loadingSchool, setLoadingSchool] = useState(false);
+  const [schoolAccordionOpen, setSchoolAccordionOpen] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchAdminProfile();
     }
+    fetchSchoolProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -69,8 +93,45 @@ function Settings() {
     }
   };
 
+  const fetchSchoolProfile = async () => {
+    setLoadingSchool(true);
+    try {
+      const result = await schoolService.getSchool();
+      if (result.success && result.hasSchool && result.data) {
+        const s = result.data;
+        setSchoolProfile({
+          schoolName: s.schoolName || "",
+          address: s.address || "",
+          city: s.city || "",
+          district: s.district || "",
+          country: s.country || "Uganda",
+          phoneNumber: s.phoneNumber || "",
+          email: s.email || "",
+          website: s.website || "",
+          motto: s.motto || "",
+          vision: s.vision || "",
+          mission: s.mission || "",
+          schoolType: s.schoolType || "Secondary",
+          registrationNumber: s.registrationNumber || "",
+          schoolLevel: s.schoolLevel || "O & A Level",
+          logo: s.logo || null,
+          principalName: s.principalName || "",
+          establishedYear: s.establishedYear || "",
+        });
+      }
+    } catch {
+      console.error('Failed to fetch school profile');
+    } finally {
+      setLoadingSchool(false);
+    }
+  };
+
   const handleProfileChange = (field, value) => {
     setAdminProfile({ ...adminProfile, [field]: value });
+  };
+
+  const handleSchoolChange = (field, value) => {
+    setSchoolProfile({ ...schoolProfile, [field]: value });
   };
 
   const handleAvatarUpload = (e) => {
@@ -79,6 +140,21 @@ function Settings() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setAdminProfile({ ...adminProfile, avatar: event.target.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSchoolLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: "error", text: "Logo file size must be under 5MB" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSchoolProfile({ ...schoolProfile, logo: event.target.result });
       };
       reader.readAsDataURL(file);
     }
@@ -139,6 +215,22 @@ function Settings() {
       setMessage({ type: "error", text: "Failed to save profile" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveSchoolProfile = async () => {
+    if (!schoolProfile.schoolName) {
+      setMessage({ type: "error", text: "School name is required" });
+      return;
+    }
+    setLoadingSchool(true);
+    try {
+      await schoolService.saveSchool(schoolProfile);
+      setMessage({ type: "success", text: "School profile saved successfully" });
+    } catch {
+      setMessage({ type: "error", text: "Failed to save school profile" });
+    } finally {
+      setLoadingSchool(false);
     }
   };
 
@@ -244,10 +336,11 @@ function Settings() {
       else if (avgScore >= 50) overallGrade = "Satisfactory";
       
       doc.setFontSize(22);
-      doc.text('ACADEMIC PERFORMANCE REPORT', 105, 20, { align: 'center' });
+      const reportSchoolName = schoolProfile.schoolName || 'Peculiar School';
+      doc.text(reportSchoolName.toUpperCase(), 105, 20, { align: 'center' });
       doc.setFontSize(10);
-      doc.text('Peculiar School - Uganda', 105, 30, { align: 'center' });
-      doc.text('Academic Excellence Center', 105, 36, { align: 'center' });
+      doc.text([schoolProfile.city, schoolProfile.country].filter(Boolean).join(', ') || 'Uganda', 105, 30, { align: 'center' });
+      doc.text(schoolProfile.motto || 'Academic Excellence Center', 105, 36, { align: 'center' });
       
       autoTable(doc, {
         startY: 45,
@@ -303,7 +396,7 @@ function Settings() {
       
       const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 200;
       doc.setFontSize(8);
-      doc.text('© ' + new Date().getFullYear() + ' Peculiar School. All rights reserved.', 105, finalY + 20, { align: 'center' });
+      doc.text('© ' + new Date().getFullYear() + ' ' + (schoolProfile.schoolName || 'Peculiar School') + '. All rights reserved.', 105, finalY + 20, { align: 'center' });
       doc.text('This is a confidential document. For official use only.', 105, finalY + 27, { align: 'center' });
       
       doc.save(`report-card-${selectedStudent?.studentId || selectedStudent?.id || 'unknown'}.pdf`);
@@ -341,12 +434,29 @@ function Settings() {
 
       doc.setFillColor(30, 64, 191);
       doc.rect(0, 0, 85.6, 15, 'F');
-      
+
+      const schoolLogo = schoolProfile.logo;
+      if (schoolLogo) {
+        try {
+          const schoolImg = new Image();
+          schoolImg.src = schoolLogo;
+          await new Promise(resolve => { schoolImg.onload = resolve; });
+          doc.addImage(schoolLogo, 'PNG', 2, 1, 6, 13);
+        } catch {
+          doc.setTextColor(255, 255, 255);
+        }
+      }
+
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text('PECULIAR SCHOOL', 42.8, 9, { align: 'center' });
-      doc.setFontSize(8);
-      doc.text('Uganda', 42.8, 13, { align: 'center' });
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      const schoolNameText = (schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase();
+      const maxTextWidth = schoolLogo ? 72 : 85;
+      doc.text(schoolNameText, schoolLogo ? 49 : 42.8, 7, { align: 'center', maxWidth: maxTextWidth });
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      const locationText = [schoolProfile.city, schoolProfile.country].filter(Boolean).join(', ') || 'Uganda';
+      doc.text(locationText, 42.8, 12, { align: 'center' });
 
       if (photoUrl) {
         try {
@@ -385,7 +495,7 @@ function Settings() {
       doc.rect(0, 48, 85.6, 5, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(6);
-      doc.text(`Valid: ${new Date().getFullYear()}`, 42.8, 51, { align: 'center' });
+      doc.text(`${schoolProfile.schoolName || 'Peculiar School'} | ${new Date().getFullYear()}`, 42.8, 51, { align: 'center' });
 
       doc.save(`id-card-${idNumber}.pdf`);
       setMessage({ type: "success", text: "ID Card generated successfully" });
@@ -432,67 +542,293 @@ function Settings() {
       <div className="card shadow-sm border-0 mb-4">
         <div className="card-header bg-white py-3">
           <h5 className="mb-0 fw-bold text-dark-emphasis">
-            <i className="fa-solid fa-user me-2"></i>Admin Profile
+            <i className="fa-solid fa-building-columns me-2"></i>Institution Profiles
           </h5>
         </div>
         <div className="card-body px-4">
-          <div className="row g-3">
-            <div className="col-12 col-md-2 text-center">
-              <div className="avatar-upload">
-                {adminProfile.avatar ? (
-                  <img src={adminProfile.avatar} alt="Avatar" className="rounded-circle mb-2" width="80" height="80" style={{ objectFit: 'cover' }} />
-                ) : (
-                  <div className="rounded-circle bg-light d-flex align-items-center justify-content-center mb-2" style={{ width: '80px', height: '80px', margin: '0 auto' }}>
-                    <i className="fa-solid fa-user fa-2x text-muted"></i>
+          <div className="row g-4">
+            {/* Admin Profile */}
+            <div className="col-md-5">
+              <div className="border rounded-3 p-3 h-100" style={{ background: '#f8f9fa' }}>
+                <h6 className="fw-bold mb-3 text-dark-emphasis">
+                  <i className="fa-solid fa-user-shield me-2" style={{ color: '#1E40AF' }}></i>Admin Profile
+                </h6>
+                <div className="text-center mb-3">
+                  <div className="avatar-upload d-inline-block position-relative">
+                    {adminProfile.avatar ? (
+                      <img src={adminProfile.avatar} alt="Avatar" className="rounded-circle border" width="90" height="90" style={{ objectFit: 'cover', borderColor: '#1E40AF' }} />
+                    ) : (
+                      <div className="rounded-circle bg-white d-flex align-items-center justify-content-center" style={{ width: '90px', height: '90px', border: '2px solid #dee2e6' }}>
+                        <i className="fa-solid fa-user fa-2x text-muted"></i>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="d-none" id="avatarInput" />
+                    <label htmlFor="avatarInput" className="btn btn-sm btn-light position-absolute bottom-0 end-0 rounded-circle" style={{ border: '2px solid #1E40AF', width: '32px', height: '32px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1E40AF' }} title="Change photo">
+                      <i className="fa-solid fa-camera fa-xs"></i>
+                    </label>
                   </div>
-                )}
-                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="d-none" id="avatarInput" />
-                <label htmlFor="avatarInput" className="btn btn-sm btn-outline" style={{ borderColor: '#1E40AF', color: '#1E40AF' }}>
-                  <i className="fa-solid fa-camera me-1"></i>Change Photo
-                </label>
-              </div>
-            </div>
-            <div className="col-12 col-md-10">
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Full Name</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
+                </div>
+                <div className="mb-2">
+                  <label className="form-label fw-semibold small text-muted">Full Name</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
                     value={adminProfile.fullName}
                     onChange={(e) => handleProfileChange('fullName', e.target.value)}
                   />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Email</label>
-                  <input 
-                    type="email" 
-                    className="form-control" 
+                <div className="mb-2">
+                  <label className="form-label fw-semibold small text-muted">Email</label>
+                  <input
+                    type="email"
+                    className="form-control form-control-sm"
                     value={adminProfile.email}
                     disabled
                   />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    className="form-control" 
+                <div className="mb-2">
+                  <label className="form-label fw-semibold small text-muted">Phone Number</label>
+                  <input
+                    type="tel"
+                    className="form-control form-control-sm"
                     value={adminProfile.phone}
                     onChange={(e) => handleProfileChange('phone', e.target.value)}
                   />
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Role</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
+                <div className="mb-3">
+                  <label className="form-label fw-semibold small text-muted">Role</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
                     value={adminProfile.role}
                     disabled
                   />
                 </div>
-                <div className="col-12">
-                  <button className="btn btn-success" onClick={saveProfile} disabled={loading}>
-                    <i className="fa-solid fa-save me-2"></i>{loading ? 'Saving...' : 'Save Profile'}
+                <button className="btn btn-success btn-sm w-100" onClick={saveProfile} disabled={loading}>
+                  <i className={`fa-solid ${loading ? 'fa-spinner fa-spin' : 'fa-save'} me-2`}></i>{loading ? 'Saving...' : 'Save Admin Profile'}
+                </button>
+              </div>
+            </div>
+
+            {/* School Profile */}
+            <div className="col-md-7">
+              <div className="border rounded-3 h-100" style={{ background: '#f8f9fa' }}>
+                <div className="school-accordion">
+
+                  {/* Toggle Button */}
+                  <button
+                    className="school-accordion-btn w-100 d-flex align-items-center justify-content-between px-3 py-2 border-0 bg-transparent"
+                    type="button"
+                    onClick={() => setSchoolAccordionOpen(!schoolAccordionOpen)}
+                  >
+                    <span className="fw-bold text-dark-emphasis">
+                      <i className="fa-solid fa-school me-2" style={{ color: '#1E40AF' }}></i>School Profile
+                    </span>
+                    <i className={`fa-solid fa-chevron-down school-accordion-chevron ${schoolAccordionOpen ? 'rotated' : ''}`}></i>
+                  </button>
+
+                  {/* Collapsible Body */}
+                  <div className={`school-accordion-body ${schoolAccordionOpen ? 'open' : ''}`}>
+                    <div className="px-3 pb-3">
+                      <div className="row g-2">
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">School Name *</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.schoolName}
+                      onChange={(e) => handleSchoolChange('schoolName', e.target.value)}
+                      placeholder="Enter school name"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">School Type</label>
+                    <select
+                      className="form-select form-select-sm"
+                      value={schoolProfile.schoolType}
+                      onChange={(e) => handleSchoolChange('schoolType', e.target.value)}
+                    >
+                      <option value="Primary">Primary</option>
+                      <option value="Secondary">Secondary</option>
+                      <option value="Primary & Secondary">Primary & Secondary</option>
+                      <option value="High School">High School</option>
+                    </select>
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small text-muted">Address</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.address}
+                      onChange={(e) => handleSchoolChange('address', e.target.value)}
+                      placeholder="Street address / P.O. Box"
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-semibold small text-muted">City / Town</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.city}
+                      onChange={(e) => handleSchoolChange('city', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-semibold small text-muted">District</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.district}
+                      onChange={(e) => handleSchoolChange('district', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-semibold small text-muted">Country</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.country}
+                      onChange={(e) => handleSchoolChange('country', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Phone Number</label>
+                    <input
+                      type="tel"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.phoneNumber}
+                      onChange={(e) => handleSchoolChange('phoneNumber', e.target.value)}
+                      placeholder="+256 XXX XXX XXX"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Email</label>
+                    <input
+                      type="email"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.email}
+                      onChange={(e) => handleSchoolChange('email', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Website</label>
+                    <input
+                      type="url"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.website}
+                      onChange={(e) => handleSchoolChange('website', e.target.value)}
+                      placeholder="https://"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Registration Number</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.registrationNumber}
+                      onChange={(e) => handleSchoolChange('registrationNumber', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">School Level</label>
+                    <select
+                      className="form-select form-select-sm"
+                      value={schoolProfile.schoolLevel}
+                      onChange={(e) => handleSchoolChange('schoolLevel', e.target.value)}
+                    >
+                      <option value="O Level Only">O Level Only</option>
+                      <option value="A Level Only">A Level Only</option>
+                      <option value="O & A Level">O & A Level</option>
+                      <option value="Primary">Primary</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Principal / Headteacher</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.principalName}
+                      onChange={(e) => handleSchoolChange('principalName', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label fw-semibold small text-muted">Year Established</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.establishedYear}
+                      onChange={(e) => handleSchoolChange('establishedYear', e.target.value)}
+                      placeholder="e.g. 1995"
+                      maxLength={4}
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small text-muted">Motto</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={schoolProfile.motto}
+                      onChange={(e) => handleSchoolChange('motto', e.target.value)}
+                      placeholder="School motto"
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Vision Statement</label>
+                    <textarea
+                      className="form-control form-control-sm"
+                      rows="2"
+                      value={schoolProfile.vision}
+                      onChange={(e) => handleSchoolChange('vision', e.target.value)}
+                      placeholder="School vision"
+                    ></textarea>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold small text-muted">Mission Statement</label>
+                    <textarea
+                      className="form-control form-control-sm"
+                      rows="2"
+                      value={schoolProfile.mission}
+                      onChange={(e) => handleSchoolChange('mission', e.target.value)}
+                      placeholder="School mission"
+                    ></textarea>
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label fw-semibold small text-muted mb-1">School Logo</label>
+                    <div className="d-flex align-items-center gap-3">
+                      <div className="school-logo-upload">
+                        {schoolProfile.logo ? (
+                          <img src={schoolProfile.logo} alt="School Logo" className="school-logo-preview" />
+                        ) : (
+                          <div className="school-logo-placeholder">
+                            <i className="fa-solid fa-image fa-2x"></i>
+                            <small>No Logo</small>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <input type="file" accept="image/*" onChange={handleSchoolLogoUpload} className="d-none" id="schoolLogoInput" />
+                        <label htmlFor="schoolLogoInput" className="btn btn-outline btn-sm" style={{ borderColor: '#1E40AF', color: '#1E40AF' }}>
+                          <i className="fa-solid fa-upload me-1"></i>Upload Logo
+                        </label>
+                        {schoolProfile.logo && (
+                          <button className="btn btn-sm btn-outline-danger ms-1" onClick={() => setSchoolProfile({ ...schoolProfile, logo: null })}>
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        )}
+                        <div className="small text-muted mt-1">Used on ID cards & report cards. Max 5MB. PNG/JPG/SVG.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                <div className="px-3 pb-3">
+                  <button className="btn btn-success btn-sm" onClick={saveSchoolProfile} disabled={loadingSchool}>
+                    <i className={`fa-solid ${loadingSchool ? 'fa-spinner fa-spin' : 'fa-save'} me-2`}></i>{loadingSchool ? 'Saving...' : 'Save School Profile'}
                   </button>
                 </div>
               </div>
@@ -797,19 +1133,19 @@ function Settings() {
                 background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)',
                 position: 'relative',
                 fontFamily: 'Arial, sans-serif'
-              }}>
-                <div style={{ 
-                  background: '#1E40AF', 
-                  color: 'white', 
-                  padding: '5px', 
-                  textAlign: 'center', 
-                  fontWeight: 'bold',
-                  fontSize: '12px',
-                  borderRadius: '4px',
-                  marginBottom: '8px'
                 }}>
-                  PECULIAR SCHOOL - UGANDA
-                </div>
+                  <div style={{ 
+                    background: '#1E40AF', 
+                    color: 'white', 
+                    padding: '5px', 
+                    textAlign: 'center', 
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    borderRadius: '4px',
+                    marginBottom: '8px'
+                  }}>
+                    {(schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase()} - {(schoolProfile.country || 'UGANDA').toUpperCase()}
+                  </div>
                 
                 <div className="d-flex">
                   <div style={{ width: '80px', height: '100px', background: '#e9ecef', borderRadius: '4px', marginRight: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>

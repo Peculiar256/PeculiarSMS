@@ -840,8 +840,10 @@ const handleSaveSubjectAssignment = async (e) => {
       {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
       
       <div style={{margin:"5px"}}>
-        <h2 style={{fontWeight:"bold"}}>Teacher Management</h2>
-        <p style={{color:"#6b7280", fontStyle:"italic"}}>Manage and organize your institution's teacher records.</p>
+        <h2 style={{fontWeight:"bold", display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <i className="fa-solid fa-user-tie" style={{ color: '#1E40AF' }}></i> Teacher Management
+        </h2>
+        <p style={{color:"#111214ff", fontStyle:"italic"}}>Manage and organize your institution's teacher records.</p>
         {/* <hr style={{color:"#6b7280"}}/> */}
       </div>
 
