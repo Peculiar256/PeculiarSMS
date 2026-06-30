@@ -288,49 +288,6 @@ function Grades() {
                 </div>
             </div>
 
-            {/* Best & Worst Performing */}
-            <div className="performance-highlights">
-                <div className="highlight-section best-subjects">
-                    <h4><i className="fa-solid fa-arrow-up"></i> Best Performing</h4>
-                    <div className="highlight-list">
-                        {reportData.bestSubjects.length > 0 ? (
-                            reportData.bestSubjects.map((subject, idx) => (
-                                <div key={idx} className="highlight-item">
-                                    <span className="rank-badge">{idx + 1}</span>
-                                    <div className="subject-info">
-                                        <p className="subject-name">{subject.course}</p>
-                                        <p className="subject-score">{subject.marks}/{subject.maxMarks}</p>
-                                    </div>
-                                    <span className="badge-success">{subject.grade}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="empty-state">No data available</p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="highlight-section needs-improvement">
-                    <h4><i className="fa-solid fa-triangle-exclamation"></i> Needs Improvement</h4>
-                    <div className="highlight-list">
-                        {reportData.worstSubjects.length > 0 ? (
-                            reportData.worstSubjects.map((subject, idx) => (
-                                <div key={idx} className="highlight-item">
-                                    <span className="rank-badge warning">{idx + 1}</span>
-                                    <div className="subject-info">
-                                        <p className="subject-name">{subject.course}</p>
-                                        <p className="subject-score">{subject.marks}/{subject.maxMarks}</p>
-                                    </div>
-                                    <span className="badge-warning">{subject.grade}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="empty-state">🌟 Outstanding! All subjects performing excellently (75+)</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
             {/* Detailed Subjects Table */}
             <div className="card subjects-table-card">
                 <div className="card-header">
@@ -390,6 +347,49 @@ function Grades() {
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Best & Worst Performing */}
+            <div className="performance-highlights">
+                <div className="highlight-section best-subjects">
+                    <h4><i className="fa-solid fa-arrow-up"></i> Best Performing</h4>
+                    <div className="highlight-list">
+                        {reportData.bestSubjects.length > 0 ? (
+                            reportData.bestSubjects.map((subject, idx) => (
+                                <div key={idx} className="highlight-item">
+                                    <span className="rank-badge">{idx + 1}</span>
+                                    <div className="subject-info">
+                                        <p className="subject-name">{subject.course}</p>
+                                        <p className="subject-score">{subject.marks}/{subject.maxMarks}</p>
+                                    </div>
+                                    <span className="badge-success">{subject.grade}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="empty-state">No data available</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="highlight-section needs-improvement">
+                    <h4><i className="fa-solid fa-triangle-exclamation"></i> Needs Improvement</h4>
+                    <div className="highlight-list">
+                        {reportData.worstSubjects.length > 0 ? (
+                            reportData.worstSubjects.map((subject, idx) => (
+                                <div key={idx} className="highlight-item">
+                                    <span className="rank-badge warning">{idx + 1}</span>
+                                    <div className="subject-info">
+                                        <p className="subject-name">{subject.course}</p>
+                                        <p className="subject-score">{subject.marks}/{subject.maxMarks}</p>
+                                    </div>
+                                    <span className="badge-warning">{subject.grade}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="empty-state">🌟 Outstanding! All subjects performing excellently (75+)</p>
+                        )}
+                    </div>
                 </div>
             </div>
 

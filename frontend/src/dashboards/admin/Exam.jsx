@@ -25,7 +25,7 @@ function Exam() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(""); // "success" or "error"
-  const [viewMode, setViewMode] = useState("analytics"); // NEW: Toggle between analytics and table
+  const [viewMode, setViewMode] = useState("table"); // Toggle between table and analytics
 
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -346,27 +346,8 @@ function Exam() {
         <h1>Exam Management</h1>
         <p>Create, manage, and analyze exam results</p>
         
-        {/* NEW: View Toggle Buttons */}
+        {/* View Toggle Buttons - Table first, Analytics second */}
         <div style={{marginTop: "16px", display: "flex", gap: "12px"}}>
-          <button
-            onClick={() => setViewMode("analytics")}
-            style={{
-              padding: "10px 20px",
-              background: viewMode === "analytics" ? "#667eea" : "#e2e8f0",
-              color: viewMode === "analytics" ? "white" : "#334155",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "600",
-              transition: "all 0.3s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px"
-            }}
-          >
-            <i className="fa-solid fa-chart-bar"></i> Analytics
-          </button>
           <button
             onClick={() => setViewMode("table")}
             style={{
@@ -385,6 +366,25 @@ function Exam() {
             }}
           >
             <i className="fa-solid fa-table"></i> Exams Table
+          </button>
+          <button
+            onClick={() => setViewMode("analytics")}
+            style={{
+              padding: "10px 20px",
+              background: viewMode === "analytics" ? "#667eea" : "#e2e8f0",
+              color: viewMode === "analytics" ? "white" : "#334155",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <i className="fa-solid fa-chart-bar"></i> Analytics
           </button>
         </div>
       </div>
