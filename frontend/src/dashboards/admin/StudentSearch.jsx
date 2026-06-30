@@ -4,6 +4,7 @@ import { exportToCSV, exportToExcel, exportToPDF } from '../../utils/exporters';
 import { printTeacherList } from '../../utils/printUtils';
 import CSVImportModal from '../../components/CSVImportModal';
 import './StudentSearch.css';
+import './AdminCards.css';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -374,64 +375,84 @@ const StudentSearch = () => {
       
       <div className="search-header">
         <h2>Student Management</h2>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
-          <button className="btn btn-add-student" onClick={() => setIsAddModalOpen(true)} style={{ flex: 1, minWidth: '120px' }}>
-            <i className="fa-solid fa-plus"></i> Add Student
-          </button>
-          <button type="button" className="btn btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ flex: 1, minWidth: '100px' }}>
-            <i className="fa-solid fa-file-csv"></i> CSV
-          </button>
-          <button type="button" className="btn btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ flex: 1, minWidth: '100px' }}>
-            <i className="fa-solid fa-file-excel"></i> Excel
-          </button>
-          <button type="button" className="btn btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ flex: 1, minWidth: '100px' }}>
-            <i className="fa-solid fa-file-pdf"></i> PDF
-          </button>
-          <button 
-            type="button" 
-            className="btn btn-export" 
-            onClick={handlePrintView}
-            disabled={isPrintLoading}
-            title="Print View" 
-            style={{ flex: 1, minWidth: '100px' }}
-          >
-            <i className="fa-solid fa-print"></i> Print
-          </button>
-          <button 
-            type="button" 
-            className="btn btn-export" 
-            onClick={() => setIsCSVImportOpen(true)}
-            title="Import from CSV" 
-            style={{ flex: 1, minWidth: '100px' }}
-          >
-            <i className="fa-solid fa-upload"></i> Import
-          </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <button className="btn btn-add-student" onClick={() => setIsAddModalOpen(true)} style={{ minWidth: '120px' }}>
+              <i className="fa-solid fa-plus"></i> Add Student
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ minWidth: '100px' }}>
+              <i className="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button type="button" className="btn btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ minWidth: '100px' }}>
+              <i className="fa-solid fa-file-excel"></i> Excel
+            </button>
+            <button type="button" className="btn btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ minWidth: '100px' }}>
+              <i className="fa-solid fa-file-pdf"></i> PDF
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-export" 
+              onClick={handlePrintView}
+              disabled={isPrintLoading}
+              title="Print View" 
+              style={{ minWidth: '100px' }}
+            >
+              <i className="fa-solid fa-print"></i> Print
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-export" 
+              onClick={() => setIsCSVImportOpen(true)}
+              title="Import from CSV" 
+              style={{ minWidth: '100px' }}
+            >
+              <i className="fa-solid fa-upload"></i> Import
+            </button>
+          </div>
         </div>
       </div>
 
-      <section className="summary-cards">
-        <article className="summary-card summary-card-active">
-          <i className="fa-solid fa-user-graduate summary-card-icon"></i>
-          <p className="summary-label">Total Active Students</p>
-          <h3>{totalActiveStudents}</h3>
+      <section className="stats-grid" style={{ marginBottom: '24px' }}>
+        <article className="stat-card">
+          <div className="stat-icon student">
+            <i className="fa-solid fa-user-graduate"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Total Active Students</h3>
+            <p>{totalActiveStudents}</p>
+          </div>
         </article>
 
-        <article className="summary-card summary-card-recent">
-          <i className="fa-solid fa-user-plus summary-card-icon"></i>
-          <p className="summary-label">Recent Admissions</p>
-          <h3>{recentAdmissions}</h3>
+        <article className="stat-card">
+          <div className="stat-icon student">
+            <i className="fa-solid fa-user-plus"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Recent Admissions</h3>
+            <p>{recentAdmissions}</p>
+          </div>
         </article>
 
-        <article className="summary-card summary-card-fees">
-          <i className="fa-solid fa-dollar-sign summary-card-icon"></i>
-          <p className="summary-label">Total Fees Collected</p>
-          <h3>$0.00</h3>
+        <article className="stat-card">
+          <div className="stat-icon student">
+            <i className="fa-solid fa-dollar-sign"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Total Fees Collected</h3>
+            <p>$0.00</p>
+          </div>
         </article>
 
-        <article className="summary-card summary-card-attendance">
-          <i className="fa-solid fa-calendar-check summary-card-icon"></i>
-          <p className="summary-label">Today's Attendance</p>
-          <h3>{todaysAttendance}</h3>
+        <article className="stat-card">
+          <div className="stat-icon attendance">
+            <i className="fa-solid fa-calendar-check"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Today's Attendance</h3>
+            <p>{todaysAttendance}</p>
+          </div>
         </article>
       </section>
 

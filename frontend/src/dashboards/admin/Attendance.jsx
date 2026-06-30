@@ -353,6 +353,49 @@ const Attendance = () => {
         <div className="card-body">
           <h2 className="mb-4 fs-5">Student Attendance Records</h2>
 
+          <div className="row g-3 mb-4" style={{ alignItems: "center" }}>
+            <div className="col-12">
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleResetAttendance}
+                  disabled={!hasChanges || saving}
+                  style={{
+                    padding: "8px 16px",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: !hasChanges || saving ? "not-allowed" : "pointer",
+                    opacity: !hasChanges || saving ? 0.5 : 1,
+                  }}
+                >
+                  <i className="fa-solid fa-undo" style={{ marginRight: "6px" }}></i>
+                  Reset Changes
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={handleSubmitAttendance}
+                  disabled={!hasChanges || saving}
+                  style={{
+                    padding: "8px 16px",
+                    background: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: !hasChanges || saving ? "not-allowed" : "pointer",
+                    opacity: !hasChanges || saving ? 0.5 : 1,
+                  }}
+                >
+                  <i className="fa-solid fa-check" style={{ marginRight: "6px" }}></i>
+                  {saving ? "Submitting..." : "Submit Attendance"}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {hasChanges && (
             <div style={{ 
               padding: "12px", 
@@ -417,49 +460,6 @@ const Attendance = () => {
                 <option value="late">Late</option>
                 <option value="unknown">Unknown</option>
               </select>
-            </div>
-          </div>
-
-          <div className="row g-3 mb-4" style={{ alignItems: "center" }}>
-            <div className="col-12">
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleResetAttendance}
-                  disabled={!hasChanges || saving}
-                  style={{
-                    padding: "8px 16px",
-                    background: "#6c757d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: !hasChanges || saving ? "not-allowed" : "pointer",
-                    opacity: !hasChanges || saving ? 0.5 : 1,
-                  }}
-                >
-                  <i className="fa-solid fa-undo" style={{ marginRight: "6px" }}></i>
-                  Reset Changes
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={handleSubmitAttendance}
-                  disabled={!hasChanges || saving}
-                  style={{
-                    padding: "8px 16px",
-                    background: "#28a745",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: !hasChanges || saving ? "not-allowed" : "pointer",
-                    opacity: !hasChanges || saving ? 0.5 : 1,
-                  }}
-                >
-                  <i className="fa-solid fa-check" style={{ marginRight: "6px" }}></i>
-                  {saving ? "Submitting..." : "Submit Attendance"}
-                </button>
-              </div>
             </div>
           </div>
 

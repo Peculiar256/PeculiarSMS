@@ -9,6 +9,7 @@ import { getStatusOptions } from '../../utils/statusUtils';
 import CSVImportModal from '../../components/CSVImportModal';
 import StatusBadge from '../../components/StatusBadge';
 import './TeacherSearch.css';
+import './AdminCards.css';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -838,79 +839,99 @@ const handleSaveSubjectAssignment = async (e) => {
       {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
       {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
       
-      <section className="teacher-summary-cards" aria-label="Teacher summary cards">
-        <article className="teacher-summary-card teacher-summary-total">
-          <i className="fa-solid fa-user-tie teacher-summary-icon" aria-hidden="true"></i>
-          <p>Total Teachers</p>
-          <h3>{totalTeachers}</h3>
+      <section className="stats-grid" style={{ marginBottom: '24px' }}>
+        <article className="stat-card">
+          <div className="stat-icon teacher">
+            <i className="fa-solid fa-user-tie"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Total Teachers</h3>
+            <p>{totalTeachers}</p>
+          </div>
         </article>
 
-        <article className="teacher-summary-card teacher-summary-new">
-          <i className="fa-solid fa-user-plus teacher-summary-icon" aria-hidden="true"></i>
-          <p>New Teachers</p>
-          <h3>{newTeachersCount}</h3>
+        <article className="stat-card">
+          <div className="stat-icon teacher">
+            <i className="fa-solid fa-user-plus"></i>
+          </div>
+          <div className="stat-info">
+            <h3>New Teachers</h3>
+            <p>{newTeachersCount}</p>
+          </div>
         </article>
 
-        <article className="teacher-summary-card teacher-summary-progress">
-          <i className="fa-solid fa-book-open teacher-summary-icon" aria-hidden="true"></i>
-          <p>Syllabus Progress</p>
-          <h3>{`${syllabusProgress}%`}</h3>
+        <article className="stat-card">
+          <div className="stat-icon teacher">
+            <i className="fa-solid fa-book-open"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Syllabus Progress</h3>
+            <p>{`${syllabusProgress}%`}</p>
+          </div>
         </article>
 
-        <article className="teacher-summary-card teacher-summary-top-department">
-          <i className="fa-solid fa-trophy teacher-summary-icon" aria-hidden="true"></i>
-          <p>Top Performing Departments</p>
-          <h3>{topDepartment.count}</h3>
+        <article className="stat-card">
+          <div className="stat-icon departments">
+            <i className="fa-solid fa-trophy"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Top Performing Departments</h3>
+            <p>{topDepartment.count}</p>
+          </div>
         </article>
       </section>
 
       <div className="search-section">
         <div className="teacher-header">
           <h2>Teacher Management</h2>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
-            <button type="button" className="btn-add-teacher" onClick={openAddModal} style={{ flex: 1, minWidth: '120px' }}>
-              <i className="fa-solid fa-plus"></i> Add Teacher
-            </button>
-            <button type="button" className="btn-export" onClick={() => setShowFilters(!showFilters)} title="Toggle Filters" style={{ flex: 1, minWidth: '100px' }}>
-              <i className="fa-solid fa-filter"></i> Filters
-            </button>
-            <button type="button" className="btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ flex: 1, minWidth: '100px' }}>
-              <i className="fa-solid fa-file-csv"></i>Export CSV
-            </button>
-            <button type="button" className="btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ flex: 1, minWidth: '100px' }}>
-              <i className="fa-solid fa-file-excel"></i>Export as Excel
-            </button>
-            <button type="button" className="btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ flex: 1, minWidth: '100px' }}>
-              <i className="fa-solid fa-file-pdf"></i>Export as PDF
-            </button>
-            <button 
-              type="button" 
-              className="btn-export" 
-              onClick={handlePrintView}
-              disabled={isPrintLoading}
-              title="Print View" 
-              style={{ flex: 1, minWidth: '100px' }}
-            >
-              <i className="fa-solid fa-print"></i> Print
-            </button>
-            <button 
-              type="button" 
-              className="btn-export" 
-              onClick={() => setIsCSVImportOpen(true)}
-              title="Import from CSV" 
-              style={{ flex: 1, minWidth: '100px' }}
-            >
-              <i className="fa-solid fa-upload"></i> Import csv file
-            </button>
-            {!batchMode ? (
-              <button type="button" className="btn-batch" onClick={() => setBatchMode(true)} title="Batch Operations" style={{ flex: 1, minWidth: '100px' }}>
-                <i className="fa-solid fa-check-double"></i> Batch
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <button type="button" className="btn-add-teacher" onClick={openAddModal} style={{ minWidth: '120px' }}>
+                <i className="fa-solid fa-plus"></i> Add Teacher
               </button>
-            ) : (
-              <button type="button" className="btn-batch-active" onClick={() => { setBatchMode(false); setSelectedTeachers(new Set()); }} title="Exit Batch Mode" style={{ flex: 1, minWidth: '100px' }}>
-                <i className="fa-solid fa-times"></i> Cancel Batch
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button type="button" className="btn-export" onClick={() => setShowFilters(!showFilters)} title="Toggle Filters" style={{ minWidth: '100px' }}>
+                <i className="fa-solid fa-filter"></i> Filters
               </button>
-            )}
+              <button type="button" className="btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ minWidth: '100px' }}>
+                <i className="fa-solid fa-file-csv"></i>Export CSV
+              </button>
+              <button type="button" className="btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ minWidth: '100px' }}>
+                <i className="fa-solid fa-file-excel"></i>Export as Excel
+              </button>
+              <button type="button" className="btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ minWidth: '100px' }}>
+                <i className="fa-solid fa-file-pdf"></i>Export as PDF
+              </button>
+              <button 
+                type="button" 
+                className="btn-export" 
+                onClick={handlePrintView}
+                disabled={isPrintLoading}
+                title="Print View" 
+                style={{ minWidth: '100px' }}
+              >
+                <i className="fa-solid fa-print"></i> Print
+              </button>
+              <button 
+                type="button" 
+                className="btn-export" 
+                onClick={() => setIsCSVImportOpen(true)}
+                title="Import from CSV" 
+                style={{ minWidth: '100px' }}
+              >
+                <i className="fa-solid fa-upload"></i> Import csv file
+              </button>
+              {!batchMode ? (
+                <button type="button" className="btn-batch" onClick={() => setBatchMode(true)} title="Batch Operations" style={{ minWidth: '100px' }}>
+                  <i className="fa-solid fa-check-double"></i> Batch
+                </button>
+              ) : (
+                <button type="button" className="btn-batch-active" onClick={() => { setBatchMode(false); setSelectedTeachers(new Set()); }} title="Exit Batch Mode" style={{ minWidth: '100px' }}>
+                  <i className="fa-solid fa-times"></i> Cancel Batch
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

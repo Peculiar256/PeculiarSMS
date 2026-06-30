@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import "./Exam.css";
+import "./AdminCards.css";
 import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -401,44 +402,44 @@ function Exam() {
       {viewMode === "analytics" && (
         <>
       {/* Statistics Cards */}
-      <section className="exam-statistics">
-        <div className="exam-stat-card">
-          <div className="exam-stat-icon">
+      <section className="stats-grid" style={{ marginBottom: '24px' }}>
+        <div className="stat-card">
+          <div className="stat-icon classes">
             <i className="fas fa-file-alt"></i>
           </div>
-          <div className="exam-stat-content">
-            <p className="stat-label">Total Exams</p>
-            <h3>{statistics.totalExams}</h3>
+          <div className="stat-info">
+            <h3>Total Exams</h3>
+            <p>{statistics.totalExams}</p>
           </div>
         </div>
 
-        <div className="exam-stat-card pass-rate">
-          <div className="exam-stat-icon">
+        <div className="stat-card">
+          <div className="stat-icon student">
             <i className="fas fa-check-circle"></i>
           </div>
-          <div className="exam-stat-content">
-            <p className="stat-label">Pass Rate</p>
-            <h3>{statistics.passRate}%</h3>
+          <div className="stat-info">
+            <h3>Pass Rate</h3>
+            <p>{statistics.passRate}%</p>
           </div>
         </div>
 
-        <div className="exam-stat-card fail-rate">
-          <div className="exam-stat-icon">
+        <div className="stat-card">
+          <div className="stat-icon rooms">
             <i className="fas fa-times-circle"></i>
           </div>
-          <div className="exam-stat-content">
-            <p className="stat-label">Fail Rate</p>
-            <h3>{statistics.failRate}%</h3>
+          <div className="stat-info">
+            <h3>Fail Rate</h3>
+            <p>{statistics.failRate}%</p>
           </div>
         </div>
 
-        <div className="exam-stat-card">
-          <div className="exam-stat-icon">
+        <div className="stat-card">
+          <div className="stat-icon teacher">
             <i className="fas fa-users"></i>
           </div>
-          <div className="exam-stat-content">
-            <p className="stat-label">Total Students</p>
-            <h3>{statistics.totalStudents}</h3>
+          <div className="stat-info">
+            <h3>Total Students</h3>
+            <p>{statistics.totalStudents}</p>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import axios from "axios";
 import "./Subjects.css";
+import "./AdminCards.css";
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -359,53 +360,44 @@ function Subjects() {
         </div>
       )}
 
-      {/* Overview Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="subjects-card total-card">
-            <div className="subjects-card-icon">
-              <i className="fa-solid fa-book" aria-hidden="true"></i>
-            </div>
-            <div className="subjects-card-content">
-              <h3>Total Subjects</h3>
-              <h2>{metrics.totalSubjects}</h2>
-            </div>
+      <div className="stats-grid mb-4">
+        <div className="stat-card">
+          <div className="stat-icon classes">
+            <i className="fa-solid fa-book"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Total Subjects</h3>
+            <p>{metrics.totalSubjects}</p>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="subjects-card active-card">
-            <div className="subjects-card-icon">
-              <i className="fa-solid fa-check-circle" aria-hidden="true"></i>
-            </div>
-            <div className="subjects-card-content">
-              <h3>Active Subjects</h3>
-              <h2>{metrics.activeSubjects}</h2>
-            </div>
+        <div className="stat-card">
+          <div className="stat-icon attendance">
+            <i className="fa-solid fa-check-circle"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Active Subjects</h3>
+            <p>{metrics.activeSubjects}</p>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="subjects-card compulsory-card">
-            <div className="subjects-card-icon">
-              <i className="fa-solid fa-book-open" aria-hidden="true"></i>
-            </div>
-            <div className="subjects-card-content">
-              <h3>Compulsory</h3>
-              <h2>{metrics.compulsoryCount}</h2>
-            </div>
+        <div className="stat-card">
+          <div className="stat-icon departments">
+            <i className="fa-solid fa-book-open"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Compulsory</h3>
+            <p>{metrics.compulsoryCount}</p>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="subjects-card elective-card">
-            <div className="subjects-card-icon">
-              <i className="fa-solid fa-graduation-cap" aria-hidden="true"></i>
-            </div>
-            <div className="subjects-card-content">
-              <h3>Elective</h3>
-              <h2>{metrics.electiveCount}</h2>
-            </div>
+        <div className="stat-card">
+          <div className="stat-icon student">
+            <i className="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div className="stat-info">
+            <h3>Elective</h3>
+            <p>{metrics.electiveCount}</p>
           </div>
         </div>
       </div>

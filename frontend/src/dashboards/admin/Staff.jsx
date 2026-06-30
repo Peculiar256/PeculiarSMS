@@ -341,29 +341,45 @@ function Staff() {
 				</div>
 			</div>
 
-			<section className="users-summary-cards" aria-label="Staff summary cards">
-				<article className="users-summary-card users-summary-total">
-					<i className="fa-solid fa-users users-summary-icon" aria-hidden="true"></i>
-					<p>Total Staff</p>
-					<h3>{totalStaff}</h3>
+			<section className="stats-grid" style={{ margin: '24px' }}>
+				<article className="stat-card">
+					<div className="stat-icon teacher">
+						<i className="fa-solid fa-users"></i>
+					</div>
+					<div className="stat-info">
+						<h3>Total Staff</h3>
+						<p>{totalStaff}</p>
+					</div>
 				</article>
 
-				<article className="users-summary-card users-summary-recent">
-					<i className="fa-solid fa-user-plus users-summary-icon" aria-hidden="true"></i>
-					<p>Recent Added</p>
-					<h3>{recentAddedStaff}</h3>
+				<article className="stat-card">
+					<div className="stat-icon teacher">
+						<i className="fa-solid fa-user-plus"></i>
+					</div>
+					<div className="stat-info">
+						<h3>Recent Added</h3>
+						<p>{recentAddedStaff}</p>
+					</div>
 				</article>
 
-				<article className="users-summary-card users-summary-active">
-					<i className="fa-solid fa-user-check users-summary-icon" aria-hidden="true"></i>
-					<p>Active Staff</p>
-					<h3>{activeStaff}</h3>
+				<article className="stat-card">
+					<div className="stat-icon teacher">
+						<i className="fa-solid fa-user-check"></i>
+					</div>
+					<div className="stat-info">
+						<h3>Active Staff</h3>
+						<p>{activeStaff}</p>
+					</div>
 				</article>
 
-				<article className="users-summary-card users-summary-alerts">
-					<i className="fa-solid fa-shield-halved users-summary-icon" aria-hidden="true"></i>
-					<p>On Leave/Terminated</p>
-					<h3>{onLeaveStaff + terminatedStaff}</h3>
+				<article className="stat-card">
+					<div className="stat-icon rooms">
+						<i className="fa-solid fa-shield-halved"></i>
+					</div>
+					<div className="stat-info">
+						<h3>On Leave/Terminated</h3>
+						<p>{onLeaveStaff + terminatedStaff}</p>
+					</div>
 				</article>
 			</section>
 

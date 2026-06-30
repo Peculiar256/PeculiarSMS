@@ -103,7 +103,7 @@ function Settings() {
     }
     setLoading(true);
     try {
-      const storedEmail = localStorage.getItem('email');
+      const storedEmail = user?.email || adminProfile.email;
       if (storedEmail) {
         await axiosInstance.put(`/auth/change-email?userEmail=${encodeURIComponent(storedEmail)}`, {
           currentPassword: emailData.currentPassword,
@@ -149,7 +149,7 @@ function Settings() {
     }
     setLoading(true);
     try {
-      const storedEmail = localStorage.getItem('email');
+      const storedEmail = user?.email || adminProfile.email;
       if (storedEmail) {
         await axiosInstance.put(`/auth/change-password?userEmail=${encodeURIComponent(storedEmail)}`, {
           currentPassword: passwordData.currentPassword,

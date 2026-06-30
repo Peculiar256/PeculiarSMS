@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import axios from 'axios';
 import './Department.css';
+import './AdminCards.css';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -303,37 +304,44 @@ function Department() {
         </div>
       )}
 
-      {/* Overview Cards */}
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="department-card total-card h-100">
-            <i className="fa-solid fa-building" style={{ border: '1px solid #2563eb', borderRadius: '50%', width: '50px', height: '50px', fontSize: '15px', display: 'grid', placeItems: 'center', color: '#2563eb', marginBottom: '5px' }} aria-hidden="true"></i>
+      <div className="stats-grid mb-4">
+        <div className="stat-card">
+          <div className="stat-icon departments">
+            <i className="fa-solid fa-building"></i>
+          </div>
+          <div className="stat-info">
             <h3>Total Departments</h3>
-            <h2>{metrics.totalDepartments}</h2>
+            <p>{metrics.totalDepartments}</p>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="department-card active-card h-100">
-            <i className="fa-solid fa-check-circle" style={{ border: '1px solid #16a34a', borderRadius: '50%', width: '50px', height: '50px', fontSize: '15px', display: 'grid', placeItems: 'center', color: '#16a34a', marginBottom: '5px' }} aria-hidden="true"></i>
+        <div className="stat-card">
+          <div className="stat-icon attendance">
+            <i className="fa-solid fa-check-circle"></i>
+          </div>
+          <div className="stat-info">
             <h3>Active</h3>
-            <h2>{metrics.activeDepartments}</h2>
+            <p>{metrics.activeDepartments}</p>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="department-card inactive-card h-100">
-            <i className="fa-solid fa-circle-pause" style={{ border: '1px solid #6b7280', borderRadius: '50%', width: '50px', height: '50px', fontSize: '15px', display: 'grid', placeItems: 'center', color: '#6b7280', marginBottom: '5px' }} aria-hidden="true"></i>
+        <div className="stat-card">
+          <div className="stat-icon rooms">
+            <i className="fa-solid fa-circle-pause"></i>
+          </div>
+          <div className="stat-info">
             <h3>Inactive</h3>
-            <h2>{metrics.inactiveDepartments}</h2>
+            <p>{metrics.inactiveDepartments}</p>
           </div>
         </div>
 
-        <div className="col-12 col-sm-6 col-lg-3">
-          <div className="department-card suspended-card h-100">
-            <i className="fa-solid fa-ban" style={{ border: '1px solid #dc2626', borderRadius: '50%', width: '50px', height: '50px', fontSize: '15px', display: 'grid', placeItems: 'center', color: '#dc2626', marginBottom: '5px' }} aria-hidden="true"></i>
+        <div className="stat-card">
+          <div className="stat-icon student">
+             <i className="fa-solid fa-ban"></i>
+          </div>
+          <div className="stat-info">
             <h3>Suspended</h3>
-            <h2>{metrics.suspendedDepartments}</h2>
+            <p>{metrics.suspendedDepartments}</p>
           </div>
         </div>
       </div>
