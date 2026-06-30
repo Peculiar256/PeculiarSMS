@@ -73,7 +73,7 @@ function AdminCards (){
     }, []);
 
     return (
-        <div className="admin-container" style={{marginBottom: "-40px"}}>
+        <div className="admin-container" style={{marginBottom: "-40px",}}>
             <div className="banner-container">
                 <div className="banner-content">
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
@@ -112,8 +112,9 @@ function AdminCards (){
             )}
 
             <div className="stats-grid">
+
                 <div className="stat-card">
-                    <div className="stat-icon student">
+                    <div className="stat-icon student" >
                         <i className="fa-solid fa-users"></i>
                     </div>
                     <div className="stat-info">

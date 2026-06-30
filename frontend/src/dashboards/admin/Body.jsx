@@ -195,11 +195,10 @@ function Body (){
   ], [dashboardStats]);
 
   return(
-    <div className="container-fluid py-4">
-      <div className="row g-4">
-        
+    <div className="container-fluid py-3">
+      <div >
         {/* Left Column - Quick Actions */}
-        <div className="col-lg-6">
+        <div className="col-lg-12">
           <div className="card shadow-sm h-100 border-0">
             <div className="card-header bg-white border-bottom-0 pt-4 px-4">
               <h5 className="mb-0 fw-bold text-dark-emphasis">
@@ -297,7 +296,7 @@ function Body (){
         </div>
 
         {/* Right Column - Charts & Activity */}
-        <div className="col-lg-6">
+        <div className="col-lg-12">
           <div className="row g-4">
             {/* Charts */}
             <div className="col-md-6">
