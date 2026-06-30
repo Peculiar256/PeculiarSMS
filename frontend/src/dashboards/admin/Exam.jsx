@@ -344,8 +344,8 @@ function Exam() {
   return (
     <div className="exam-container">
       <div className="exam-header">
-        <h1>Exam Management</h1>
-        <p>Create, manage, and analyze exam results</p>
+        <h1 style={{fontWeight:"bold"}}>Exam Management</h1>
+        <p style={{color:"#6b7280", fontStyle:"italic"}}>Create, manage, and analyze exam results</p>
         
         {/* View Toggle Buttons - Table first, Analytics second */}
         <div style={{marginTop: "16px", display: "flex", gap: "12px"}}>

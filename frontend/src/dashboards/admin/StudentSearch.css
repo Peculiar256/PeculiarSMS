@@ -265,7 +265,7 @@
 }
 
 .add-student-modal {
-  max-width: 900px;
+  max-width: 800px;
 }
 
 .modal-header {
@@ -273,6 +273,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  background-color: #1E40AF;
 }
 
 .modal-header h3 {

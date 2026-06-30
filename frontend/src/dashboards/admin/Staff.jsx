@@ -449,10 +449,11 @@ function Staff() {
 				</div>
 			)}
 
-			<div className="users-header">
-			<h2 style={{fontWeight:"bold"}}>Staff Management</h2>
-			{/* <p style={{color:"#6b7280"}}>Manage and organize your institution's staff records. Use the tools below to search, filter, edit staff profiles, or register new staff into the system.</p> */}
-		</div>
+			<div style={{margin:"20px"}}>
+				<h2 style={{fontWeight:"bold"}}>Staff Management</h2>
+				<p style={{color:"#6b7280", fontStyle:"italic"}}>Manage and organize your institution's staff records.</p>
+				{/* <hr style={{color:"#6b7280"}}/> */}
+			</div>
 
 			<section className="stats-grid" style={{ margin: '24px' }}>
 				<article className="stat-card">
@@ -685,7 +686,7 @@ function Staff() {
 
 							<div className="users-form-actions">
 								<button type="button" className="users-cancel-btn" onClick={closeAddModal}>Cancel</button>
-								<button type="submit" className="users-save-btn">Save Staff</button>
+								<button type="submit" className="btn btn-success">Save Staff</button>
 							</div>
 						</form>
 					</div>
@@ -741,7 +742,7 @@ function Staff() {
 						</p>
 						<div className="users-form-actions" style={{ marginTop: '15px' }}>
 							<button type="button" className="users-cancel-btn" onClick={() => setIsStatusModalOpen(false)}>Cancel</button>
-							<button type="button" className="users-save-btn" onClick={handleToggleStatus}>{selectedStaffForStatus.status === "ACTIVE" ? "Deactivate" : "Activate"}</button>
+							<button type="button" className="btn btn-success" onClick={handleToggleStatus}>{selectedStaffForStatus.status === "ACTIVE" ? "Deactivate" : "Activate"}</button>
 						</div>
 					</div>
 				</div>
@@ -843,7 +844,7 @@ function Staff() {
 
 							<div className="users-form-actions">
 								<button type="button" className="users-cancel-btn" onClick={closeEditModal}>Cancel</button>
-								<button type="submit" className="users-save-btn">Save Changes</button>
+								<button type="submit" className="btn btn-success">Save Changes</button>
 							</div>
 						</form>
 					</div>

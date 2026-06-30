@@ -26,6 +26,7 @@ import lombok.Data;
 /**
  * Exam entity for Ugandan secondary schools
  * Supports internal exams (BOT, MOT, EOT) and national exams (UCE, UACE)
+ * 
  */
 @Data
 @Entity

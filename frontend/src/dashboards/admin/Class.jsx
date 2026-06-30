@@ -549,7 +549,9 @@ function Class() {
           <div className="class-modal">
             <div className="class-modal-header">
               <h3>{selectedClass.name} - Class Details</h3>
-              <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}></button>
+              <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
             </div>
             <div className="class-modal-body">
               <div className="row mb-4">
@@ -621,7 +623,9 @@ function Class() {
           <div className="class-modal">
             <div className="class-modal-header">
               <h3>Add New Class</h3>
-              <button className="btn-close" onClick={() => setIsAddModalOpen(false)}></button>
+              <button className="btn-close" onClick={() => setIsAddModalOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
             </div>
             <div className="class-modal-body">
               <form className="row g-3">
@@ -778,7 +782,9 @@ function Class() {
           <div className="class-modal">
             <div className="class-modal-header">
               <h3>Edit Class</h3>
-              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}></button>
+              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
             </div>
             <div className="class-modal-body">
               <form className="row g-3">

@@ -437,7 +437,8 @@ const StudentSearch = () => {
       {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
       {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
       <h2 style={{fontWeight:"bold"}}>Student Management</h2>
-      {/* <p style={{color:"#6b7280"}}>Manage and organize your institution's student records. Use the tools below to search, filter, edit student profiles, or register new admissions into the system.</p> */}
+      <p style={{color:"#6b7280", fontStyle:"italic"}}>Manage and organize your institution's student records.</p>
+      {/* <hr style={{color:"#6b7280"}}/> */}
 
       <section className="stats-grid" style={{ marginBottom: '24px' }}>
         <article className="stat-card">

@@ -839,8 +839,12 @@ const handleSaveSubjectAssignment = async (e) => {
       {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
       {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
       
-      <h2 style={{fontWeight:"bold"}}>Teacher Management</h2>
-      {/* <p style={{color:"#6b7280"}}>Manage and organize your institution's teacher records. Use the tools below to search, filter, edit teacher profiles, or register new teachers into the system.</p> */}
+      <div style={{margin:"5px"}}>
+        <h2 style={{fontWeight:"bold"}}>Teacher Management</h2>
+        <p style={{color:"#6b7280", fontStyle:"italic"}}>Manage and organize your institution's teacher records.</p>
+        {/* <hr style={{color:"#6b7280"}}/> */}
+      </div>
+
       <section className="stats-grid" style={{ marginBottom: '24px' }}>
         <article className="stat-card">
           <div className="stat-icon teacher">
@@ -1162,7 +1166,7 @@ const handleSaveSubjectAssignment = async (e) => {
 
               <div className="teacher-form-actions">
                 <button type="button" className="teacher-cancel-btn" onClick={closeAddModal} disabled={loading}>Cancel</button>
-                <button type="submit" className="teacher-save-btn" disabled={loading}>{loading ? 'Saving...' : 'Save Teacher'}</button>
+                <button type="submit" className="btn btn-success" disabled={loading}>{loading ? 'Saving...' : 'Save Teacher'}</button>
               </div>
             </form>
           </div>

@@ -281,8 +281,8 @@ function TimetableByClass() {
     <div className="timetable-page">
       <div className="timetable-header">
         <div>
-          <h1>Timetable Management</h1>
-          <p>View and manage class schedules with API integration.</p>
+          <h1 style={{fontWeight:"bold"}}>Timetable Management</h1>
+          <p style={{color:"#6b7280", fontStyle:"italic"}}>View and manage class schedules with API integration.</p>
         </div>
         <div className="d-flex gap-2">
           <select
