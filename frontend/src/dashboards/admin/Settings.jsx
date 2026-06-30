@@ -299,425 +299,267 @@ function Settings() {
   };
 
   const generateStudentReport = async (studentId) => {
-    if (!studentId) return;
-    setLoading(true);
-    try {
-      const resultsResponse = await axiosInstance.get(`/students/${studentId}/results`);
-      const resultData = resultsResponse.data;
+  if (!studentId) return;
+  setLoading(true);
+  try {
+    const resultsResponse = await axiosInstance.get(`/students/${studentId}/results`);
+    const resultData = resultsResponse.data;
 
-      const jsPDF = (await import('jspdf')).jsPDF;
-      const autoTable = (await import('jspdf-autotable')).default;
+    const jsPDF = (await import('jspdf')).jsPDF;
+    const autoTable = (await import('jspdf-autotable')).default;
 
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
 
-      const grades = resultData?.grades || resultData?.results || [];
-      const formattedGrades = grades.map(g => ({
-        subjectCode: g.subjectCode,
-        course: g.subject || g.subjectName || g.subjectCode || "Unknown Subject",
-        marks: g.marksObtained || g.score || 0,
-        maxMarks: g.maxMarks || 100,
-        percentage: g.percentage || ((g.marksObtained || 0) / (g.maxMarks || 100) * 100).toFixed(1),
-        grade: g.grade || 'N/A',
-        gradePoints: g.gradePoints || 0,
-        remarks: g.remarks || '-',
-        classPosition: g.classPosition || '-',
-        stream: g.stream || 'N/A',
-        className: g.className || selectedStudent?.className || selectedStudent?.currentClass || ''
-      }));
+    const PAGE_HEIGHT = 297;
+    const PAGE_WIDTH = 210;
+    const pageMargin = 12;
+    const contentWidth = PAGE_WIDTH - (pageMargin * 2);
+    const primaryColor = [0, 32, 69];
+    const surfaceColor = [247, 249, 251];
+    const borderColor = [200, 204, 207];
 
-      const totalMarks = formattedGrades.reduce((sum, g) => sum + g.marks, 0);
-      const avgScore = formattedGrades.length > 0 ? (totalMarks / formattedGrades.length).toFixed(1) : 0;
-      const bestSubjects = [...formattedGrades].sort((a, b) => b.marks - a.marks).slice(0, 3);
+    let cursorY = 10;
 
-      let overallGrade = "Average";
-      if (avgScore >= 80) overallGrade = "Excellent";
-      else if (avgScore >= 70) overallGrade = "Very Good";
-      else if (avgScore >= 60) overallGrade = "Good";
-      else if (avgScore >= 50) overallGrade = "Satisfactory";
+    // ── 1. HEADER ──────────────────────────────────────────────
+    const headerHeight = 35;
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, PAGE_WIDTH, headerHeight, 'F');
 
-      const schoolName = schoolProfile.schoolName || 'PECULIAR SCHOOL';
-      const schoolAddress = [schoolProfile.address, schoolProfile.city, schoolProfile.district, schoolProfile.country].filter(Boolean).join(', ');
-      const schoolContact = ['Tel: ' + schoolProfile.phoneNumber, 'Email: ' + schoolProfile.email].filter(Boolean).join(' | ');
-      const studentName = selectedStudent?.firstName + ' ' + selectedStudent?.lastName;
-      const studentIdNum = selectedStudent?.studentId || selectedStudent?.linn || selectedStudent?.id || 'N/A';
-      const studentClass = formattedGrades[0]?.className || selectedStudent?.className || selectedStudent?.currentClass || 'N/A';
-      const studentStream = formattedGrades[0]?.stream || 'N/A';
-
-      const primaryColor = [0, 32, 69];
-      const surfaceColor = [247, 249, 251];
-      const labelColor = [67, 71, 78];
-      const borderColor = [200, 204, 207];
-      const pageMargin = 12;
-      const pageWidth = 210;
-      const contentWidth = pageWidth - (pageMargin * 2);
-
-      let cursorY = 10;
-
-      // ── HEADER ──────────────────────────────────────────────
-      const headerHeight = 38;
-      doc.setFillColor(...primaryColor);
-      doc.rect(0, 0, pageWidth, headerHeight, 'F');
-
-      if (schoolProfile.logo) {
-        try {
-          const logoImg = new Image();
-          logoImg.src = schoolProfile.logo;
-          await new Promise(resolve => { logoImg.onload = resolve; });
-          doc.addImage(schoolProfile.logo, 'PNG', 15, 6, 26, 26);
-        } catch {
-          doc.setFillColor(255, 255, 255);
-          doc.rect(15, 6, 26, 26, 'F');
-        }
+    if (schoolProfile.logo) {
+      try {
+        doc.addImage(schoolProfile.logo, 'PNG', 15, 5, 25, 25);
+      } catch (e) {
+        console.error("Logo injection skipped", e);
       }
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ACADEMIC EXCELLENCE CENTER', pageWidth / 2, 10, { align: 'center' });
-      doc.setFontSize(16);
-      doc.text(schoolName.toUpperCase(), pageWidth / 2, 18, { align: 'center' });
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      if (schoolAddress) doc.text(schoolAddress, pageWidth / 2, 24, { align: 'center' });
-      if (schoolContact) doc.text(schoolContact, pageWidth / 2, 29, { align: 'center' });
-
-      cursorY = headerHeight + 4;
-
-      // ── STUDENT INFO BLOCK ───────────────────────────────────
-      const infoBlockHeight = 26;
-      doc.setFillColor(...surfaceColor);
-      doc.rect(pageMargin, cursorY, contentWidth, infoBlockHeight, 'F');
-      doc.setDrawColor(...borderColor);
-      doc.setLineWidth(0.3);
-      doc.rect(pageMargin, cursorY, contentWidth, infoBlockHeight, 'S');
-
-      const col1X = pageMargin + 4;
-      const col2X = pageMargin + (contentWidth / 2) + 2;
-      const row1Y = cursorY + 5;
-      const row2Y = cursorY + 13;
-      const row3Y = cursorY + 21;
-
-      const drawInfoLabel = (text, x, y) => {
-        doc.setTextColor(...labelColor);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.text(text.toUpperCase(), x, y);
-      };
-      const drawInfoValue = (text, x, y, maxWidth = 80) => {
-        doc.setTextColor(...primaryColor);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(text || 'N/A', x, y + 5, { maxWidth });
-      };
-
-      drawInfoLabel('Student Name', col1X, row1Y);
-      drawInfoValue(studentName, col1X, row1Y, 85);
-      drawInfoLabel('Student ID', col2X, row1Y);
-      drawInfoValue(studentIdNum, col2X, row1Y, 80);
-
-      drawInfoLabel('Class / Form', col1X, row2Y);
-      drawInfoValue(studentClass, col1X, row2Y, 85);
-      drawInfoLabel('Stream', col2X, row2Y);
-      drawInfoValue(studentStream, col2X, row2Y, 80);
-
-      drawInfoLabel('Academic Year', col1X, row3Y);
-      drawInfoValue(reportOptions.academicYear, col1X, row3Y, 40);
-      drawInfoLabel('Term / Semester', col1X + 50, row3Y);
-      drawInfoValue(reportOptions.term, col1X + 50, row3Y, 25);
-      drawInfoLabel('Report Date', col2X, row3Y);
-      drawInfoValue(new Date().toLocaleDateString('en-UG'), col2X, row3Y, 80);
-
-      cursorY += infoBlockHeight + 5;
-
-      // ── ACADEMIC RECORD TABLE ────────────────────────────────
-      const sectionHeaderHeight = 7;
-      doc.setFillColor(...primaryColor);
-      doc.rect(pageMargin, cursorY, contentWidth, sectionHeaderHeight, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ACADEMIC RECORD', pageMargin + 4, cursorY + 5);
-      cursorY += sectionHeaderHeight;
-
-      autoTable(doc, {
-        startY: cursorY,
-        head: [['SUBJECT', 'MARKS / 100', 'PERCENTAGE', 'GRADE', 'REMARKS']],
-        body: formattedGrades.map(g => [
-          g.course,
-          `${g.marks} / ${g.maxMarks}`,
-          parseFloat(g.percentage).toFixed(1) + '%',
-          g.grade,
-          g.remarks
-        ]),
-        theme: 'grid',
-        headStyles: {
-          fillColor: [...primaryColor],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 9,
-          lineColor: [...borderColor],
-          lineWidth: 0.3
-        },
-        bodyStyles: {
-          fontSize: 9,
-          textColor: [25, 28, 30],
-          lineColor: [...borderColor],
-          lineWidth: 0.3
-        },
-        alternateRowStyles: {
-          fillColor: [...surfaceColor]
-        },
-        styles: {
-          cellPadding: 3,
-          lineWidth: 0.3,
-          lineColor: [...borderColor]
-        },
-        columnStyles: {
-          0: { cellWidth: 70, halign: 'left' },
-          1: { cellWidth: 35, halign: 'center' },
-          2: { cellWidth: 35, halign: 'center' },
-          3: { cellWidth: 25, halign: 'center' },
-          4: { cellWidth: 25, halign: 'center' }
-        }
-      });
-
-      cursorY = doc.lastAutoTable.finalY + 6;
-
-      // ── TWO-COLUMN LAYOUT: GRADING SCALE + PERFORMANCE SUMMARY ──
-      const leftColX = pageMargin;
-      const rightColX = pageMargin + (contentWidth / 2) + 3;
-      const twoColWidth = (contentWidth / 2) - 3;
-
-      // Calculate available vertical space
-      const pageBottom = 270;
-      const availableHeight = pageBottom - cursorY;
-
-      // LEFT COLUMN: Grading Scale
-      doc.setFillColor(...primaryColor);
-      doc.rect(leftColX, cursorY, twoColWidth, sectionHeaderHeight, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('GRADING SCALE', leftColX + 4, cursorY + 5);
-      const gradingTop = cursorY + sectionHeaderHeight;
-
-      autoTable(doc, {
-        startY: gradingTop,
-        head: [['Grade', 'Range', 'Description']],
-        body: [
-          ['D1', '80 - 100', 'Distinction One'],
-          ['D2', '75 - 79', 'Distinction Two'],
-          ['C3', '70 - 74', 'Credit Three'],
-          ['C4', '65 - 69', 'Credit Four'],
-          ['C5', '60 - 64', 'Credit Five'],
-          ['C6', '55 - 59', 'Credit Six'],
-          ['P7', '50 - 54', 'Pass Seven'],
-          ['P8', '45 - 49', 'Pass Eight'],
-          ['F9', '0 - 44', 'Fail']
-        ],
-        theme: 'grid',
-        headStyles: {
-          fillColor: [...primaryColor],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 8,
-          lineColor: [...borderColor],
-          lineWidth: 0.3
-        },
-        bodyStyles: {
-          fontSize: 8,
-          textColor: [25, 28, 30],
-          lineColor: [...borderColor],
-          lineWidth: 0.3
-        },
-        alternateRowStyles: {
-          fillColor: [...surfaceColor]
-        },
-        styles: {
-          cellPadding: 2,
-          lineWidth: 0.3,
-          lineColor: [...borderColor]
-        },
-        columnStyles: {
-          0: { cellWidth: 18, halign: 'center' },
-          1: { cellWidth: 28, halign: 'center' },
-          2: { cellWidth: twoColWidth - 46, halign: 'left' }
-        }
-      });
-
-      const gradingBottom = doc.lastAutoTable.finalY;
-
-      // RIGHT COLUMN: Performance Summary
-      const summaryHeight = 28;
-      const summaryY = cursorY;
-      doc.setFillColor(...primaryColor);
-      doc.rect(rightColX, summaryY, twoColWidth, sectionHeaderHeight, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PERFORMANCE SUMMARY', rightColX + 4, summaryY + 5);
-
-      doc.setFillColor(...surfaceColor);
-      doc.rect(rightColX, summaryY + sectionHeaderHeight, twoColWidth, summaryHeight - sectionHeaderHeight, 'F');
-      doc.setDrawColor(...borderColor);
-      doc.setLineWidth(0.3);
-      doc.rect(rightColX, summaryY + sectionHeaderHeight, twoColWidth, summaryHeight - sectionHeaderHeight, 'S');
-
-      const summaryLabelX = rightColX + 4;
-      const summaryValueX = rightColX + twoColWidth - 4;
-      const summaryRow1 = summaryY + sectionHeaderHeight + 6;
-      const summaryRow2 = summaryY + sectionHeaderHeight + 14;
-      const summaryRow3 = summaryY + sectionHeaderHeight + 22;
-
-      doc.setTextColor(...labelColor);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Average Score', summaryLabelX, summaryRow1);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...primaryColor);
-      doc.text(avgScore + ' / 100', summaryValueX, summaryRow1, { align: 'right' });
-
-      doc.setTextColor(...labelColor);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Overall Grade', summaryLabelX, summaryRow2);
-      doc.setTextColor(...primaryColor);
-      doc.text(overallGrade, summaryValueX, summaryRow2, { align: 'right' });
-
-      doc.setTextColor(...labelColor);
-      doc.text('Total Subjects', summaryLabelX, summaryRow3);
-      doc.setTextColor(...primaryColor);
-      doc.text(String(formattedGrades.length), summaryValueX, summaryRow3, { align: 'right' });
-
-      // Move cursor below both columns
-      cursorY = Math.max(gradingBottom, summaryY + summaryHeight) + 6;
-
-      // ── ATTENDANCE RECORD ────────────────────────────────────
-      const attendanceHeight = 22;
-      doc.setFillColor(...primaryColor);
-      doc.rect(pageMargin, cursorY, contentWidth, sectionHeaderHeight, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('ATTENDANCE RECORD', pageMargin + 4, cursorY + 5);
-      cursorY += sectionHeaderHeight;
-
-      doc.setFillColor(...surfaceColor);
-      doc.rect(pageMargin, cursorY, contentWidth, attendanceHeight, 'F');
-      doc.setDrawColor(...borderColor);
-      doc.setLineWidth(0.3);
-      doc.rect(pageMargin, cursorY, contentWidth, attendanceHeight, 'S');
-
-      doc.setTextColor(...labelColor);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Days Present:', pageMargin + 4, cursorY + 8);
-      doc.setTextColor(...primaryColor);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('68 / 70', pageMargin + 4, cursorY + 17);
-
-      const barX = pageMargin + 35;
-      const barWidth = contentWidth - 40;
-      const barHeight = 8;
-      const barY = cursorY + 6;
-      doc.setFillColor(220, 223, 228);
-      doc.rect(barX, barY, barWidth, barHeight, 'F');
-      doc.setFillColor(0, 108, 74);
-      doc.rect(barX, barY, barWidth * 0.97, barHeight, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('97%', barX + barWidth / 2, barY + 5.5, { align: 'center' });
-
-      cursorY += attendanceHeight + 5;
-
-      // ── CLASS TEACHER'S REMARKS ──────────────────────────────
-      const remarksHeight = 28;
-      doc.setFillColor(...primaryColor);
-      doc.rect(pageMargin, cursorY, contentWidth, sectionHeaderHeight, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text("CLASS TEACHER'S REMARKS", pageMargin + 4, cursorY + 5);
-      cursorY += sectionHeaderHeight;
-
-      doc.setFillColor(...surfaceColor);
-      doc.rect(pageMargin, cursorY, contentWidth, remarksHeight, 'F');
-      doc.setDrawColor(...borderColor);
-      doc.setLineWidth(0.3);
-      doc.rect(pageMargin, cursorY, contentWidth, remarksHeight, 'S');
-
-      doc.setTextColor(...labelColor);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      const remarksText = selectedStudent?.stream === 'Sciences'
-        ? 'Sadat is a disciplined student who shows exceptional interest in Mathematics. Consistent effort will yield even better results.'
-        : 'A dedicated learner with strong commitment to academic excellence. Keep striving for improvement in all subjects.';
-      doc.text(remarksText, pageMargin + 4, cursorY + 7, { maxWidth: contentWidth - 8, lineHeightFactor: 1.5 });
-      doc.text('Class Teacher', pageMargin + 4, cursorY + remarksHeight - 5);
-
-      cursorY += remarksHeight + 5;
-
-      // ── SIGNATURE LINES ──────────────────────────────────────
-      const sigSectionHeight = 22;
-      const sigColWidth = contentWidth / 3;
-
-      doc.setTextColor(...labelColor);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('CLASS TEACHER', pageMargin + sigColWidth / 2, cursorY + 4, { align: 'center' });
-      doc.text('PARENT / GUARDIAN', pageMargin + sigColWidth + sigColWidth / 2, cursorY + 4, { align: 'center' });
-      doc.text("PRINCIPAL'S SIGNATURE", pageMargin + (sigColWidth * 2) + sigColWidth / 2, cursorY + 4, { align: 'center' });
-
-      doc.setDrawColor(180, 184, 188);
-      doc.setLineWidth(0.3);
-      doc.line(pageMargin + 5, cursorY + 7, pageMargin + sigColWidth - 5, cursorY + 7);
-      doc.line(pageMargin + sigColWidth + 5, cursorY + 7, pageMargin + (sigColWidth * 2) - 5, cursorY + 7);
-      doc.line(pageMargin + (sigColWidth * 2) + 5, cursorY + 7, pageMargin + contentWidth - 5, cursorY + 7);
-
-      cursorY += sigSectionHeight + 5;
-
-      // ── FOOTER ───────────────────────────────────────────────
-      doc.setDrawColor(...borderColor);
-      doc.setLineWidth(0.3);
-      doc.line(pageMargin, cursorY, pageMargin + contentWidth, cursorY);
-
-      doc.setTextColor(...labelColor);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text(schoolName.toUpperCase(), pageWidth / 2, cursorY + 8, { align: 'center' });
-
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.text('© ' + new Date().getFullYear() + ' ' + schoolName + '. All rights reserved.', pageWidth / 2, cursorY + 14, { align: 'center' });
-      doc.text('This is a confidential document. For official use only. Any alteration to this report card renders it invalid.', pageWidth / 2, cursorY + 19, { align: 'center' });
-
-      doc.setDrawColor(...primaryColor);
-      doc.setLineWidth(0.5);
-      doc.line(pageMargin, cursorY + 22, pageMargin + contentWidth, cursorY + 22);
-
-      doc.setTextColor(...labelColor);
-      doc.setFontSize(7);
-      doc.text('CONTACT US', pageMargin + 30, cursorY + 27, { align: 'center' });
-      doc.text('PRIVACY POLICY', pageWidth / 2, cursorY + 27, { align: 'center' });
-      doc.text('VERIFICATION PORTAL', pageMargin + contentWidth - 30, cursorY + 27, { align: 'center' });
-
-      doc.setDrawColor(180, 184, 188);
-      doc.setLineWidth(0.3);
-      doc.line(pageMargin, cursorY + 29, pageMargin + contentWidth, cursorY + 29);
-
-      doc.save(`report-card-${selectedStudent?.studentId || selectedStudent?.id || 'unknown'}.pdf`);
-      setMessage({ type: "success", text: "Report card generated and downloaded" });
-    } catch {
-      setMessage({ type: "error", text: "Failed to generate report card. Please check student data." });
-    } finally {
-      setLoading(false);
     }
-  };
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ACADEMIC EXCELLENCE CENTER', PAGE_WIDTH / 2, 9, { align: 'center' });
+    doc.setFontSize(15);
+    doc.text((schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase(), PAGE_WIDTH / 2, 16, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    
+    const schoolAddress = [schoolProfile.address, schoolProfile.city, schoolProfile.district, schoolProfile.country].filter(Boolean).join(', ');
+    const schoolContact = ['Tel: ' + schoolProfile.phoneNumber, 'Email: ' + schoolProfile.email].filter(Boolean).join(' | ');
+    if (schoolAddress) doc.text(schoolAddress, PAGE_WIDTH / 2, 22, { align: 'center' });
+    if (schoolContact) doc.text(schoolContact, PAGE_WIDTH / 2, 27, { align: 'center' });
+
+    cursorY = headerHeight + 5;
+
+    // ── 2. STUDENT INFO BLOCK (Fixed Overlaps using Clean AutoTable) ──
+    const studentName = `${selectedStudent?.firstName || ''} ${selectedStudent?.lastName || ''}`.trim();
+    
+    autoTable(doc, {
+      startY: cursorY,
+      margin: { horizontal: pageMargin },
+      body: [
+        [
+          { content: `STUDENT NAME:\n${studentName || 'N/A'}`, styles: { fontStyle: 'bold' } },
+          { content: `STUDENT ID:\n${selectedStudent?.studentId || 'N/A'}`, styles: { fontStyle: 'bold' } }
+        ],
+        [
+          `CLASS / FORM:\n${selectedStudent?.className || selectedStudent?.currentClass || 'N/A'}`,
+          `STREAM:\n${selectedStudent?.stream || 'N/A'}`
+        ],
+        [
+          `ACADEMIC YEAR:\n${reportOptions.academicYear}`,
+          `TERM / SEMESTER:\n${reportOptions.term}`
+        ]
+      ],
+      theme: 'plain',
+      styles: {
+        fillColor: surfaceColor,
+        textColor: primaryColor,
+        fontSize: 9,
+        cellPadding: 3,
+        lineColor: borderColor,
+        lineWidth: 0.2
+      },
+      columnStyles: {
+        0: { cellWidth: contentWidth / 2 },
+        1: { cellWidth: contentWidth / 2 }
+      }
+    });
+
+    cursorY = doc.lastAutoTable.finalY + 5;
+
+    // ── 3. ACADEMIC RECORD TABLE ────────────────────────────────
+    doc.setFillColor(...primaryColor);
+    doc.rect(pageMargin, cursorY, contentWidth, 7, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ACADEMIC RECORD', pageMargin + 4, cursorY + 5);
+    cursorY += 7;
+
+    const grades = resultData?.grades || resultData?.results || [];
+    const formattedGrades = grades.map(g => [
+      g.subject || g.subjectName || g.subjectCode || "Unknown",
+      `${g.marksObtained || g.score || 0} / ${g.maxMarks || 100}`,
+      `${g.percentage || 0}%`,
+      g.grade || 'N/A',
+      g.remarks || '-'
+    ]);
+
+    autoTable(doc, {
+      startY: cursorY,
+      margin: { horizontal: pageMargin },
+      head: [['SUBJECT', 'MARKS / 100', 'PERCENTAGE', 'GRADE', 'REMARKS']],
+      body: formattedGrades.length > 0 ? formattedGrades : [['No structural marks found', '-', '-', '-', '-']],
+      theme: 'grid',
+      headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 9, textColor: [25, 28, 30] },
+      alternateRowStyles: { fillColor: surfaceColor },
+      styles: { cellPadding: 3, lineWidth: 0.2, lineColor: borderColor }
+    });
+
+    cursorY = doc.lastAutoTable.finalY + 5;
+
+    // ── 4. TWO-COLUMN LAYOUT (GRADING SCALE & PERFORMANCE) ──
+    const colWidth = (contentWidth / 2) - 2;
+    const rightColX = pageMargin + colWidth + 4;
+
+    // Left Column Side: Grading Scale Table
+    autoTable(doc, {
+      startY: cursorY,
+      margin: { left: pageMargin, right: PAGE_WIDTH - rightColX + 2 },
+      head: [['Grade', 'Range', 'Description']],
+      body: [
+        ['D1', '80 - 100', 'Distinction One'],
+        ['D2', '75 - 79', 'Distinction Two'],
+        ['C3', '70 - 74', 'Credit Three'],
+        ['C4', '65 - 69', 'Credit Four'],
+        ['C5', '60 - 64', 'Credit Five'],
+        ['C6', '55 - 59', 'Credit Six'],
+        ['P7', '50 - 54', 'Pass Seven'],
+        ['P8', '45 - 49', 'Pass Eight'],
+        ['F9', '0 - 44', 'Fail']
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: primaryColor, fontSize: 8 },
+      bodyStyles: { fontSize: 7.5, cellPadding: 1.5 }
+    });
+    const leftTableBottom = doc.lastAutoTable.finalY;
+
+    // Right Column Side: Performance Summary Table (No manual boxes = No clipping!)
+    const totalMarks = grades.reduce((sum, g) => sum + (g.marksObtained || g.score || 0), 0);
+    const avgScore = grades.length > 0 ? (totalMarks / grades.length).toFixed(1) : '0.0';
+
+    autoTable(doc, {
+      startY: cursorY,
+      margin: { left: rightColX, right: pageMargin },
+      head: [[{ content: 'PERFORMANCE SUMMARY', colSpan: 2 }]],
+      body: [
+        ['Average Score', `${avgScore} / 100`],
+        ['Overall Grade', avgScore >= 80 ? 'Excellent' : avgScore >= 60 ? 'Good' : 'Satisfactory'],
+        ['Total Subjects', String(grades.length)]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: primaryColor, fontSize: 8 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 3.5 },
+      columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
+    });
+    const rightTableBottom = doc.lastAutoTable.finalY;
+
+    cursorY = Math.max(leftTableBottom, rightTableBottom) + 5;
+
+    // ── 5. ATTENDANCE RECORD ────────────────────────────────────
+    doc.setFillColor(...primaryColor);
+    doc.rect(pageMargin, cursorY, contentWidth, 6, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8.5);
+    doc.text('ATTENDANCE RECORD', pageMargin + 4, cursorY + 4.5);
+    cursorY += 6;
+
+    autoTable(doc, {
+      startY: cursorY,
+      margin: { horizontal: pageMargin },
+      body: [[
+        { content: 'Days Present:\n\n68 / 70', styles: { fontSize: 11, fontStyle: 'bold', valign: 'middle' } },
+        { content: 'Attendance Rate: 97%\n(Excellent consistency and classroom involvement)', styles: { valign: 'middle' } }
+      ]],
+      theme: 'grid',
+      styles: { fillColor: surfaceColor, fontSize: 9, cellPadding: 4 }
+    });
+
+    cursorY = doc.lastAutoTable.finalY + 5;
+
+    // ── 6. CLASS TEACHER'S REMARKS ──────────────────────────────
+    doc.setFillColor(...primaryColor);
+    doc.rect(pageMargin, cursorY, contentWidth, 6, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.text("CLASS TEACHER'S REMARKS", pageMargin + 4, cursorY + 4.5);
+    cursorY += 6;
+
+    const remarksText = selectedStudent?.stream === 'Sciences'
+      ? 'Sadat is a disciplined student who shows exceptional interest in Sciences. Consistent effort will yield even better results.'
+      : 'A dedicated learner with strong commitment to academic excellence. Keep striving for improvement in all subjects.';
+
+    autoTable(doc, {
+      startY: cursorY,
+      margin: { horizontal: pageMargin },
+      body: [[remarksText]],
+      theme: 'grid',
+      styles: { fillColor: surfaceColor, fontSize: 9, cellPadding: 4 }
+    });
+
+    cursorY = doc.lastAutoTable.finalY + 12;
+
+    // ── 7. SIGNATURE LINES ──────────────────────────────────────
+    const sigColWidth = contentWidth / 3;
+    doc.setFontSize(8);
+    doc.setTextColor(67, 71, 78);
+    doc.setDrawColor(180, 184, 188);
+    doc.setLineWidth(0.3);
+
+    // Line 1
+    doc.line(pageMargin, cursorY, pageMargin + sigColWidth - 5, cursorY);
+    doc.text('CLASS TEACHER', pageMargin + (sigColWidth - 5) / 2, cursorY + 4, { align: 'center' });
+
+    // Line 2
+    doc.line(pageMargin + sigColWidth + 2, cursorY, pageMargin + (sigColWidth * 2) - 2, cursorY);
+    doc.text('PARENT / GUARDIAN', pageMargin + sigColWidth + (sigColWidth / 2), cursorY + 4, { align: 'center' });
+
+    // Line 3
+    doc.line(pageMargin + (sigColWidth * 2) + 5, cursorY, pageMargin + contentWidth, cursorY);
+    doc.text("PRINCIPAL'S SIGNATURE", pageMargin + (sigColWidth * 2) + 5 + (sigColWidth - 5) / 2, cursorY + 4, { align: 'center' });
+
+    // ── 8. ABSOLUTE FIXED FOOTER (Prevents Page Overflow Cut-offs) ──
+    const footerStartY = PAGE_HEIGHT - 26; 
+
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.2);
+    doc.line(pageMargin, footerStartY, pageMargin + contentWidth, footerStartY);
+
+    doc.setTextColor(67, 71, 78);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(schoolProfile.schoolName?.toUpperCase() || 'SCHOOL REPORT', PAGE_WIDTH / 2, footerStartY + 5, { align: 'center' });
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`© ${new Date().getFullYear()} Generated via Portal System. All rights reserved.`, PAGE_WIDTH / 2, footerStartY + 10, { align: 'center' });
+    doc.text('This is a confidential academic transcript. Any unapproved modifications render this document invalid.', PAGE_WIDTH / 2, footerStartY + 14, { align: 'center' });
+
+    doc.setFillColor(...primaryColor);
+    doc.rect(pageMargin, footerStartY + 17, contentWidth, 0.5, 'F');
+
+    doc.save(`report-card-${selectedStudent?.studentId || 'student'}.pdf`);
+    setMessage({ type: "success", text: "Report card generated with fixed layout!" });
+  } catch (err) {
+    console.error(err);
+    setMessage({ type: "error", text: "Failed to generate clear document view." });
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   const generateIdCard = async (type, userId) => {
