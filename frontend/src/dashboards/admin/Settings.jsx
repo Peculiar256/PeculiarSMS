@@ -499,7 +499,7 @@ function Settings() {
     cursorY += 6;
 
     const remarksText = selectedStudent?.stream === 'Sciences'
-      ? 'Sadat is a disciplined student who shows exceptional interest in Sciences. Consistent effort will yield even better results.'
+      ? 'Student is a disciplined student who shows exceptional interest in Sciences. Consistent effort will yield even better results.'
       : 'A dedicated learner with strong commitment to academic excellence. Keep striving for improvement in all subjects.';
 
     autoTable(doc, {
@@ -562,104 +562,397 @@ function Settings() {
 };
 
 
-  const generateIdCard = async (type, userId) => {
-    if (!userId) {
-      setMessage({ type: "error", text: "Please select a user first" });
-      return;
+  const loadImage = (src) => {
+  return new Promise((resolve, reject) => {
+    if (!src) return reject(new Error('No image src'));
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Image failed to load'));
+    img.src = src;
+  });
+};
+
+const truncateText = (text, maxChars) => {
+  if (!text) return '';
+  return text.length > maxChars ? text.substring(0, maxChars - 1) + '…' : text;
+};
+
+const generateIdCard = async (type, userId) => {
+  if (!userId) {
+    setMessage({ type: "error", text: "Please select a user first" });
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const userData = type === 'student'
+      ? (await axiosInstance.get(`/students/${userId}`)).data
+      : (await axiosInstance.get(`/teachers/${userId}`)).data;
+
+    const jsPDF = (await import('jspdf')).jsPDF;
+
+    // ---- Standard CR80 card size ----
+    const cardW = 85.6;
+    const cardH = 54;
+    const margin = 4;
+    const contentW = cardW - (margin * 2);
+
+    const primaryColor = [0, 32, 69];
+    const secondaryColor = [0, 108, 74];
+    const textColor = [25, 28, 30];
+    const lightGray = [220, 220, 220];
+    const borderGray = [196, 198, 207];
+
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const cardX = (pageW - cardW) / 2;
+    const cardY = (pageH - cardH) / 2;
+
+    const idNumber = type === 'student'
+      ? (userData.studentId || userData.linn || userData.id)
+      : (userData.teacherId || userData.id);
+    const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Unknown';
+    const photoUrl = userData.avatar || userData.photoUrl || userData.profilePicture;
+    const gender = userData.gender || 'N/A';
+    const className = userData.className || userData.currentClass || 'N/A';
+    const stream = userData.stream || '';
+    const department = userData.department?.name || 'N/A';
+    const phone = userData.phone || 'N/A';
+    const dob = userData.dateOfBirth || userData.dob || '';
+    const admissionDate = userData.admissionDate || userData.dateOfAdmission || '';
+    const bloodGroup = userData.bloodGroup || '';
+    const address = userData.address || '';
+    const city = userData.city || '';
+    const email = userData.email || userData.schoolEmail || '';
+    const emergencyContactName = userData.emergencyContactName || userData.guardianName || '';
+    const emergencyContactPhone = userData.emergencyContactPhone || userData.guardianPhone || '';
+
+    const schoolLogo = schoolProfile.logo;
+    const schoolNameText = (schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase();
+    const locationText = [schoolProfile.city, schoolProfile.country].filter(Boolean).join(', ') || 'Uganda';
+    const academicYear = schoolProfile.academicYear || new Date().getFullYear();
+    const schoolMotto = schoolProfile.motto || '';
+    const schoolWebsite = schoolProfile.website || '';
+    const schoolPhone = schoolProfile.phone || '';
+
+    let logoImg = null;
+    if (schoolLogo) {
+      try {
+        logoImg = await loadImage(schoolLogo);
+      } catch {
+        console.error('School logo skipped — failed to load');
+      }
     }
 
-    setLoading(true);
-    try {
-      const userData = type === 'student' 
-        ? (await axiosInstance.get(`/students/${userId}`)).data
-        : (await axiosInstance.get(`/teachers/${userId}`)).data;
-      
-      const jsPDF = (await import('jspdf')).jsPDF;
-      
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [85.6, 53.98]
-      });
-
-      const idNumber = type === 'student' ? userData.studentId || userData.linn || userData.id : userData.teacherId || userData.id;
-      const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
-      const photoUrl = userData.avatar || userData.photoUrl || userData.profilePicture;
-
-      doc.setFillColor(30, 64, 191);
-      doc.rect(0, 0, 85.6, 15, 'F');
-
-      const schoolLogo = schoolProfile.logo;
-      if (schoolLogo) {
-        try {
-          const schoolImg = new Image();
-          schoolImg.src = schoolLogo;
-          await new Promise(resolve => { schoolImg.onload = resolve; });
-          doc.addImage(schoolLogo, 'PNG', 2, 1, 6, 13);
-        } catch {
-          doc.setTextColor(255, 255, 255);
-        }
+    let photoImg = null;
+    if (photoUrl) {
+      try {
+        photoImg = await loadImage(photoUrl);
+      } catch {
+        console.error('Student photo skipped — failed to load');
       }
+    }
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      const schoolNameText = (schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase();
-      const maxTextWidth = schoolLogo ? 72 : 85;
-      doc.text(schoolNameText, schoolLogo ? 49 : 42.8, 7, { align: 'center', maxWidth: maxTextWidth });
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      const locationText = [schoolProfile.city, schoolProfile.country].filter(Boolean).join(', ') || 'Uganda';
-      doc.text(locationText, 42.8, 12, { align: 'center' });
+    // ===================================================================
+    // FRONT SIDE
+    // ===================================================================
 
-      if (photoUrl) {
-        try {
-          const img = new Image();
-          img.src = photoUrl;
-          await new Promise(resolve => { img.onload = resolve; });
-          doc.addImage(img, 'JPEG', 5, 20, 25, 25);
-        } catch {
-          doc.setFillColor(230, 230, 230);
-          doc.rect(5, 20, 25, 25, 'F');
-        }
-      } else {
-        doc.setFillColor(230, 230, 230);
-        doc.rect(5, 20, 25, 25, 'F');
-        doc.setTextColor(100, 100, 100);
-        doc.setFontSize(8);
-        doc.text('PHOTO', 17.5, 34, { align: 'center' });
+    // ---- Card outer border ----
+    doc.setDrawColor(...borderGray);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(cardX, cardY, cardW, cardH, 2, 2, 'S');
+
+    // ---- Header background FIRST, logo drawn on top ----
+    const headerH = 16;
+    doc.setFillColor(...primaryColor);
+    doc.rect(cardX, cardY, cardW, headerH, 'F');
+
+    const logoSize = 12;
+    if (logoImg) {
+      try {
+        doc.addImage(logoImg, 'PNG', cardX + margin, cardY + 2, logoSize, logoSize);
+      } catch {
+        console.error('School logo skipped — failed to render');
       }
+    }
 
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(9);
-      doc.text('ID: ' + idNumber, 35, 25);
-      doc.text(fullName, 35, 31);
+    const headerTextX = logoImg ? cardX + margin + logoSize + 2 : cardX + margin;
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    const maxSchoolNameChars = logoImg ? 24 : 32;
+    doc.text(truncateText(schoolNameText, maxSchoolNameChars), headerTextX, cardY + 6.5);
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(truncateText(locationText, maxSchoolNameChars + 6), headerTextX, cardY + 11.5);
+
+    // ---- Photo + main info ----
+    let cursorY = cardY + headerH + 4;
+    const photoW = 22;
+    const photoH = 24;
+
+    if (photoImg) {
+      try {
+        doc.addImage(photoImg, 'JPEG', cardX + margin, cursorY, photoW, photoH);
+        doc.setDrawColor(...borderGray);
+        doc.rect(cardX + margin, cursorY, photoW, photoH, 'S');
+      } catch {
+        photoImg = null;
+      }
+    }
+    if (!photoImg) {
+      doc.setFillColor(...lightGray);
+      doc.rect(cardX + margin, cursorY, photoW, photoH, 'F');
+      doc.setTextColor(120, 120, 120);
       doc.setFontSize(8);
-      doc.text('Gender: ' + (userData.gender || 'N/A'), 35, 37);
-      doc.text(type === 'student' ? 'Student' : 'Teacher', 35, 43);
-      
-      if (type === 'student') {
-        doc.text('Class: ' + (userData.className || userData.currentClass || 'N/A'), 35, 49);
-        doc.text('Stream: ' + (userData.stream || 'N/A'), 35, 54);
-      } else {
-        doc.text('Dept: ' + (userData.department?.name || 'N/A'), 35, 49);
-        doc.text('Phone: ' + (userData.phone || 'N/A'), 35, 54);
-      }
-
-      doc.setFillColor(30, 64, 191);
-      doc.rect(0, 56, 85.6, 5, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(6);
-      doc.text(`${schoolProfile.schoolName || 'Peculiar School'} | ${new Date().getFullYear()}`, 42.8, 59, { align: 'center' });
-
-      doc.save(`id-card-${idNumber}.pdf`);
-      setMessage({ type: "success", text: "ID Card generated successfully" });
-    } catch {
-      setMessage({ type: "error", text: "Failed to generate ID card" });
-    } finally {
-      setLoading(false);
+      doc.text('PHOTO', cardX + margin + photoW / 2, cursorY + photoH / 2, { align: 'center' });
     }
-  };
+
+    const infoStartX = cardX + margin + photoW + 4;
+
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(idNumber), infoStartX, cursorY + 3.5);
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(truncateText(fullName, 22), infoStartX, cursorY + 9);
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.text(
+      type === 'student' ? `Class: ${className}${stream ? ' | ' + stream : ''}` : `Dept: ${department}`,
+      infoStartX, cursorY + 14
+    );
+
+    doc.text(`Gender: ${gender}`, infoStartX, cursorY + 18.5);
+
+    let extraY = cursorY + 23;
+    if (type === 'student') {
+      if (stream && !className.includes(stream)) {
+        doc.text(`Stream: ${stream}`, infoStartX, extraY);
+        extraY += 4.5;
+      }
+    }
+    if (phone && phone !== 'N/A') {
+      doc.text(`Phone: ${truncateText(phone, 18)}`, infoStartX, extraY);
+    }
+
+    cursorY += photoH + 4;
+
+    // ---- Divider ----
+    doc.setDrawColor(...borderGray);
+    doc.setLineWidth(0.2);
+    doc.line(cardX + margin, cursorY, cardX + cardW - margin, cursorY);
+    cursorY += 3.5;
+
+    // // ---- Personal details ----
+    // doc.setFontSize(6.5);
+    // doc.setFont('helvetica', 'bold');
+    // doc.setTextColor(...secondaryColor);
+    // doc.text('PERSONAL DETAILS', cardX + margin, cursorY);
+    // cursorY += 3;
+
+    // doc.setFontSize(6.5);
+    // doc.setFont('helvetica', 'normal');
+    // doc.setTextColor(...textColor);
+
+    // const leftColX = cardX + margin;
+    // const rightColX = cardX + margin + (contentW / 2);
+    // const rowGap = 3.2;
+
+    // if (email && email !== 'N/A') {
+    //   doc.text(truncateText(email, 32), leftColX, cursorY);
+    //   cursorY += rowGap;
+    // }
+
+    // const row = (leftLabel, leftVal, rightLabel, rightVal, y) => {
+    //   if (leftVal) {
+    //     doc.setFont('helvetica', 'normal');
+    //     doc.text(leftLabel, leftColX, y);
+    //     doc.setFont('helvetica', 'bold');
+    //     doc.text(String(leftVal), leftColX + 13, y);
+    //   }
+    //   if (rightVal) {
+    //     doc.setFont('helvetica', 'normal');
+    //     doc.text(rightLabel, rightColX, y);
+    //     doc.setFont('helvetica', 'bold');
+    //     doc.text(String(rightVal), rightColX + 12, y);
+    //   }
+    //   doc.setFont('helvetica', 'normal');
+    // };
+
+    // row('D.O.B', dob, 'Blood', bloodGroup, cursorY);
+    // if (dob || bloodGroup) cursorY += rowGap;
+
+    // if (address || city) {
+    //   const fullAddress = [address, city].filter(Boolean).join(', ');
+    //   doc.text(truncateText(fullAddress, 30), leftColX, cursorY);
+    //   cursorY += rowGap;
+    // }
+
+    // if (admissionDate) {
+    //   doc.setFont('helvetica', 'normal');
+    //   doc.text('Admitted', leftColX, cursorY);
+    //   doc.setFont('helvetica', 'bold');
+    //   doc.text(String(admissionDate), leftColX + 14, cursorY);
+    //   doc.setFont('helvetica', 'normal');
+    // }
+
+    // ---- Footer ----
+    const footerY = cardY + cardH - 6;
+    doc.setFillColor(...primaryColor);
+    doc.rect(cardX + margin, footerY - 2, contentW, 0.7, 'F');
+
+    doc.setFontSize(5.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(
+      `Issued: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`,
+      cardX + margin, footerY + 1.5
+    );
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...secondaryColor);
+    doc.text(`VALID FOR ${academicYear}`, cardX + cardW - margin, footerY + 1.5, { align: 'right' });
+
+    doc.setFontSize(5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(140, 140, 140);
+    doc.text(
+      `This card is property of ${(schoolProfile.schoolName || 'Peculiar School').toUpperCase()}`,
+      cardX + margin, footerY + 4.5,
+      { maxWidth: contentW }
+    );
+
+    // ===================================================================
+    // BACK SIDE — new page
+    // ===================================================================
+    doc.addPage('a4', 'landscape');
+
+    doc.setDrawColor(...borderGray);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(cardX, cardY, cardW, cardH, 2, 2, 'S');
+
+    // Thin colored top strip (brand accent, not a full header)
+    doc.setFillColor(...primaryColor);
+    doc.rect(cardX, cardY, cardW, 4, 'F');
+
+    let backY = cardY + 8;
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...secondaryColor);
+    doc.text('EMERGENCY CONTACT', cardX + margin, backY);
+    backY += 4;
+
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    if (emergencyContactName) {
+      doc.text(`Name: ${truncateText(emergencyContactName, 30)}`, cardX + margin, backY);
+      backY += 3.5;
+    }
+    if (emergencyContactPhone) {
+      doc.text(`Phone: ${truncateText(emergencyContactPhone, 25)}`, cardX + margin, backY);
+      backY += 3.5;
+    }
+    if (!emergencyContactName && !emergencyContactPhone) {
+      doc.setTextColor(150, 150, 150);
+      doc.text('Not provided', cardX + margin, backY);
+      backY += 3.5;
+      doc.setTextColor(...textColor);
+    }
+
+    backY += 2;
+    doc.setDrawColor(...borderGray);
+    doc.setLineWidth(0.2);
+    doc.line(cardX + margin, backY, cardX + cardW - margin, backY);
+    backY += 4;
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...secondaryColor);
+    doc.text('TERMS & CONDITIONS', cardX + margin, backY);
+    backY += 3.5;
+
+    doc.setFontSize(5.8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    const terms = [
+      'This card remains the property of the school and must be',
+      'surrendered on request. If found, please return to the',
+      'school office or contact the number below.',
+      `${type === 'student' ? 'Student' : 'Staff'} must carry this card at all times on campus.`
+    ];
+    terms.forEach(line => {
+      doc.text(line, cardX + margin, backY);
+      backY += 3;
+    });
+
+    backY += 1.5;
+    doc.setDrawColor(...borderGray);
+    doc.line(cardX + margin, backY, cardX + cardW - margin, backY);
+    backY += 4;
+
+    // Signature line
+    const sigLineY = backY + 6;
+    doc.setDrawColor(...textColor);
+    doc.setLineWidth(0.15);
+    doc.line(cardX + margin, sigLineY, cardX + margin + 30, sigLineY);
+    doc.setFontSize(5.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Head Teacher', cardX + margin, sigLineY + 3);
+
+    // Simple decorative barcode-style bars under the ID number
+    // NOTE: this is a visual placeholder, NOT a scannable barcode encoding.
+    // For a real scannable code, use a barcode/QR library (see note below).
+    const barcodeX = cardX + cardW - margin - 32;
+    const barcodeY = backY - 2;
+    const barcodeW = 32;
+    const barcodeH = 10;
+    doc.setDrawColor(...textColor);
+    let bx = barcodeX;
+    const barPattern = String(idNumber || '0').split('').map(c => c.charCodeAt(0) % 2 === 0 ? 1.2 : 0.6);
+    barPattern.forEach(w => {
+      doc.setLineWidth(w);
+      doc.line(bx, barcodeY, bx, barcodeY + barcodeH);
+      bx += w + 0.8;
+    });
+    doc.setFontSize(5.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.text(String(idNumber), barcodeX, barcodeY + barcodeH + 3, { maxWidth: barcodeW });
+
+    // Footer contact info
+    const backFooterY = cardY + cardH - 4;
+    doc.setFontSize(5);
+    doc.setTextColor(140, 140, 140);
+    const contactLine = [schoolPhone, schoolWebsite].filter(Boolean).join(' | ') || schoolMotto;
+    if (contactLine) {
+      doc.text(truncateText(contactLine, 60), cardX + margin, backFooterY, { maxWidth: contentW });
+    }
+
+    doc.save(`id-card-${idNumber}.pdf`);
+    setMessage({ type: "success", text: "ID Card (front & back) generated successfully" });
+  } catch (err) {
+    console.error(err);
+    setMessage({ type: "error", text: "Failed to generate ID card" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const generateReport = async () => {
     setLoading(true);
@@ -1272,88 +1565,196 @@ function Settings() {
       {/* ID Card Preview Modal */}
       {showPreview && (previewType === 'student' ? selectedStudent : selectedTeacher) && (
         <div className="class-modal-overlay">
-          <div className="class-modal" style={{ maxWidth: '500px' }}>
+          <div className="class-modal" style={{ maxWidth: '550px' }}>
             <div className="class-modal-header">
               <h3>ID Card Preview</h3>
               <button className="btn-close" onClick={() => setShowPreview(false)}></button>
             </div>
             <div className="class-modal-body">
-              <div className="id-card-preview" style={{ 
-                width: '330px', 
-                minHeight: '200px', 
-                border: '2px solid #1E40AF', 
-                borderRadius: '8px',
-                padding: '10px',
-                margin: '0 auto',
-                background: 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)',
-                position: 'relative',
-                fontFamily: 'Arial, sans-serif'
-                }}>
-                  <div style={{ 
-                    background: '#1E40AF', 
-                    color: 'white', 
-                    padding: '5px', 
-                    textAlign: 'center', 
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    borderRadius: '4px',
-                    marginBottom: '8px'
-                  }}>
-                    {(schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase()} - {(schoolProfile.country || 'UGANDA').toUpperCase()}
-                  </div>
-                
-                <div className="d-flex">
-                  <div style={{ width: '80px', height: '100px', background: '#e9ecef', borderRadius: '4px', marginRight: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                    {(previewType === 'student' ? selectedStudent.avatar : selectedTeacher?.avatar) ? (
-                      <img 
-                        src={previewType === 'student' ? selectedStudent.avatar : selectedTeacher?.avatar} 
-                        alt="Photo" 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <i className="fa-solid fa-user fa-2x text-muted"></i>
-                    )}
-                  </div>
-                  
-                  <div style={{ flex: 1, fontSize: '10px' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: '5px' }}>
-                      {previewType === 'student' ? selectedStudent.firstName + ' ' + selectedStudent.lastName : selectedTeacher?.firstName + ' ' + selectedTeacher?.lastName}
-                    </div>
-                    <div><strong>ID:</strong> {previewType === 'student' ? (selectedStudent.studentId || selectedStudent.linn || selectedStudent.id) : (selectedTeacher?.teacherId || selectedTeacher?.id)}</div>
-                    <div><strong>Type:</strong> {previewType === 'student' ? 'Student' : 'Teacher'}</div>
-                    {previewType === 'student' ? (
-                      <>
-                        <div><strong>Class:</strong> {selectedStudent.className || selectedStudent.currentClass || 'N/A'}</div>
-                        <div><strong>Stream:</strong> {selectedStudent.stream || 'N/A'}</div>
-                      </>
-                    ) : (
-                      <>
-                        <div><strong>Dept:</strong> {selectedTeacher?.department?.name || 'N/A'}</div>
-                        <div><strong>Phone:</strong> {selectedTeacher?.phone || 'N/A'}</div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                <div style={{ 
-                  position: 'absolute', 
-                  bottom: '10px', 
-                  left: '10px', 
-                  right: '10px',
-                  borderTop: '1px dashed #1E40AF',
-                  paddingTop: '5px',
-                  fontSize: '8px',
-                  textAlign: 'center',
-                  color: '#666'
-                }}>
-                  Valid: {new Date().getFullYear()} | Principal Signature
-                </div>
-              </div>
+               <div className="id-card-preview" style={{
+                 width: '100%',
+                 maxWidth: '525px',
+                 minHeight: '340px',
+                 border: '1px solid #c4c6cf',
+                 borderRadius: '2px',
+                 padding: '14px',
+                 margin: '0 auto',
+                 background: '#f7f9fb',
+                 fontFamily: 'Work Sans, Arial, sans-serif',
+                 boxSizing: 'border-box',
+                 aspectRatio: '105/68',
+                 position: 'relative',
+                 overflow: 'hidden'
+               }}>
+                 {(() => {
+                   const user = previewType === 'student' ? selectedStudent : selectedTeacher;
+                   const photoUrl = user?.avatar || user?.photoUrl || user?.profilePicture;
+                   return (
+                   <div>
+                     <div style={{
+                       background: '#002045',
+                       color: '#ffffff',
+                       padding: '6px 10px',
+                       position: 'relative',
+                       minHeight: '54px'
+                     }}>
+                       {schoolProfile.logo && (
+                         <img
+                           src={schoolProfile.logo}
+                           alt="Logo"
+                           style={{
+                             position: 'absolute',
+                             left: '14px',
+                             top: '50%',
+                             transform: 'translateY(-50%)',
+                             height: '28px',
+                             width: '28px',
+                             objectFit: 'contain',
+                             borderRadius: '2px'
+                           }}
+                         />
+                       )}
+                       <div style={{ paddingLeft: schoolProfile.logo ? '46px' : '0' }}>
+                         <div style={{
+                           fontFamily: 'Work Sans, Arial, sans-serif',
+                           fontSize: '14px',
+                           fontWeight: '700',
+                           lineHeight: '1.2',
+                           letterSpacing: '0.02em',
+                           color: '#ffffff'
+                         }}>
+                           {(schoolProfile.schoolName || 'PECULIAR SCHOOL').toUpperCase()}
+                         </div>
+                         <div style={{
+                           fontFamily: 'Work Sans, Arial, sans-serif',
+                           fontSize: '10px',
+                           fontWeight: '400',
+                           lineHeight: '1.2',
+                           color: '#86a0cd',
+                           marginTop: '2px'
+                         }}>
+                           {[schoolProfile.city, schoolProfile.country].filter(Boolean).join(', ') || 'Uganda'}
+                         </div>
+                       </div>
+                     </div>
+
+                     <div style={{ display: 'flex', gap: '12px', marginTop: '18px', alignItems: 'flex-start' }}>
+                       <div style={{
+                         width: '60px',
+                         height: '68px',
+                         background: '#e0e3e5',
+                         borderRadius: '2px',
+                         flexShrink: 0,
+                         overflow: 'hidden',
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center'
+                       }}>
+                         {photoUrl ? (
+                           <img
+                             src={photoUrl}
+                             alt="Photo"
+                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                           />
+                         ) : (
+                           <i className="fa-solid fa-user fa-lg" style={{ color: '#74777f' }}></i>
+                         )}
+                       </div>
+
+                       <div style={{ flex: 1, minWidth: 0 }}>
+                         <div style={{
+                           fontFamily: 'Work Sans, Arial, sans-serif',
+                           fontSize: '13px',
+                           fontWeight: '700',
+                           color: '#002045',
+                           marginBottom: '4px',
+                           lineHeight: '1.2'
+                         }}>
+                           {(user?.firstName ? `${user.firstName} ${user.lastName}` : 'Unknown Name') || 'Unknown Name'}
+                         </div>
+                         <div style={{
+                           fontFamily: 'Work Sans, Arial, sans-serif',
+                           fontSize: '11px',
+                           fontWeight: '500',
+                           color: '#191c1e',
+                           marginBottom: '3px'
+                         }}>
+                           ID: {previewType === 'student' ? (user?.studentId || user?.linn || user?.id) : (user?.teacherId || user?.id)}
+                         </div>
+                         <div style={{
+                           fontFamily: 'Work Sans, Arial, sans-serif',
+                           fontSize: '10px',
+                           color: '#43474e'
+                         }}>
+                           <div><span style={{ fontWeight: '600', color: '#43474e' }}>Gender:</span> {user?.gender || 'N/A'}</div>
+                           {previewType === 'student' ? (
+                             <>
+                               <div><span style={{ fontWeight: '600', color: '#43474e' }}>Class:</span> {(user?.className || user?.currentClass || 'N/A')}{user?.stream ? ' | ' + user.stream : ''}</div>
+                               {user?.phone && <div><span style={{ fontWeight: '600', color: '#43474e' }}>Phone:</span> {user.phone}</div>}
+                             </>
+                           ) : (
+                             <>
+                               <div><span style={{ fontWeight: '600', color: '#43474e' }}>Dept:</span> {user?.department?.name || 'N/A'}</div>
+                               <div><span style={{ fontWeight: '600', color: '#43474e' }}>Phone:</span> {user?.phone || 'N/A'}</div>
+                             </>
+                           )}
+                         </div>
+                       </div>
+                     </div>
+
+                     <div style={{
+                       position: 'absolute',
+                       bottom: '0',
+                       left: '0',
+                       right: '0',
+                       borderTop: '1px solid #c4c6cf',
+                       padding: '8px 14px',
+                       display: 'flex',
+                       justifyContent: 'space-between',
+                       alignItems: 'center',
+                       background: '#f7f9fb',
+                       zIndex: '2'
+                     }}>
+                       <span style={{
+                         fontFamily: 'Work Sans, Arial, sans-serif',
+                         fontSize: '9px',
+                         color: '#43474e'
+                       }}>
+                         Issued: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                       </span>
+                       <span style={{
+                         fontFamily: 'Work Sans, Arial, sans-serif',
+                         fontSize: '9px',
+                         fontWeight: '700',
+                         color: '#006c4a',
+                         letterSpacing: '0.08em'
+                       }}>
+                         VALID FOR 2026
+                       </span>
+                     </div>
+
+                     <div style={{
+                       position: 'absolute',
+                       bottom: '22px',
+                       left: '14px',
+                       right: '14px',
+                       textAlign: 'center',
+                       fontSize: '8px',
+                       color: '#74777f',
+                       fontFamily: 'Work Sans, Arial, sans-serif',
+                       zIndex: '1'
+                     }}>
+                       This card is property of {(schoolProfile.schoolName || 'Peculiar School').toUpperCase()}. Misuse is an offence.
+                     </div>
+                   </div>
+                   );
+                 })()}
+               </div>
             </div>
             <div className="class-modal-footer">
               <button className="btn btn-secondary me-2" onClick={() => setShowPreview(false)}>Close</button>
-              <button 
-                className="btn btn-success" 
+              <button
+                className="btn btn-success"
                 onClick={() => {
                   if (previewType === 'student') {
                     generateIdCard('student', selectedStudent?.id);
