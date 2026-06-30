@@ -170,15 +170,135 @@ export const generateCSVTemplate = () => {
   return [headers.join(','), ...sampleData].join('\n');
 };
 
-// Download template clean trigger
-export const downloadCSVTemplate = () => {
-  const csv = generateCSVTemplate();
+export const parseStaffCSV = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      try {
+        const csv = event.target.result;
+        const lines = csv.split(/\r?\n/);
+        
+        if (lines.length < 2) {
+          reject('CSV file is empty');
+          return;
+        }
+
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const requiredFields = [
+          'firstname',
+          'lastname',
+          'email',
+          'department',
+          'position'
+        ];
+        
+        const missingFields = requiredFields.filter(field => !headers.includes(field));
+        if (missingFields.length > 0) {
+          reject(`Missing required columns: ${missingFields.join(', ')}`);
+          return;
+        }
+
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          const values = parseCSVLine(line);
+          if (values.length < headers.length) {
+            reject(`Row ${i + 1} has fewer columns than header`);
+            return;
+          }
+
+          const row = {};
+          headers.forEach((header, idx) => {
+            row[header] = values[idx]?.trim() || '';
+          });
+
+          const staff = {
+            firstName: row.firstname,
+            lastName: row.lastname,
+            email: row.email,
+            phoneNumber: row.phonenumber || '',
+            department: row.department,
+            position: row.position,
+            joinDate: row.joindate || new Date().toISOString().split('T')[0],
+            contractType: row.contracttype || 'PERMANENT',
+            salary: row.salary || '',
+            qualification: row.qualification || '',
+            experience: row.experience || '',
+          };
+
+          data.push(staff);
+        }
+
+        resolve({
+          rows: data.length,
+          data: data
+        });
+      } catch (error) {
+        reject(`Error parsing CSV: ${error.message}`);
+      }
+    };
+
+    reader.onerror = () => reject('Error reading file');
+    reader.readAsText(file);
+  });
+};
+
+export const validateStaffRow = (staff, rowNumber) => {
+  const errors = [];
+
+  if (!staff.firstName?.trim()) errors.push('First Name is required');
+  if (!staff.lastName?.trim()) errors.push('Last Name is required');
+  
+  if (!staff.email?.trim()) {
+    errors.push('Email is required');
+  } else if (!isValidEmail(staff.email)) {
+    errors.push('Invalid email format');
+  }
+
+  if (!staff.department?.trim()) errors.push('Department is required');
+  if (!staff.position?.trim()) errors.push('Position is required');
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    rowNumber,
+  };
+};
+
+export const generateStaffCSVTemplate = () => {
+  const headers = [
+    'firstname',
+    'lastname',
+    'email',
+    'phonenumber',
+    'department',
+    'position',
+    'joindate',
+    'contracttype',
+    'salary',
+    'qualification',
+    'experience',
+  ];
+
+  const sampleData = [
+    'John,Doe,john.doe@school.com,+256700123456,Science,Teacher,2024-01-10,PERMANENT,500000,Bachelors,5',
+    'Jane,Smith,jane.smith@school.com,+256700123457,Mathematics,Teacher,2024-02-15,CONTRACT,400000,Masters,3',
+  ];
+
+  return [headers.join(','), ...sampleData].join('\n');
+};
+
+export const downloadStaffCSVTemplate = () => {
+  const csv = generateStaffCSVTemplate();
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
 
   link.setAttribute('href', url);
-  link.setAttribute('download', 'teacher_import_template.csv');
+  link.setAttribute('download', 'staff_import_template.csv');
   link.style.visibility = 'hidden';
 
   document.body.appendChild(link);
@@ -186,3 +306,5 @@ export const downloadCSVTemplate = () => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export const downloadCSVTemplate = downloadStaffCSVTemplate;

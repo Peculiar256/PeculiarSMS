@@ -839,6 +839,8 @@ const handleSaveSubjectAssignment = async (e) => {
       {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
       {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
       
+      <h2 style={{fontWeight:"bold"}}>Teacher Management</h2>
+      {/* <p style={{color:"#6b7280"}}>Manage and organize your institution's teacher records. Use the tools below to search, filter, edit teacher profiles, or register new teachers into the system.</p> */}
       <section className="stats-grid" style={{ marginBottom: '24px' }}>
         <article className="stat-card">
           <div className="stat-icon teacher">
@@ -883,10 +885,9 @@ const handleSaveSubjectAssignment = async (e) => {
 
       <div className="search-section">
         <div className="teacher-header">
-          <h2>Teacher Management</h2>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
             <div>
-              <button type="button" className="btn-add-teacher" onClick={openAddModal} style={{ minWidth: '120px' }}>
+              <button type="button" className="btn btn-success" onClick={openAddModal} style={{ minWidth: '120px' }}>
                 <i className="fa-solid fa-plus"></i> Add Teacher
               </button>
             </div>

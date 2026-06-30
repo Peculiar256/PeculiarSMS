@@ -1,5 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react";
 import axiosInstance from '../../services/axiosInstance';
+import { exportStaffToCSV, exportStaffToExcel, exportStaffToPDF } from '../../utils/exporters';
+import { printStaffList } from '../../utils/printUtils';
+import { parseStaffCSV, validateStaffRow, downloadStaffCSVTemplate } from '../../utils/csvImporter';
+import CSVImportModal from '../../components/CSVImportModal';
 import './Users.css';
 
 function Staff() {
@@ -45,6 +49,13 @@ function Staff() {
 		qualification: "",
 		experience: "",
 	});
+
+	const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
+	const [isPrintLoading, setIsPrintLoading] = useState(false);
+	const [successMessage, setSuccessMessage] = useState('');
+	const [batchMode, setBatchMode] = useState(false);
+	const [selectedStaff, setSelectedStaff] = useState(new Set());
+	const [batchError, setBatchError] = useState('');
 
 	useEffect(() => {
 		loadStaff();
@@ -164,6 +175,98 @@ function Staff() {
 			qualification: "",
 			experience: "",
 		});
+	};
+
+	const handleExportCSV = () => {
+		const exportData = batchMode && selectedStaff.size > 0
+			? staff.filter(s => selectedStaff.has(s.id))
+			: filteredStaff;
+		const filename = `staff_${new Date().toISOString().split('T')[0]}.csv`;
+		exportStaffToCSV(exportData, filename);
+		setSuccessMessage('CSV exported successfully');
+		setTimeout(() => setSuccessMessage(''), 2000);
+	};
+
+	const handleExportExcel = async () => {
+		const exportData = batchMode && selectedStaff.size > 0
+			? staff.filter(s => selectedStaff.has(s.id))
+			: filteredStaff;
+		const filename = `staff_${new Date().toISOString().split('T')[0]}.xlsx`;
+		await exportStaffToExcel(exportData, filename);
+		setSuccessMessage('Excel exported successfully');
+		setTimeout(() => setSuccessMessage(''), 2000);
+	};
+
+	const handleExportPDF = async () => {
+		const exportData = batchMode && selectedStaff.size > 0
+			? staff.filter(s => selectedStaff.has(s.id))
+			: filteredStaff;
+		const filename = `staff_report_${new Date().toISOString().split('T')[0]}.pdf`;
+		await exportStaffToPDF(exportData, filename);
+		setSuccessMessage('PDF exported successfully');
+		setTimeout(() => setSuccessMessage(''), 2000);
+	};
+
+	const handlePrintView = () => {
+		try {
+			setIsPrintLoading(true);
+			const exportData = batchMode && selectedStaff.size > 0
+				? staff.filter(s => selectedStaff.has(s.id))
+				: filteredStaff;
+			printStaffList(exportData);
+			setSuccessMessage('Print view opened!');
+			setTimeout(() => setSuccessMessage(''), 2000);
+		} catch {
+			setMessage({ type: "error", text: "Failed to open print view" });
+			setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+		} finally {
+			setIsPrintLoading(false);
+		}
+	};
+
+	const toggleStaffSelection = (staffId) => {
+		const newSelected = new Set(selectedStaff);
+		if (newSelected.has(staffId)) {
+			newSelected.delete(staffId);
+		} else {
+			newSelected.add(staffId);
+		}
+		setSelectedStaff(newSelected);
+	};
+
+	const selectAllStaff = () => {
+		if (selectedStaff.size === filteredStaff.length) {
+			setSelectedStaff(new Set());
+		} else {
+			setSelectedStaff(new Set(filteredStaff.map((s) => s.id)));
+		}
+	};
+
+	const handleBatchDelete = async () => {
+		if (selectedStaff.size === 0) {
+			setBatchError('No staff selected');
+			return;
+		}
+		if (!window.confirm(`Are you sure you want to delete ${selectedStaff.size} staff member(s)? This cannot be undone.`)) {
+			return;
+		}
+		try {
+			await Promise.all(Array.from(selectedStaff).map(id => axiosInstance.delete(`/staff/${id}`)));
+			setMessage({ type: "success", text: `Deleted ${selectedStaff.size} staff member(s)` });
+			setSelectedStaff(new Set());
+			setBatchMode(false);
+			loadStaff();
+		} catch (err) {
+			setBatchError(err.message || 'Batch delete failed');
+		}
+	};
+
+	const handleCSVImportComplete = (result) => {
+		if (result.successful && result.successful.length > 0) {
+			setSuccessMessage(`Successfully imported ${result.successful.length} staff member(s)`);
+			setTimeout(() => setSuccessMessage(''), 3000);
+			loadStaff();
+		}
 	};
 
 	const handleAddStaff = async (event) => {
@@ -333,13 +436,23 @@ function Staff() {
 					<button type="button" className="btn-close" onClick={() => setMessage({ type: "", text: "" })}></button>
 				</div>
 			)}
+{successMessage && (
+				<div className="alert alert-success alert-dismissible fade show" role="alert">
+					{successMessage}
+					<button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
+				</div>
+			)}
+			{batchError && (
+				<div className="alert alert-danger alert-dismissible fade show" role="alert">
+					{batchError}
+					<button type="button" className="btn-close" onClick={() => setBatchError('')}></button>
+				</div>
+			)}
 
 			<div className="users-header">
-				<h2>Staff Management</h2>
-				<div className="users-header-actions">
-					<button type="button" className="add-user-btn" onClick={openAddModal}>Add Staff</button>
-				</div>
-			</div>
+			<h2 style={{fontWeight:"bold"}}>Staff Management</h2>
+			{/* <p style={{color:"#6b7280"}}>Manage and organize your institution's staff records. Use the tools below to search, filter, edit staff profiles, or register new staff into the system.</p> */}
+		</div>
 
 			<section className="stats-grid" style={{ margin: '24px' }}>
 				<article className="stat-card">
@@ -382,6 +495,42 @@ function Staff() {
 					</div>
 				</article>
 			</section>
+
+			<div className="users-header-actions" style={{margin:"20px", display:"flex", justifyContent:"space-between"}}>
+				<div>
+					<button type="button" className="btn btn-success" onClick={openAddModal}>
+						<i className="fa-solid fa-plus"></i> Add new Staff
+					</button>
+				</div>
+
+				<div>
+					
+					<button type="button" className="btn btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ minWidth: '100px', marginLeft: '8px' }}>
+					<i className="fa-solid fa-file-csv"></i> CSV
+					</button>
+					<button type="button" className="btn btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ minWidth: '100px', marginLeft: '8px' }}>
+						<i className="fa-solid fa-file-excel"></i> Excel
+					</button>
+					<button type="button" className="btn btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ minWidth: '100px', marginLeft: '8px' }}>
+						<i className="fa-solid fa-file-pdf"></i> PDF
+					</button>
+					<button type="button" className="btn btn-export" onClick={handlePrintView} disabled={isPrintLoading} title="Print View" style={{ minWidth: '100px', marginLeft: '8px' }}>
+						<i className="fa-solid fa-print"></i> Print
+					</button>
+					<button type="button" className="btn btn-export" onClick={() => setIsCSVImportOpen(true)} title="Import from CSV" style={{ minWidth: '100px', marginLeft: '8px' }}>
+						<i className="fa-solid fa-upload"></i> Import
+					</button>
+					{!batchMode ? (
+						<button type="button" className="btn btn-batch" onClick={() => setBatchMode(true)} title="Batch Operations" style={{ minWidth: '100px', marginLeft: '8px' }}>
+							<i className="fa-solid fa-check-double"></i> Batch
+						</button>
+					) : (
+						<button type="button" className="btn btn-batch-active" onClick={() => { setBatchMode(false); setSelectedStaff(new Set()); }} title="Exit Batch Mode" style={{ minWidth: '100px', marginLeft: '8px' }}>
+							<i className="fa-solid fa-times"></i> Cancel Batch
+						</button>
+					)}
+				</div>
+			</div>
 
 			{isAddModalOpen && (
 				<div className="users-modal-overlay" onClick={closeAddModal}>
@@ -729,10 +878,31 @@ function Staff() {
 				</div>
 			</div>
 
+			{batchMode && selectedStaff.size > 0 && (
+				<div style={{ padding: '10px', background: '#fff3cd', borderRadius: '4px', margin: '15px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					<span><strong>{selectedStaff.size} staff member(s) selected</strong></span>
+					<div style={{ display: 'flex', gap: '10px' }}>
+						<button type="button" className="btn btn-danger" onClick={handleBatchDelete} title="Batch Delete">
+							<i className="fa-solid fa-trash"></i> Delete
+						</button>
+					</div>
+				</div>
+			)}
+
 			<div className="users-table-wrapper">
 				<table className="users-table">
 					<thead>
 						<tr>
+							{batchMode && (
+								<th style={{ width: '40px' }}>
+									<input
+										type="checkbox"
+										checked={selectedStaff.size === filteredStaff.length && filteredStaff.length > 0}
+										onChange={selectAllStaff}
+										title="Select all staff"
+									/>
+								</th>
+							)}
 							<th>Staff ID</th>
 							<th>Name</th>
 							<th>Email</th>
@@ -746,6 +916,15 @@ function Staff() {
 					<tbody>
 						{filteredStaff.map((s) => (
 							<tr key={s.id}>
+								{batchMode && (
+									<td>
+										<input
+											type="checkbox"
+											checked={selectedStaff.has(s.id)}
+											onChange={() => toggleStaffSelection(s.id)}
+										/>
+									</td>
+								)}
 								<td>{s.staffId}</td>
 								<td>{s.fullName || `${s.firstName} ${s.lastName}`}</td>
 								<td>{s.email}</td>
@@ -773,6 +952,44 @@ function Staff() {
 					</tbody>
 				</table>
 			</div>
+
+			<CSVImportModal
+				isOpen={isCSVImportOpen}
+				onClose={() => setIsCSVImportOpen(false)}
+				onImportComplete={handleCSVImportComplete}
+				parseFile={parseStaffCSV}
+				validateRow={validateStaffRow}
+				downloadTemplate={downloadStaffCSVTemplate}
+				importAction={async (rowData) => {
+					await axiosInstance.post('/staff', rowData);
+				}}
+				modalTitle="Import Staff from CSV"
+				processingText="Importing staff records..."
+				entityName="staff"
+				requiredFields={[
+					'First Name',
+					'Last Name',
+					'Email (must be valid)',
+					'Department',
+					'Position'
+				]}
+				optionalFields={[
+					'Phone Number',
+					'Join Date',
+					'Contract Type',
+					'Salary',
+					'Qualification',
+					'Experience'
+				]}
+				previewColumns={[
+					{ key: 'firstName', label: 'First Name' },
+					{ key: 'lastName', label: 'Last Name' },
+					{ key: 'email', label: 'Email' },
+					{ key: 'phoneNumber', label: 'Phone' },
+					{ key: 'department', label: 'Department' },
+					{ key: 'position', label: 'Position' }
+				]}
+			/>
 		</div>
 	);
 }

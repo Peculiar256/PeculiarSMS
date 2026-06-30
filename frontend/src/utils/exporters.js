@@ -162,6 +162,162 @@ export const exportToPDF = async (teachers, filename = 'teachers.pdf', filters =
   }
 };
 
+// Staff CSV Export
+export const exportStaffToCSV = (staff, filename = 'staff.csv') => {
+  if (!staff || staff.length === 0) {
+    alert('No staff to export');
+    return;
+  }
+
+  const headers = [
+    'Staff ID',
+    'First Name',
+    'Last Name',
+    'Email',
+    'Phone',
+    'Department',
+    'Position',
+    'Status',
+    'Join Date',
+    'Contract Type',
+    'Salary',
+    'Qualification',
+    'Experience',
+  ];
+
+  const rows = staff.map((s) => [
+    s.staffId || '',
+    s.firstName || '',
+    s.lastName || '',
+    s.email || '',
+    s.phoneNumber || '',
+    s.department || '',
+    s.position || '',
+    s.status || '',
+    s.joinDate || '',
+    s.contractType || '',
+    s.salary || '',
+    s.qualification || '',
+    s.experience || '',
+  ]);
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) =>
+      row
+        .map((cell) => {
+          const cellStr = String(cell || '');
+          return cellStr.includes(',') ? `"${cellStr.replace(/"/g, '""')}"` : cellStr;
+        })
+        .join(',')
+    ),
+  ].join('\n');
+
+  downloadFile(csvContent, filename, 'text/csv;charset=utf-8;');
+};
+
+// Staff Excel Export using xlsx library
+export const exportStaffToExcel = async (staff, filename = 'staff.xlsx') => {
+  if (!staff || staff.length === 0) {
+    alert('No staff to export');
+    return;
+  }
+
+  try {
+    const XLSX = await import('xlsx');
+
+    const data = staff.map((s) => ({
+      'Staff ID': s.staffId || s.id || '',
+      'First Name': s.firstName || '',
+      'Last Name': s.lastName || '',
+      Email: s.email || '',
+      Phone: s.phoneNumber || '',
+      Department: s.department || '',
+      Position: s.position || '',
+      Status: s.status || '',
+      'Join Date': s.joinDate || '',
+      'Contract Type': s.contractType || '',
+      Salary: s.salary || '',
+      Qualification: s.qualification || '',
+      Experience: s.experience || '',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Staff');
+
+    const colWidths = [12, 12, 12, 25, 15, 15, 15, 12, 12, 15, 12, 15, 12];
+    worksheet['!cols'] = colWidths.map((width) => ({ wch: width }));
+
+    XLSX.writeFile(workbook, filename);
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    alert('Failed to export to Excel. Make sure xlsx is installed.');
+  }
+};
+
+// Staff PDF Export using jsPDF and autoTable
+export const exportStaffToPDF = async (staff, filename = 'staff.pdf', filters = {}) => {
+  if (!staff || staff.length === 0) {
+    alert('No staff to export');
+    return;
+  }
+
+  try {
+    const jsPDF = (await import('jspdf')).jsPDF;
+    const autoTable = (await import('jspdf-autotable')).default;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    doc.setFontSize(16);
+    doc.text('Staff Report', pageWidth / 2, 15, { align: 'center' });
+
+    doc.setFontSize(10);
+    const reportDate = new Date().toLocaleDateString();
+    doc.text(`Generated: ${reportDate}`, 15, 25);
+
+    if (Object.keys(filters).length > 0) {
+      doc.text(`Filters Applied: ${JSON.stringify(filters)}`, 15, 32);
+    }
+
+    const tableData = staff.map((s) => [
+      s.staffId || s.id || '',
+      `${s.firstName} ${s.lastName}`,
+      s.email || '',
+      s.department || '',
+      s.position || '',
+      s.contractType || '',
+    ]);
+
+    autoTable(doc, {
+      head: [['ID', 'Name', 'Email', 'Department', 'Position', 'Contract']],
+      body: tableData,
+      startY: 40,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: 15, right: 15 },
+      didDrawPage: (data) => {
+        const pageCount = doc.internal.getPages().length;
+        doc.setFontSize(9);
+        doc.text(
+          `Page ${doc.internal.getPageNumbers()} of ${pageCount}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+      },
+    });
+
+    doc.save(filename);
+  } catch (error) {
+    console.error('Error exporting to PDF:', error);
+    alert('Failed to export to PDF. Make sure jsPDF and jspdf-autotable are installed.');
+  }
+};
+
 // Generic download helper
 const downloadFile = (content, filename, mimeType) => {
   const blob = new Blob([content], { type: mimeType });

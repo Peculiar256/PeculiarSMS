@@ -1,8 +1,12 @@
 /* Attendance Component Styles */
 
 .attendance-page {
-  background-color: #f8f9fa;
-  min-height: 100vh;
+  width: 80vw;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f3f6fa 100%);
+  border-radius: 14px;
+  margin: 20px;
+  border: 1px solid #e4e9f2;
 }
 
 .attendance-header {

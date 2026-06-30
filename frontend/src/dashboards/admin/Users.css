@@ -1,6 +1,10 @@
 .users-page {
-	padding: 0;
-	width: 100%;
+	width: 80vw;
+	padding: 24px;
+	background: linear-gradient(135deg, #f8fbff 0%, #f3f6fa 100%);
+	border-radius: 14px;
+	margin: 20px;
+	border: 1px solid #e4e9f2;
 }
 
 .users-header {

@@ -1,12 +1,10 @@
 .teacher-search-container {
-  width: calc(100% - 40px);
-  max-width: 100%;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  width: 80vw;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f3f6fa 100%);
+  border-radius: 14px;
   margin: 20px;
-  box-sizing: border-box;
-  overflow-x: hidden;
+  border: 1px solid #e4e9f2;
 }
 
 .teacher-summary-cards {

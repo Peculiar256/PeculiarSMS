@@ -32,6 +32,7 @@ const CSVImportModal = ({
   parseFile = parseCSV,
   validateRow = validateTeacherRow,
   downloadTemplate = downloadCSVTemplate,
+  importAction,
   modalTitle = 'Import Teachers from CSV',
   processingText = 'Importing records...',
   entityName = 'teacher',
@@ -106,19 +107,15 @@ const CSVImportModal = ({
       const successfulImports = [];
       const failedImports = [];
 
-      // Simulate API calls with progress
       for (let i = 0; i < validRows.length; i++) {
         const row = validRows[i];
 
         try {
-          // TODO: Replace with actual API call
-          // const response = await axiosInstance.post('/api/teachers', row.data);
-          // successfulImports.push(response.data);
-
-          // For now, simulate success
+          if (importAction) {
+            await importAction(row.data);
+          }
           successfulImports.push(row.data);
 
-          // Update progress
           setImportProgress(Math.round(((i + 1) / validRows.length) * 100));
         } catch (error) {
           failedImports.push({
@@ -127,8 +124,9 @@ const CSVImportModal = ({
           });
         }
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 300));
+        if (!importAction) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
 
       setImportStep('complete');

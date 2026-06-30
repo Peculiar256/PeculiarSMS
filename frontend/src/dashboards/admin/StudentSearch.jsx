@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import axiosInstance from '../../services/axiosInstance';
 import { exportToCSV, exportToExcel, exportToPDF } from '../../utils/exporters';
 import { printTeacherList } from '../../utils/printUtils';
+import { batchDeleteStudents } from '../../utils/batchOperations';
 import CSVImportModal from '../../components/CSVImportModal';
 import './StudentSearch.css';
 import './AdminCards.css';
@@ -28,6 +29,10 @@ const StudentSearch = () => {
   const [activeViewSection, setActiveViewSection] = useState('personal'); // 'personal', 'academic', 'contact'
   const [isPrintLoading, setIsPrintLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedStudents, setSelectedStudents] = useState(new Set());
+  const [batchError, setBatchError] = useState('');
+  const [isBatchOperating, setIsBatchOperating] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -298,22 +303,31 @@ const StudentSearch = () => {
 
   // ===== EXPORT & PRINT HANDLERS =====
   const handleExportCSV = () => {
+    const data = batchMode && selectedStudents.size > 0 
+      ? filteredStudents.filter(s => selectedStudents.has(s.id)) 
+      : filteredStudents;
     const filename = `students_${new Date().toISOString().split('T')[0]}.csv`;
-    exportToCSV(filteredStudents, filename);
+    exportToCSV(data, filename);
     setSuccessMessage('CSV exported successfully');
     setTimeout(() => setSuccessMessage(''), 2000);
   };
 
   const handleExportExcel = async () => {
+    const data = batchMode && selectedStudents.size > 0 
+      ? filteredStudents.filter(s => selectedStudents.has(s.id)) 
+      : filteredStudents;
     const filename = `students_${new Date().toISOString().split('T')[0]}.xlsx`;
-    await exportToExcel(filteredStudents, filename);
+    await exportToExcel(data, filename);
     setSuccessMessage('Excel exported successfully');
     setTimeout(() => setSuccessMessage(''), 2000);
   };
 
   const handleExportPDF = async () => {
+    const data = batchMode && selectedStudents.size > 0 
+      ? filteredStudents.filter(s => selectedStudents.has(s.id)) 
+      : filteredStudents;
     const filename = `students_report_${new Date().toISOString().split('T')[0]}.pdf`;
-    await exportToPDF(filteredStudents, filename);
+    await exportToPDF(data, filename);
     setSuccessMessage('PDF exported successfully');
     setTimeout(() => setSuccessMessage(''), 2000);
   };
@@ -321,7 +335,10 @@ const StudentSearch = () => {
   const handlePrintView = () => {
     try {
       setIsPrintLoading(true);
-      printTeacherList(filteredStudents);
+      const data = batchMode && selectedStudents.size > 0 
+        ? filteredStudents.filter(s => selectedStudents.has(s.id)) 
+        : filteredStudents;
+      printTeacherList(data);
       setSuccessMessage('Print view opened!');
       setTimeout(() => setSuccessMessage(''), 2000);
     } catch {
@@ -368,51 +385,59 @@ const StudentSearch = () => {
     return phone.replace(/^\+256/, '');
   };
 
+  const toggleStudentSelection = (studentId) => {
+    const newSelected = new Set(selectedStudents);
+    if (newSelected.has(studentId)) {
+      newSelected.delete(studentId);
+    } else {
+      newSelected.add(studentId);
+    }
+    setSelectedStudents(newSelected);
+  };
+
+  const selectAllStudents = () => {
+    if (selectedStudents.size === filteredStudents.length) {
+      setSelectedStudents(new Set());
+    } else {
+      setSelectedStudents(new Set(filteredStudents.map((s) => s.id)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedStudents.size === 0) {
+      setBatchError('No students selected');
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete ${selectedStudents.size} student(s)? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      setIsBatchOperating(true);
+      setBatchError('');
+      const results = await batchDeleteStudents(Array.from(selectedStudents));
+      if (results.failed.length > 0) {
+        setBatchError(`Deleted ${results.successful.length}, failed: ${results.failed.length}`);
+      } else {
+        setSuccessMessage(`Deleted ${results.successful.length} student(s)`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+      setSelectedStudents(new Set());
+      setBatchMode(false);
+      fetchStudents();
+    } catch (err) {
+      setBatchError(err.message || 'Batch delete failed');
+    } finally {
+      setIsBatchOperating(false);
+    }
+  };
+
   return (
     <div className="student-search-container">
       {error && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{error}</div>}
       {successMessage && <div className="success-banner" style={{ color: 'green', padding: '10px', background: '#efe' }}>{successMessage}</div>}
-      
-      <div className="search-header">
-        <h2>Student Management</h2>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <button className="btn btn-add-student" onClick={() => setIsAddModalOpen(true)} style={{ minWidth: '120px' }}>
-              <i className="fa-solid fa-plus"></i> Add Student
-            </button>
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button type="button" className="btn btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ minWidth: '100px' }}>
-              <i className="fa-solid fa-file-csv"></i> CSV
-            </button>
-            <button type="button" className="btn btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ minWidth: '100px' }}>
-              <i className="fa-solid fa-file-excel"></i> Excel
-            </button>
-            <button type="button" className="btn btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ minWidth: '100px' }}>
-              <i className="fa-solid fa-file-pdf"></i> PDF
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-export" 
-              onClick={handlePrintView}
-              disabled={isPrintLoading}
-              title="Print View" 
-              style={{ minWidth: '100px' }}
-            >
-              <i className="fa-solid fa-print"></i> Print
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-export" 
-              onClick={() => setIsCSVImportOpen(true)}
-              title="Import from CSV" 
-              style={{ minWidth: '100px' }}
-            >
-              <i className="fa-solid fa-upload"></i> Import
-            </button>
-          </div>
-        </div>
-      </div>
+      {batchError && <div className="error-banner" style={{ color: 'red', padding: '10px', background: '#fee' }}>{batchError}</div>}
+      <h2 style={{fontWeight:"bold"}}>Student Management</h2>
+      {/* <p style={{color:"#6b7280"}}>Manage and organize your institution's student records. Use the tools below to search, filter, edit student profiles, or register new admissions into the system.</p> */}
 
       <section className="stats-grid" style={{ marginBottom: '24px' }}>
         <article className="stat-card">
@@ -455,7 +480,57 @@ const StudentSearch = () => {
           </div>
         </article>
       </section>
+      
+      <div className="search-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <button className="btn btn-add-student" onClick={() => setIsAddModalOpen(true)} style={{ minWidth: '120px' }}>
+              <i className="fa-solid fa-plus"></i> Add Student
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-export" onClick={handleExportCSV} title="Export as CSV" style={{ minWidth: '100px' }}>
+              <i className="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button type="button" className="btn btn-export" onClick={handleExportExcel} title="Export as Excel" style={{ minWidth: '100px' }}>
+              <i className="fa-solid fa-file-excel"></i> Excel
+            </button>
+            <button type="button" className="btn btn-export" onClick={handleExportPDF} title="Export as PDF" style={{ minWidth: '100px' }}>
+              <i className="fa-solid fa-file-pdf"></i> PDF
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-export" 
+              onClick={handlePrintView}
+              disabled={isPrintLoading}
+              title="Print View" 
+              style={{ minWidth: '100px' }}
+            >
+              <i className="fa-solid fa-print"></i> Print
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-export" 
+              onClick={() => setIsCSVImportOpen(true)}
+              title="Import from CSV" 
+              style={{ minWidth: '100px' }}
+            >
+              <i className="fa-solid fa-upload"></i> Import
+            </button>
+            {!batchMode ? (
+              <button type="button" className="btn btn-batch" onClick={() => setBatchMode(true)} title="Batch Operations" style={{ minWidth: '100px' }}>
+                <i className="fa-solid fa-check-double"></i> Batch
+              </button>
+            ) : (
+              <button type="button" className="btn btn-batch-active" onClick={() => { setBatchMode(false); setSelectedStudents(new Set()); }} title="Exit Batch Mode" style={{ minWidth: '100px' }}>
+                <i className="fa-solid fa-times"></i> Cancel Batch
+              </button>
+            )}
+          </div>
+</div>
+       </div>
 
+      {/* Search Section */}
       <div className="search-section">
         <div className="search-filters">
           <div className="search-input-wrapper">
@@ -472,6 +547,18 @@ const StudentSearch = () => {
           </div>
         </div>
       </div>
+
+{/* Batch Operations Bar */}
+        {batchMode && selectedStudents.size > 0 && (
+          <div style={{ padding: '10px', background: '#fff3cd', borderRadius: '4px', margin: '15px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span><strong>{selectedStudents.size} student(s) selected</strong></span>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" className="btn btn-danger" onClick={handleBatchDelete} disabled={isBatchOperating} title="Batch Delete">
+                <i className="fa-solid fa-trash"></i> {isBatchOperating ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        )}
 
       {/* ADD MODAL */}
       {isAddModalOpen && (
@@ -960,7 +1047,7 @@ const StudentSearch = () => {
         </div>
       )}
 
-      {/* TABLE */}
+{/* TABLE */}
       <div className="table-wrapper">
         {loading ? (
           <div className="loading-state">Loading...</div>
@@ -970,8 +1057,18 @@ const StudentSearch = () => {
           <table className="students-table">
             <thead>
               <tr>
+                {batchMode && (
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.size === filteredStudents.length && filteredStudents.length > 0}
+                      onChange={selectAllStudents}
+                      title="Select all students"
+                    />
+                  </th>
+                )}
                 <th>Student ID</th>
-                <th>Name</th> 
+                <th>Name</th>
                 <th>Class</th>
                 <th>Contact</th>
                 <th>Status</th>
@@ -981,6 +1078,15 @@ const StudentSearch = () => {
             <tbody>
               {filteredStudents.map(student => (
                 <tr key={student.id}>
+                  {batchMode && (
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.has(student.id)}
+                        onChange={() => toggleStudentSelection(student.id)}
+                      />
+                    </td>
+                  )}
                   <td>{student.studentId}</td>
                   <td>{student.firstName} {student.lastName}</td>
                   <td>
@@ -990,11 +1096,11 @@ const StudentSearch = () => {
                   </td>
                   <td>{student.phoneNumber || '-'}</td>
                   <td>{getStatusBadge(student.isActive)}</td>
-                  <td>
+<td>
                     <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                       <button className="btn btn-info btn-sm" onClick={() => { setSelectedStudent(student); setIsViewModalOpen(true); }} title="View Detail" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-eye"></i></button>
                       <button className="btn btn-success btn-sm" onClick={() => handleEditStudent(student)} title="Edit Student" style={{ padding: '5px 10px' }}> <i className="fa-solid fa-pen-to-square"></i></button>
-<button
+                      <button
                         className={`btn ${student.isActive !== false ? 'btn-danger' : 'btn-success'} btn-sm`}
                         onClick={() => { setSelectedStudent(student); setIsStatusModalOpen(true); }}
                         title={student.isActive !== false ? 'Deactivate' : 'Activate'}

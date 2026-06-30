@@ -99,3 +99,24 @@ export const batchUpdateDepartment = async (teacherIds, department) => {
 
   return results;
 };
+
+export const batchDeleteStudents = async (studentIds) => {
+  const results = {
+    successful: [],
+    failed: [],
+  };
+
+  for (const studentId of studentIds) {
+    try {
+      await axiosInstance.delete(`/students/${studentId}`);
+      results.successful.push(studentId);
+    } catch (error) {
+      results.failed.push({
+        studentId,
+        error: error.response?.data?.message || error.message,
+      });
+    }
+  }
+
+  return results;
+};
