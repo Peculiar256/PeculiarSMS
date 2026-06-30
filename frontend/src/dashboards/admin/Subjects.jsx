@@ -349,7 +349,9 @@ function Subjects() {
         <div className="alert alert-danger alert-dismissible fade show" role="alert">
           <i className="fa-solid fa-circle-exclamation me-2"></i>
           {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)}></button>
+          <button type="button" className="btn-close" onClick={() => setError(null)}>
+            <i className="fas fa-times"></i>
+          </button>
         </div>
       )}
 
@@ -550,7 +552,9 @@ function Subjects() {
           <div className="subjects-modal">
             <div className="subjects-modal-header">
               <h3>{selectedSubject.name} - Subject Details</h3>
-              <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}></button>
+              <button className="btn-close" onClick={() => setIsDetailsModalOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
             </div>
             <div className="subjects-modal-body">
               <div className="row mb-4">
@@ -628,7 +632,9 @@ function Subjects() {
           <div className="subjects-modal">
             <div className="subjects-modal-header">
               <h3>Add New Subject</h3>
-              <button className="btn-close" onClick={() => setIsAddModalOpen(false)}></button>
+              <button className="btn-close" onClick={() => setIsAddModalOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
             </div>
             <div className="subjects-modal-body">
               <form className="row g-3" onSubmit={handleAddSubject}>
@@ -829,7 +835,9 @@ function Subjects() {
           <div className="subjects-modal">
             <div className="subjects-modal-header">
               <h3>Edit Subject</h3>
-              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}></button>
+              <button className="btn-close" onClick={() => setIsEditModalOpen(false)}>
+                <i className="fas fa-times"></i>
+              </button>
             </div>
             <div className="subjects-modal-body">
               <form className="row g-3" onSubmit={handleEditSubject}>
