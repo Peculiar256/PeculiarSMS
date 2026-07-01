@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from '../../services/axiosInstance';
 import schoolService from '../../services/schoolService';
+import authService from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import './Settings.css';
 
 function Settings() {
   const [showPassword, setShowPassword] = useState(false);
   const { user, updateUser } = useAuth();
+  const [institutionalProfileOpen, setInstitutionalProfileOpen] = useState(false);
   const [adminProfile, setAdminProfile] = useState({
-    fullName: "Admin User",
-    email: "admin@school.ac.ug",
-    phone: "+256 700 123 456",
-    role: "Administrator",
+    fullName: "",
+    email: "",
+    phone: "",
+    role: "",
     avatar: null,
-    lastLogin: new Date().toISOString(),
+    lastLogin: "",
   });
 
   const [schoolProfile, setSchoolProfile] = useState({
@@ -56,6 +58,7 @@ function Settings() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -77,19 +80,23 @@ function Settings() {
   }, [user]);
 
   const fetchAdminProfile = async () => {
+    setLoadingProfile(true);
     try {
-      if (user) {
+      const response = await authService.refreshUserProfile();
+      if (response) {
         setAdminProfile({
-          fullName: user.fullName || user.name || "Admin User",
-          email: user.email || "admin@school.ac.ug",
-          phone: user.phone || "+256 700 123 456",
-          role: user.role || "Administrator",
-          avatar: user.avatar || null,
-          lastLogin: user.lastLogin || new Date().toISOString(),
+          fullName: response.fullName || response.name || "",
+          email: response.email || "",
+          phone: response.phone || "",
+          role: response.role || "",
+          avatar: response.avatar || response.profilePicture || null,
+          lastLogin: response.lastLogin || "",
         });
       }
     } catch {
-      console.error('Failed to fetch profile');
+      console.error('Failed to fetch admin profile from backend');
+    } finally {
+      setLoadingProfile(false);
     }
   };
 
@@ -202,17 +209,24 @@ function Settings() {
   const saveProfile = async () => {
     setLoading(true);
     try {
+      const storedEmail = user?.email || adminProfile.email;
       const updatedUser = {
-        ...user,
         fullName: adminProfile.fullName,
         phone: adminProfile.phone,
         avatar: adminProfile.avatar,
       };
 
-      updateUser(updatedUser);
+      if (!storedEmail) {
+        setMessage({ type: "error", text: "No email found to identify user" });
+        return;
+      }
+
+      await axiosInstance.put(`/auth/profile?userEmail=${encodeURIComponent(storedEmail)}`, updatedUser);
+      updateUser({ ...user, ...updatedUser });
+      setAdminProfile(prev => ({ ...prev, ...updatedUser }));
       setMessage({ type: "success", text: "Profile updated successfully" });
-    } catch {
-      setMessage({ type: "error", text: "Failed to save profile" });
+    } catch (err) {
+      setMessage({ type: "error", text: "Failed to save profile: " + (err.response?.data?.message || err.message) });
     } finally {
       setLoading(false);
     }
@@ -988,19 +1002,25 @@ const generateIdCard = async (type, userId) => {
 
       {/* Profile Settings */}
       <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white py-3">
-          <h5 className="mb-0 fw-bold text-dark-emphasis">
-            <i className="fa-solid fa-building-columns me-2"></i>Institution Profiles
-          </h5>
+        <div className="card-header bg-white py-3 cursor-pointer" onClick={() => setInstitutionalProfileOpen(!institutionalProfileOpen)}>
+          <div className="d-flex align-items-center justify-content-between w-100">
+            <h5 className="mb-0 fw-bold text-dark-emphasis">
+              <i className="fa-solid fa-building-columns me-2"></i>Institution Profiles
+            </h5>
+            <div >
+              <i className={`fa-solid fa-chevron-down institutional-accordion-chevron ${institutionalProfileOpen ? 'rotated' : ''}`}></i>
+            </div>
+          </div>
         </div>
-        <div className="card-body px-4">
-          <div className="row g-4">
-            {/* Admin Profile */}
-            <div className="col-md-5">
-              <div className="border rounded-3 p-3 h-100" style={{ background: '#f8f9fa' }}>
-                <h6 className="fw-bold mb-3 text-dark-emphasis">
-                  <i className="fa-solid fa-user-shield me-2" style={{ color: '#1E40AF' }}></i>Admin Profile
-                </h6>
+        <div className={`institutional-accordion-body ${institutionalProfileOpen ? 'open' : ''}`}>
+          <div className="card-body px-4">
+            <div className="row g-4">
+              {/* School Admin Profile */}
+              <div className="col-md-5">
+                <div className="border rounded-3 p-3 h-100" style={{ background: '#f8f9fa' }}>
+                  <h6 className="fw-bold mb-3 text-dark-emphasis">
+                    <i className="fa-solid fa-user-shield me-2" style={{ color: '#1E40AF' }}></i>Admin Profile
+                  </h6>
                 <div className="text-center mb-3">
                   <div className="avatar-upload d-inline-block position-relative">
                     {adminProfile.avatar ? (
@@ -1269,15 +1289,18 @@ const generateIdCard = async (type, userId) => {
                     </div>
                   </div>
 
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                </div>
-                <div className="px-3 pb-3">
-                  <button className="btn btn-success btn-sm" onClick={saveSchoolProfile} disabled={loadingSchool}>
-                    <i className={`fa-solid ${loadingSchool ? 'fa-spinner fa-spin' : 'fa-save'} me-2`}></i>{loadingSchool ? 'Saving...' : 'Save School Profile'}
-                  </button>
+                    <div className="px-3 pb-3">
+                      <button className="btn btn-success btn-sm" onClick={saveSchoolProfile} disabled={loadingSchool}>
+                        <i className={`fa-solid ${loadingSchool ? 'fa-spinner fa-spin' : 'fa-save'} me-2`}></i>{loadingSchool ? 'Saving...' : 'Save School Profile'}
+                      </button>
+                    </div>
+
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import './AdminCards.css'
+import {Link} from 'react-router-dom'
 
 
 function AdminCards (){
@@ -113,6 +114,7 @@ function AdminCards (){
 
             <div className="stats-grid">
 
+                <Link to="/admin/students" style={{textDecoration: "none"}}>
                 <div className="stat-card">
                     <div className="stat-icon student" >
                         <i className="fa-solid fa-users"></i>
@@ -122,17 +124,21 @@ function AdminCards (){
                         <p>{stats.loading ? "-" : stats.totalStudents.toLocaleString()}</p>
                     </div>
                 </div>
+                </Link>
 
+                <Link to="/admin/teachers" style={{textDecoration: "none"}}>
                 <div className="stat-card">
                     <div className="stat-icon teacher">
                         <i className="fas fa-graduation-cap"></i>
                     </div>
                     <div className="stat-info">
                         <h3>Total Teachers</h3>
-                        <p>{stats.loading ? "-" : stats.totalTeachers}</p>
+                        <p>{stats.loading ? "-" : stats.totalTeachers.toLocaleString()}</p>
                     </div>
                 </div>
+                </Link>
 
+                <Link to="/admin/classes" style={{textDecoration: "none"}}>
                 <div className="stat-card">
                     <div className="stat-icon classes">
                         <i className="fa-solid fa-book-open"></i>
@@ -142,7 +148,9 @@ function AdminCards (){
                         <p>{stats.loading ? "-" : stats.totalClasses}</p>
                     </div>
                 </div>
+                </Link>
 
+                <Link to="/admin/attendance" style={{textDecoration: "none"}}>
                 <div className="stat-card">
                     <div className="stat-icon attendance">
                         <i className="fa-solid fa-chart-pie"></i>
@@ -152,7 +160,9 @@ function AdminCards (){
                         <p>{stats.loading ? "-" : `${stats.attendanceRate.toFixed(1)}%`}</p>
                     </div>
                 </div>
+                </Link>
 
+                <Link to="/admin/rooms" style={{textDecoration: "none"}}>
                 <div className="stat-card">
                     <div className="stat-icon rooms">
                         <i className="fa-solid fa-door-open"></i>
@@ -162,7 +172,9 @@ function AdminCards (){
                         <p>{stats.loading ? "-" : stats.totalRooms}</p>
                     </div>
                 </div>
+                </Link>
 
+                <Link to="/admin/departments" style={{textDecoration: "none"}}>
                 <div className="stat-card">
                     <div className="stat-icon departments">
                         <i className="fa-solid fa-building"></i>
@@ -172,6 +184,7 @@ function AdminCards (){
                         <p>{stats.loading ? "-" : stats.totalDepartments}</p>
                     </div>
                 </div>
+                </Link>
             </div>
         </div>
     )

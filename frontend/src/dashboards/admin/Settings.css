@@ -160,3 +160,30 @@
     opacity: 1;
     border-top-color: #e9ecef;
 }
+
+.institutional-accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+    opacity: 0;
+}
+
+.institutional-accordion-body.open {
+    max-height: 3000px;
+    opacity: 1;
+}
+
+.institutional-accordion-chevron {
+    transition: transform 0.25s ease;
+    color: #1E40AF;
+    font-size: 0.85rem;
+}
+
+.institutional-accordion-chevron.rotated {
+    transform: rotate(180deg);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+    user-select: none;
+}

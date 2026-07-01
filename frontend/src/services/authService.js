@@ -99,6 +99,10 @@ const authService = {
   refreshToken: (refreshToken) =>
     authAPI.post('/refresh-token', { refreshToken }),
 
+  // Update profile
+  updateProfile: (profileData) =>
+    authAPI.put('/profile', profileData),
+
   // Store tokens and user
   setTokens: (accessToken, refreshToken, user) => {
     localStorage.setItem('accessToken', accessToken);
